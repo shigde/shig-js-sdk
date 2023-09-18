@@ -167,6 +167,6 @@ Thumbs.db
 /libpeerconnection.log
 testem.log
 /typings
-
+deploy.sh
 
 
