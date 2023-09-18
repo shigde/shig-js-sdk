@@ -8,8 +8,7 @@ Run `ng build` to build the project. The build artifacts will be stored in the `
 
 ## Build Core lib
 
-Run `npm run build:core` or run `ng build core` to build the lobby project. The build `shig-lobby.js `artifacts will be
-stored in the `dist/` directory.
+Run `npm run build:core` or run `ng build core` to build the core library. The build artifacts will be stored in the `dist/` directory.
 
 ## Build Lobby web component
 
