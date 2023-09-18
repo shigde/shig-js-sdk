@@ -3,15 +3,20 @@ import {BrowserModule} from '@angular/platform-browser';
 
 import {LobbyComponent} from './lobby/lobby.component';
 import {createCustomElement} from '@angular/elements';
+import {httpInterceptorProviders} from '../../../core/src/lib/interceptors';
+import {HttpClientModule} from '@angular/common/http';
 
 @NgModule({
   declarations: [
     LobbyComponent
   ],
   imports: [
-    BrowserModule
+    BrowserModule,
+    HttpClientModule,
   ],
-  providers: [],
+  providers: [
+    httpInterceptorProviders,
+  ],
 })
 export class AppModule {
   constructor(private injector: Injector) {

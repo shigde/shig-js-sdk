@@ -1,1 +1,21 @@
-<p>lobby works!</p>
+<div *ngIf="stream">
+  <h2>Live Stream: {{stream.id | uppercase}}</h2>
+
+  <div>
+    <video id="video" style="background-color: black" muted autoplay></video>
+  </div>
+  <button type="button" (click)="goBack()">go back</button>
+  <button id="btn-join" class="btn btn-primary" (click)="start()" type="button" [disabled]="!mediaStream">
+    <div *ngIf="!mediaStream"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+      Loading...
+    </div>
+    <div *ngIf="!!mediaStream">
+      Join
+    </div>
+  </button>
+
+  <div id="remote-video-container">
+    <!--    <video id="remote-video" style="background-color: black" muted autoplay></video>-->
+  </div>
+</div>
+

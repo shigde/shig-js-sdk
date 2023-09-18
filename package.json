@@ -7,6 +7,7 @@
     "build": "ng build",
     "build:core": "ng build core",
     "build:lobby": "npm run build:core && ng build lobby --output-hashing none && node ./build-lobby.js",
+    "build:lobby-dev": "npm run build:core && ng build --configuration development lobby --output-hashing none && node ./build-lobby.js",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },

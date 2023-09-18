@@ -69,6 +69,12 @@
           },
           "configurations": {
             "production": {
+              "fileReplacements": [
+                {
+                  "replace": "projects/lobby/src/environments/environment.ts",
+                  "with": "projects/lobby/src/environments/environment.prod.ts"
+                }
+              ],
               "budgets": [
                 {
                   "type": "initial",
@@ -85,11 +91,11 @@
             },
             "development": {
               "buildOptimizer": false,
-              "optimization": false,
-              "vendorChunk": true,
-              "extractLicenses": false,
-              "sourceMap": true,
-              "namedChunks": true
+              "optimization": false
+//              "vendorChunk": true,
+//              "extractLicenses": false,
+//              "sourceMap": true,
+//              "namedChunks": true
             }
           },
           "defaultConfiguration": "production"
