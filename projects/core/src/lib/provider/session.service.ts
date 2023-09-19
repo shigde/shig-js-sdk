@@ -14,63 +14,76 @@ export class SessionService {
     {id: 'guest-4', name: 'Guest 4', token: token5},
   ];
 
-  private readonly userName$: Subject<string>
-  private readonly anonymous = 'anonymous'
+  private readonly userName$: Subject<string>;
+  private readonly anonymous = 'anonymous';
+
+  private authToken: string | undefined;
 
   constructor() {
-    const user = localStorage.getItem('user')
-    this.userName$ = new BehaviorSubject<string>(user === null ? this.anonymous : user)
+    const user = localStorage.getItem('user');
+    this.userName$ = new BehaviorSubject<string>(user === null ? this.anonymous : user);
+  }
+
+  setAuthenticationToken(token: string) {
+    this.authToken = token;
   }
 
   isActive(): Observable<boolean> {
-    const user = localStorage.getItem('user')
-    return of(user !== null)
+    if (this.authToken !== undefined) {
+      return of(true);
+    }
+    const user = localStorage.getItem('user');
+    return of(user !== null);
   }
 
   getUserName(): Observable<string> {
-    return this.userName$
+    return this.userName$;
   }
 
   setUserName(user: User): boolean {
-    const found = this.users.find((list) => list.id === user.id)
+    const found = this.users.find((list) => list.id === user.id);
     if (found === undefined) {
-      return false
+      return false;
     }
     localStorage.setItem('user', user.name);
-    this.userName$.next(user.name)
-    return true
+    this.userName$.next(user.name);
+    return true;
   }
 
   getUsers(): User[] {
-    return this.users
+    return this.users;
   }
 
   public removeUser(key: string) {
     localStorage.removeItem('user');
-    this.userName$.next(this.anonymous)
+    this.userName$.next(this.anonymous);
   }
 
   public clearData() {
     localStorage.clear();
-    this.userName$.next(this.anonymous)
+    this.userName$.next(this.anonymous);
   }
 
   public getToken(): string {
-    let userName = localStorage.getItem('user');
-    if (userName === null) {
-      return ''
-    }
-    const user = this.users.find(items => items.name === userName)
-    if (user === undefined) {
-      return ''
+    if (this.authToken !== undefined) {
+      return this.authToken;
     }
 
-    return user.token
+    let userName = localStorage.getItem('user');
+    if (userName === null) {
+      return '';
+    }
+    const user = this.users.find(items => items.name === userName);
+    if (user === undefined) {
+      return '';
+    }
+
+    return `Bearer ${user.token}`;
   }
 }
 
-const token1 = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwiaWF0IjoxNTE2MjM5MDIyLCJ1dWlkIjoiYTY0MzY1ZGItMTc0ZC00ZDExLThjYjEtZWIyYTM2MzlmZmU2In0._xbasA_1ljeszeWdqYqp96EWvJIbCnYOTOFxKgcd7vM'
-const token2 = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwiaWF0IjoxNTE2MjM5MDIyLCJ1dWlkIjoiOWJlZGMwZDktZWM2MS00ZmY0LWI4MWEtOGZkZGU0NWY3MzI3In0.831begOFS84xV-7BpXYlVgg3A2hMf4xbPWoXRs4m0qg'
-const token3 = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwiaWF0IjoxNTE2MjM5MDIyLCJ1dWlkIjoiNzBiZTg2ODItNzk5Yy00MjdmLWI3MjgtZmQwMDhjNTYzYWFjIn0.mLT7DRp50QP6OqqxBQmf4VSx02i3cA0jk89UMdXLhBY'
-const token4 = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwiaWF0IjoxNTE2MjM5MDIyLCJ1dWlkIjoiMjhiYmYzNTctYTFmNy00NDkwLWIxZjItYTYzN2E0YWU5YmFlIn0.wMfmkJ0VBj86tW5NfQnnV91j2YT-mUZeM_E9qbt_bjg'
-const token5 = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwiaWF0IjoxNTE2MjM5MDIyLCJ1dWlkIjoiZmUwMjI2NDgtYTBlOS00NDQ0LTlkNGQtYTRjMGQ5ZWZiNmQ3In0.HgWacVwFeEgYBG6iDJYlQ25VTymM0xHpnppjWGrzOp4'
+const token1 = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwiaWF0IjoxNTE2MjM5MDIyLCJ1dWlkIjoiYTY0MzY1ZGItMTc0ZC00ZDExLThjYjEtZWIyYTM2MzlmZmU2In0._xbasA_1ljeszeWdqYqp96EWvJIbCnYOTOFxKgcd7vM';
+const token2 = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwiaWF0IjoxNTE2MjM5MDIyLCJ1dWlkIjoiOWJlZGMwZDktZWM2MS00ZmY0LWI4MWEtOGZkZGU0NWY3MzI3In0.831begOFS84xV-7BpXYlVgg3A2hMf4xbPWoXRs4m0qg';
+const token3 = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwiaWF0IjoxNTE2MjM5MDIyLCJ1dWlkIjoiNzBiZTg2ODItNzk5Yy00MjdmLWI3MjgtZmQwMDhjNTYzYWFjIn0.mLT7DRp50QP6OqqxBQmf4VSx02i3cA0jk89UMdXLhBY';
+const token4 = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwiaWF0IjoxNTE2MjM5MDIyLCJ1dWlkIjoiMjhiYmYzNTctYTFmNy00NDkwLWIxZjItYTYzN2E0YWU5YmFlIn0.wMfmkJ0VBj86tW5NfQnnV91j2YT-mUZeM_E9qbt_bjg';
+const token5 = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwiaWF0IjoxNTE2MjM5MDIyLCJ1dWlkIjoiZmUwMjI2NDgtYTBlOS00NDQ0LTlkNGQtYTRjMGQ5ZWZiNmQ3In0.HgWacVwFeEgYBG6iDJYlQ25VTymM0xHpnppjWGrzOp4';

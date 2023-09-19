@@ -19,15 +19,15 @@ export class AuthInterceptor implements HttpInterceptor {
       .pipe(
         map(isActive => {
           if (isActive) {
-            const token = this.session.getToken()
+            const token = this.session.getToken();
             request = request.clone({
               setHeaders: {
-                Authorization: `Bearer ${token}`,
+                Authorization: token,
               },
             });
           }
-          return request
+          return request;
         }),
-        mergeMap((req) => next.handle(req)))
+        mergeMap((req) => next.handle(req)));
   }
 }

@@ -3,10 +3,11 @@ import {HttpClient, HttpHeaders} from '@angular/common/http';
 import {MessageService} from './message.service';
 import {catchError, map, Observable, of, tap} from 'rxjs';
 import {Space} from '../entities/space';
+import {SHIG_PARAMS} from './shig-parameter';
 
 @Injectable({providedIn: 'root'})
 export class SpaceService {
-  private spacesUrl = '/plugins/shig-live-stream/router';  // URL to web api
+  private spacesUrl = `${SHIG_PARAMS.API_PREFIX}`;  // URL to web api
 
   httpOptions = {
     headers: new HttpHeaders({ 'Content-Type': 'application/json' })

@@ -6,6 +6,7 @@ import {BehaviorSubject, catchError, lastValueFrom, Observable, of, tap} from 'r
 import {MessageService} from './message.service';
 import {ChannelMessenger} from './channel-messenger';
 import {ChannelMsg, ChannelMsgType, SdpMsgData} from '../entities/channel.msg';
+import {SHIG_PARAMS} from './shig-parameter';
 
 @Injectable({
   providedIn: 'root'
@@ -78,7 +79,7 @@ export class LobbyService {
 
 
   sendWhip(offer: RTCSessionDescriptionInit, spaceId: string, streamId: string): Promise<RTCSessionDescription> {
-    const whipUrl = `/plugins/shig-live-stream/router/space/${spaceId}/stream/${streamId}/whip`;
+    const whipUrl = `${SHIG_PARAMS.API_PREFIX}/space/${spaceId}/stream/${streamId}/whip`;
 
     const body = offer.sdp
     // @ts-ignore
@@ -90,7 +91,7 @@ export class LobbyService {
   }
 
   sendWhepOfferReq(spaceId: string, streamId: string) {
-    const whepUrl = `/plugins/shig-live-stream/router/space/${spaceId}/stream/${streamId}/whep`;
+    const whepUrl = `${SHIG_PARAMS.API_PREFIX}/space/${spaceId}/stream/${streamId}/whep`;
 
     // @ts-ignore
     return lastValueFrom(this.http.post(whepUrl, null, this.httpOptions).pipe(
@@ -101,7 +102,7 @@ export class LobbyService {
   }
 
   sendWhepAnswer(answer: RTCSessionDescriptionInit, spaceId: string, streamId: string) {
-    const whepUrl = `/plugins/shig-live-stream/router/space/${spaceId}/stream/${streamId}/whep`;
+    const whepUrl = `${SHIG_PARAMS.API_PREFIX}/space/${spaceId}/stream/${streamId}/whep`;
     const body = answer.sdp
 
     // @ts-ignore

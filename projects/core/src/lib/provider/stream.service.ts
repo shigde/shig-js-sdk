@@ -3,10 +3,12 @@ import {HttpClient, HttpHeaders} from '@angular/common/http';
 import {MessageService} from './message.service';
 import {catchError, map, Observable, of, tap} from 'rxjs';
 import {Stream} from '../entities/stream';
+import {SHIG_PARAMS} from './shig-parameter';
 
 @Injectable({providedIn: 'root'})
 export class StreamService {
-  private streamsUrl = '/plugins/shig-live-stream/router/space';  // URL to web api
+  // private streamsUrl = '/plugins/shig-live-stream/router/space';  // URL to web api
+  private streamsUrl = `/${SHIG_PARAMS.API_PREFIX}/space`;  // URL to web api
 
   httpOptions = {
     headers: new HttpHeaders({ 'Content-Type': 'application/json' })
@@ -40,10 +42,9 @@ export class StreamService {
   }
 
   /** GET stream by id. Will 404 if id not found */
-  getStream(id: string, token: string): Observable<Stream> {
+  getStream(id: string): Observable<Stream> {
     const url = `${this.streamsUrl}/123/stream/${id}`;
-    const headers = {"Authorization": token};
-    return this.http.get<Stream>(url, {headers}).pipe(
+    return this.http.get<Stream>(url).pipe(
       tap(_ => this.log(`fetched stream id=${id}`)),
       catchError(this.handleError<Stream>(`getStream id=${id}`))
     );
