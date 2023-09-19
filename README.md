@@ -29,7 +29,11 @@ the `dist/` directory.
   lobby.addEventListener('loadComp', (event) => {
     console.log("Component loaded successfully!", event);
   });
-  // lobby.setAttribute('server', 'https://lobby.shig.de/');
+  
+  // settings:
+  lobby.setAttribute('token', 'your-proxy-api-token');
+  lobby.setAttribute('api-prefix', '/your/proxy/api/prefix');
+  
   const wrapper = document.getElementById("wrapper");
   wrapper.appendChild(lobby);
 </script>
