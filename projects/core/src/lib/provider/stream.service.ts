@@ -3,12 +3,10 @@ import {HttpClient, HttpHeaders} from '@angular/common/http';
 import {MessageService} from './message.service';
 import {catchError, map, Observable, of, tap} from 'rxjs';
 import {Stream} from '../entities/stream';
-import {SHIG_PARAMS} from './shig-parameter';
+import {ParameterService} from './parameter.service';
 
 @Injectable({providedIn: 'root'})
 export class StreamService {
-  // private streamsUrl = '/plugins/shig-live-stream/router/space';  // URL to web api
-  private streamsUrl = `/${SHIG_PARAMS.API_PREFIX}/space`;  // URL to web api
 
   httpOptions = {
     headers: new HttpHeaders({ 'Content-Type': 'application/json' })
@@ -16,11 +14,13 @@ export class StreamService {
 
   constructor(
     private http: HttpClient,
-    private messageService: MessageService) { }
+    private messageService: MessageService,
+    private params: ParameterService
+  ) { }
 
   /** GET Streams from the server */
   getStreams(spaceId: string ): Observable<Stream[]> {
-    return this.http.get<Stream[]>(this.streamsUrl + '/' +spaceId + '/streams')
+    return this.http.get<Stream[]>(`${this.params.API_PREFIX}/space/${spaceId}/streams`)
       .pipe(
         tap(_ => this.log('fetched streams')),
         catchError(this.handleError<Stream[]>('getStreams', []))
@@ -29,7 +29,7 @@ export class StreamService {
 
   /** GET stream by id. Return `undefined` when id not found */
   getStreamNo404<Data>(id: number): Observable<Stream> {
-    const url = `${this.streamsUrl}/?id=${id}`;
+    const url = `${this.params.API_PREFIX}/space/123/stream/?id=${id}`;
     return this.http.get<Stream[]>(url)
       .pipe(
         map(streams => streams[0]), // returns a {0|1} element array
@@ -43,7 +43,7 @@ export class StreamService {
 
   /** GET stream by id. Will 404 if id not found */
   getStream(id: string): Observable<Stream> {
-    const url = `${this.streamsUrl}/123/stream/${id}`;
+    const url = `${this.params.API_PREFIX}/space/123/stream/${id}`;
     return this.http.get<Stream>(url).pipe(
       tap(_ => this.log(`fetched stream id=${id}`)),
       catchError(this.handleError<Stream>(`getStream id=${id}`))
@@ -56,7 +56,7 @@ export class StreamService {
       // if not search term, return empty stream array.
       return of([]);
     }
-    return this.http.get<Stream[]>(`${this.streamsUrl}/?name=${term}`).pipe(
+    return this.http.get<Stream[]>(`${this.params.API_PREFIX}/space/123/stream/?name=${term}`).pipe(
       tap(x => x.length ?
         this.log(`found streams matching "${term}"`) :
         this.log(`no streams matching "${term}"`)),
@@ -68,7 +68,7 @@ export class StreamService {
 
   /** POST: add a new stream to the server */
   addStream(stream: Stream): Observable<Stream> {
-    return this.http.post<Stream>(this.streamsUrl, stream, this.httpOptions).pipe(
+    return this.http.post<Stream>(`${this.params.API_PREFIX}/space/123/stream`, stream, this.httpOptions).pipe(
       tap((newStream: Stream) => this.log(`added stream w/ id=${newStream.id}`)),
       catchError(this.handleError<Stream>('addStream'))
     );
@@ -76,7 +76,7 @@ export class StreamService {
 
   /** DELETE: delete the stream from the server */
   deleteStream(id: number): Observable<Stream> {
-    const url = `${this.streamsUrl}/${id}`;
+    const url = `${this.params.API_PREFIX}/space/123/stream/${id}`;
 
     return this.http.delete<Stream>(url, this.httpOptions).pipe(
       tap(_ => this.log(`deleted stream id=${id}`)),
@@ -86,7 +86,7 @@ export class StreamService {
 
   /** PUT: update the stream on the server */
   updateStream(stream: Stream): Observable<any> {
-    return this.http.put(this.streamsUrl, stream, this.httpOptions).pipe(
+    return this.http.put(`${this.params.API_PREFIX}/space/123/stream`, stream, this.httpOptions).pipe(
       tap(_ => this.log(`updated stream id=${stream.id}`)),
       catchError(this.handleError<any>('updateStream'))
     );

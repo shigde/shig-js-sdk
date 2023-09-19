@@ -6,13 +6,13 @@ import {BehaviorSubject, catchError, lastValueFrom, Observable, of, tap} from 'r
 import {MessageService} from './message.service';
 import {ChannelMessenger} from './channel-messenger';
 import {ChannelMsg, ChannelMsgType, SdpMsgData} from '../entities/channel.msg';
-import {SHIG_PARAMS} from './shig-parameter';
+import {ParameterService} from './parameter.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class LobbyService {
-  public add$ = new BehaviorSubject<MediaStream | null>(null)
+  public add$ = new BehaviorSubject<MediaStream | null>(null);
   public remove$ = new BehaviorSubject<string | null>(null);
 
   httpOptions = {
@@ -20,22 +20,22 @@ export class LobbyService {
     responseType: 'text'
   };
 
-  constructor(private http: HttpClient, private messageService: MessageService) {
+  constructor(private http: HttpClient, private messageService: MessageService, private params: ParameterService) {
   }
 
   public join(stream: MediaStream, spaceId: string, streamId: string, config: RTCConfiguration): Promise<unknown> {
     return this.createSendingConnection(stream, spaceId, streamId, config)
-      .then((messenger) => this.createReceivingConnection(messenger, spaceId, streamId, config))
+      .then((messenger) => this.createReceivingConnection(messenger, spaceId, streamId, config));
   }
 
 
   private createSendingConnection(stream: MediaStream, spaceId: string, streamId: string, config: RTCConfiguration): Promise<ChannelMessenger> {
-    const wc = new WebrtcConnection(config)
-    const messenger = new ChannelMessenger(wc.createDataChannel())
+    const wc = new WebrtcConnection(config);
+    const messenger = new ChannelMessenger(wc.createDataChannel());
     return wc.createOffer(stream)
       .then((offer) => this.sendWhip(offer, spaceId, streamId))
       .then((answer) => wc.setAnswer(answer))
-      .then(() => messenger)
+      .then(() => messenger);
   }
 
   private createReceivingConnection(messenger: ChannelMessenger, spaceId: string, streamId: string, config: RTCConfiguration): Promise<unknown> {
@@ -49,39 +49,39 @@ export class LobbyService {
             id: msg.id,
             data: {sdp: answer, number: msg.data.number} as SdpMsgData
           }) as ChannelMsg)
-          .then((answer) => messenger.send(answer))
+          .then((answer) => messenger.send(answer));
       }
-    })
+    });
 
     wc.subscribe((event) => {
       if (event.type === 'add') {
         let stream = event.parent?.streams[0];
         if (!stream) {
-          return
+          return;
         }
         stream.addEventListener('removetrack', () => {
           const x = stream;
-          console.log("###### Remove track:stream", x?.getTracks().length, x?.id);
-          console.log("###### This", this)
+          console.log('###### Remove track:stream', x?.getTracks().length, x?.id);
+          console.log('###### This', this);
           if (x?.getTracks().length === 0) {
-            this.remove$.next(x?.id)
+            this.remove$.next(x?.id);
           }
-        })
-        console.log("###### Add track:stream", event.track.id, stream?.id);
+        });
+        console.log('###### Add track:stream', event.track.id, stream?.id);
         this.add$.next(stream);
       }
     });
 
     return this.sendWhepOfferReq(spaceId, streamId)
       .then((offer) => wc.setRemoteOffer(offer))
-      .then((answer) => this.sendWhepAnswer(answer, spaceId, streamId))
+      .then((answer) => this.sendWhepAnswer(answer, spaceId, streamId));
   }
 
 
   sendWhip(offer: RTCSessionDescriptionInit, spaceId: string, streamId: string): Promise<RTCSessionDescription> {
-    const whipUrl = `${SHIG_PARAMS.API_PREFIX}/space/${spaceId}/stream/${streamId}/whip`;
+    const whipUrl = `${this.params.API_PREFIX}/space/${spaceId}/stream/${streamId}/whip`;
 
-    const body = offer.sdp
+    const body = offer.sdp;
     // @ts-ignore
     return lastValueFrom(this.http.post(whipUrl, body, this.httpOptions).pipe(
         tap(a => console.log('---', a)),
@@ -91,7 +91,7 @@ export class LobbyService {
   }
 
   sendWhepOfferReq(spaceId: string, streamId: string) {
-    const whepUrl = `${SHIG_PARAMS.API_PREFIX}/space/${spaceId}/stream/${streamId}/whep`;
+    const whepUrl = `${this.params.API_PREFIX}/space/${spaceId}/stream/${streamId}/whep`;
 
     // @ts-ignore
     return lastValueFrom(this.http.post(whepUrl, null, this.httpOptions).pipe(
@@ -102,8 +102,8 @@ export class LobbyService {
   }
 
   sendWhepAnswer(answer: RTCSessionDescriptionInit, spaceId: string, streamId: string) {
-    const whepUrl = `${SHIG_PARAMS.API_PREFIX}/space/${spaceId}/stream/${streamId}/whep`;
-    const body = answer.sdp
+    const whepUrl = `${this.params.API_PREFIX}/space/${spaceId}/stream/${streamId}/whep`;
+    const body = answer.sdp;
 
     // @ts-ignore
     return lastValueFrom(this.http.patch(whepUrl, body, this.httpOptions).pipe(

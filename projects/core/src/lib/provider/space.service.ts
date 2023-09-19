@@ -3,23 +3,24 @@ import {HttpClient, HttpHeaders} from '@angular/common/http';
 import {MessageService} from './message.service';
 import {catchError, map, Observable, of, tap} from 'rxjs';
 import {Space} from '../entities/space';
-import {SHIG_PARAMS} from './shig-parameter';
+import {ParameterService} from './parameter.service';
 
 @Injectable({providedIn: 'root'})
 export class SpaceService {
-  private spacesUrl = `${SHIG_PARAMS.API_PREFIX}`;  // URL to web api
-
   httpOptions = {
-    headers: new HttpHeaders({ 'Content-Type': 'application/json' })
+    headers: new HttpHeaders({'Content-Type': 'application/json'})
   };
 
   constructor(
     private http: HttpClient,
-    private messageService: MessageService) { }
+    private messageService: MessageService,
+    private params: ParameterService
+  ) {
+  }
 
   /** GET Spaces from the server */
   getSpaces(): Observable<Space[]> {
-    return this.http.get<Space[]>(this.spacesUrl + '/spaces')
+    return this.http.get<Space[]>(`${this.params.API_PREFIX}/spaces`)
       .pipe(
         tap(_ => this.log('fetched spaces')),
         catchError(this.handleError<Space[]>('getSpaces', []))
@@ -28,7 +29,7 @@ export class SpaceService {
 
   /** GET space by id. Return `undefined` when id not found */
   getSpaceNo404<Data>(id: string): Observable<Space> {
-    const url = `${this.spacesUrl}/?id=${id}`;
+    const url = `${this.params.API_PREFIX}/?id=${id}`;
     return this.http.get<Space[]>(url)
       .pipe(
         map(spaces => spaces[0]), // returns a {0|1} element array
@@ -42,7 +43,7 @@ export class SpaceService {
 
   /** GET space by id. Will 404 if id not found */
   getSpace(id: string): Observable<Space> {
-    const url = `${this.spacesUrl}/${id}`;
+    const url = `${this.params.API_PREFIX}/space/${id}`;
     return this.http.get<Space>(url).pipe(
       tap(_ => this.log(`fetched space id=${id}`)),
       catchError(this.handleError<Space>(`getSpace id=${id}`))
@@ -55,7 +56,7 @@ export class SpaceService {
       // if not search term, return empty space array.
       return of([]);
     }
-    return this.http.get<Space[]>(`${this.spacesUrl}/?name=${term}`).pipe(
+    return this.http.get<Space[]>(`${this.params.API_PREFIX}/space/?name=${term}`).pipe(
       tap(x => x.length ?
         this.log(`found spaces matching "${term}"`) :
         this.log(`no spaces matching "${term}"`)),
@@ -67,7 +68,7 @@ export class SpaceService {
 
   /** POST: add a new space to the server */
   addSpace(space: Space): Observable<Space> {
-    return this.http.post<Space>(this.spacesUrl, space, this.httpOptions).pipe(
+    return this.http.post<Space>(`${this.params.API_PREFIX}/space`, space, this.httpOptions).pipe(
       tap((newSpace: Space) => this.log(`added space w/ id=${newSpace.id}`)),
       catchError(this.handleError<Space>('addSpace'))
     );
@@ -75,7 +76,7 @@ export class SpaceService {
 
   /** DELETE: delete the space from the server */
   deleteSpace(id: string): Observable<Space> {
-    const url = `${this.spacesUrl}/${id}`;
+    const url = `${this.params.API_PREFIX}/space/${id}`;
 
     return this.http.delete<Space>(url, this.httpOptions).pipe(
       tap(_ => this.log(`deleted space id=${id}`)),
@@ -85,7 +86,7 @@ export class SpaceService {
 
   /** PUT: update the space on the server */
   updateSpace(space: Space): Observable<any> {
-    return this.http.put(this.spacesUrl, space, this.httpOptions).pipe(
+    return this.http.put(`${this.params.API_PREFIX}/space`, space, this.httpOptions).pipe(
       tap(_ => this.log(`updated space id=${space.id}`)),
       catchError(this.handleError<any>('updateSpace'))
     );

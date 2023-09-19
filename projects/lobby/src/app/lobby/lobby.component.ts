@@ -6,7 +6,7 @@ import {Location} from '@angular/common';
 import {filter, tap} from 'rxjs';
 import {environment} from '../../environments/environment';
 import {SessionService} from '../../../../core/src/lib/provider/session.service';
-import {SHIG_PARAMS} from '../../../../core/src/lib/provider/shig-parameter';
+import {ParameterService} from '../../../../core/src/lib/provider/parameter.service';
 
 @Component({
   selector: 'shig-lobby',
@@ -28,14 +28,16 @@ export class LobbyComponent implements OnInit {
     private session: SessionService,
     private streamService: StreamService,
     private lobbyService: LobbyService,
+    private params: ParameterService,
     private location: Location
   ) {
   }
 
   ngOnInit(): void {
     if (this.apiPrefix !== undefined) {
-      SHIG_PARAMS.API_PREFIX = this.apiPrefix;
+      this.params.API_PREFIX = this.apiPrefix;
     }
+
     this.session.setAuthenticationToken(this.getToken());
     this.getStream();
 
