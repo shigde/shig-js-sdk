@@ -6,7 +6,7 @@ import {
   HttpInterceptor
 } from '@angular/common/http';
 import {map, mergeMap, Observable} from 'rxjs';
-import {SessionService} from '../provider/session.service';
+import {SessionService} from '../provider';
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
