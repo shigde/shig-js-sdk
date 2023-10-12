@@ -2,6 +2,7 @@
  * Public API Surface of core
  */
 
-export * from './lib/entities/stream';
-export * from './lib/provider/lobby.service';
-export * from './lib/provider/stream.service';
+export * from './lib/entities/';
+export * from './lib/provider/';
+export * from './lib/interceptors/';
+

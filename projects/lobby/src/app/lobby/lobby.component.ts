@@ -1,12 +1,10 @@
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
-import {Stream} from '../entities/stream';
-import {StreamService} from '../../../../core/src/lib/provider/stream.service';
-import {LobbyService} from '../../../../core/src/lib/provider/lobby.service';
+
 import {Location} from '@angular/common';
 import {filter, tap} from 'rxjs';
 import {environment} from '../../environments/environment';
-import {SessionService} from '../../../../core/src/lib/provider/session.service';
-import {ParameterService} from '../../../../core/src/lib/provider/parameter.service';
+
+import {LobbyService, Stream, StreamService, SessionService, ParameterService} from 'core';
 
 @Component({
   selector: 'shig-lobby',
@@ -22,15 +20,21 @@ export class LobbyComponent implements OnInit {
 
   @Input() token: string | undefined;
   @Input('api-prefix') apiPrefix: string | undefined;
+  @Input('stream') streamId: string | undefined;
+  @Input('space') spaceId: string | undefined;
+
   @Output() loadComp = new EventEmitter();
 
+  private session: SessionService;
+
   constructor(
-    private session: SessionService,
+    session: SessionService,
     private streamService: StreamService,
     private lobbyService: LobbyService,
     private params: ParameterService,
     private location: Location
   ) {
+    this.session = session;
   }
 
   ngOnInit(): void {
@@ -48,9 +52,8 @@ export class LobbyComponent implements OnInit {
   }
 
   getStream(): void {
-    const id = 'value';
-    if (id !== null) {
-      this.streamService.getStream(id)
+    if (this.streamId !== undefined && this.spaceId !== undefined) {
+      this.streamService.getStream(this.streamId, this.spaceId)
         .pipe(tap((stream) => this.stream = stream))
         .subscribe((_) => this.startCamera());
     }
@@ -78,7 +81,7 @@ export class LobbyComponent implements OnInit {
   }
 
   start(): void {
-    if (!!this.stream && !!this.mediaStream) {
+    if (!!this.stream && !!this.mediaStream && this.streamId !== undefined && this.spaceId !== undefined) {
       this.lobbyService.add$.pipe(filter(s => s !== null)).subscribe((s) => {
         if (s !== null) {
           this.getOrCreateVideoElement(s.id).srcObject = s;
@@ -89,7 +92,7 @@ export class LobbyComponent implements OnInit {
           this.removeVideoElement(s);
         }
       });
-      this.lobbyService.join(this.mediaStream, '123', this.stream.id, this.config).then(() => console.log('Connected'));
+      this.lobbyService.join(this.mediaStream, this.spaceId, this.streamId, this.config).then(() => console.log('Connected'));
     }
   }
 

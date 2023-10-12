@@ -42,8 +42,8 @@ export class StreamService {
   }
 
   /** GET stream by id. Will 404 if id not found */
-  getStream(id: string): Observable<Stream> {
-    const url = `${this.params.API_PREFIX}/space/123/stream/${id}`;
+  getStream(id: string, space: string): Observable<Stream> {
+    const url = `${this.params.API_PREFIX}/space/${space}/stream/${id}`;
     return this.http.get<Stream>(url).pipe(
       tap(_ => this.log(`fetched stream id=${id}`)),
       catchError(this.handleError<Stream>(`getStream id=${id}`))

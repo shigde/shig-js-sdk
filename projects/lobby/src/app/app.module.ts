@@ -3,7 +3,7 @@ import {BrowserModule} from '@angular/platform-browser';
 
 import {LobbyComponent} from './lobby/lobby.component';
 import {createCustomElement} from '@angular/elements';
-import {httpInterceptorProviders} from '../../../core/src/lib/interceptors';
+import {httpInterceptorProviders} from 'core';
 import {HttpClientModule} from '@angular/common/http';
 
 @NgModule({
