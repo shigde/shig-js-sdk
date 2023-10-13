@@ -1,11 +1,10 @@
 import {EventEmitter} from '@angular/core';
-import {MediaEvent} from '../entities/media.event';
-import {ChannelMsg, ChannelMsgType} from '../entities/channel.msg';
+import {ChannelMsg, ChannelMsgType, MediaEvent} from '../entities';
 
 
 export class WebrtcConnection extends EventEmitter<MediaEvent> {
   private readonly pc: RTCPeerConnection;
-  private dataChannel: RTCDataChannel | undefined
+  private dataChannel: RTCDataChannel | undefined;
 
   constructor(
     private readonly config: RTCConfiguration
@@ -24,7 +23,7 @@ export class WebrtcConnection extends EventEmitter<MediaEvent> {
       this.dataChannel.onmessage = this.onReceiveChannelMessageCallback;
       this.dataChannel.onopen = this.onReceiveChannelStateChange;
       this.dataChannel.onclose = this.onReceiveChannelStateChange;
-    }
+    };
   }
 
   public createDataChannel(): RTCDataChannel {
@@ -43,7 +42,7 @@ export class WebrtcConnection extends EventEmitter<MediaEvent> {
     // @ts-ignore
     return this.pc.createOffer()
       .then((offer) => this.pc.setLocalDescription(offer))
-      .then(_ => this.pc.localDescription)
+      .then(_ => this.pc.localDescription);
   }
 
   // Ice Gathering ----------------------------
@@ -56,17 +55,17 @@ export class WebrtcConnection extends EventEmitter<MediaEvent> {
   }
 
   public setAnswer(answer: RTCSessionDescription): Promise<void> {
-    console.log('Answer:', answer)
-    return this.pc.setRemoteDescription(answer)
+    console.log('Answer:', answer);
+    return this.pc.setRemoteDescription(answer);
   }
 
   setRemoteOffer(offer: RTCSessionDescription) {
-    let aw: RTCSessionDescriptionInit
+    let aw: RTCSessionDescriptionInit;
     return this.pc.setRemoteDescription(offer)
       .then(() => this.pc.createAnswer())
       .then((answer) => aw = answer)
       .then((_) => this.pc.setLocalDescription(aw))
-      .then(() => aw)
+      .then(() => aw);
   }
 
 
@@ -84,13 +83,13 @@ export class WebrtcConnection extends EventEmitter<MediaEvent> {
   }
 
   private onReceiveChannelMessageCallback(me: MessageEvent<any>): void {
-    const msg = JSON.parse(new TextDecoder().decode(me.data as ArrayBuffer)) as ChannelMsg
+    const msg = JSON.parse(new TextDecoder().decode(me.data as ArrayBuffer)) as ChannelMsg;
     if (msg?.type === ChannelMsgType.OfferMsg) {
 
     }
   }
 
   private onReceiveChannelStateChange(ev: Event): void {
-    console.log('onReceiveChannelStateChange', ev)
+    console.log('onReceiveChannelStateChange', ev);
   }
 }

@@ -2,7 +2,7 @@ import {Injectable} from '@angular/core';
 import {HttpClient, HttpHeaders} from '@angular/common/http';
 import {MessageService} from './message.service';
 import {catchError, map, Observable, of, tap} from 'rxjs';
-import {Stream} from '../entities/stream';
+import {Stream} from '../entities';
 import {ParameterService} from './parameter.service';
 
 @Injectable({providedIn: 'root'})
@@ -69,7 +69,7 @@ export class StreamService {
   /** POST: add a new stream to the server */
   addStream(stream: Stream): Observable<Stream> {
     return this.http.post<Stream>(`${this.params.API_PREFIX}/space/123/stream`, stream, this.httpOptions).pipe(
-      tap((newStream: Stream) => this.log(`added stream w/ id=${newStream.id}`)),
+      tap((newStream: Stream) => this.log(`added stream w/ id=${newStream.uuid}`)),
       catchError(this.handleError<Stream>('addStream'))
     );
   }
@@ -87,7 +87,7 @@ export class StreamService {
   /** PUT: update the stream on the server */
   updateStream(stream: Stream): Observable<any> {
     return this.http.put(`${this.params.API_PREFIX}/space/123/stream`, stream, this.httpOptions).pipe(
-      tap(_ => this.log(`updated stream id=${stream.id}`)),
+      tap(_ => this.log(`updated stream id=${stream.uuid}`)),
       catchError(this.handleError<any>('updateStream'))
     );
   }

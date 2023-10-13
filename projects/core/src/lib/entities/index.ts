@@ -1,4 +1,5 @@
 export * from './channel.msg';
+export * from './device-settings';
 export * from './media.event';
 export * from './space';
 export * from './stream';
