@@ -3,8 +3,18 @@ import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {Location} from '@angular/common';
 import {filter, tap} from 'rxjs';
 import {environment} from '../../environments/environment';
+import {DeviceSettingsCbk} from '../device-settings/device-settings.component';
+import {
+  DeviceSettings,
+  DeviceSettingsService,
+  LobbyService,
+  ParameterService,
+  SessionService,
+  Stream,
+  StreamService
+} from 'core';
+import {MultiStreamsMixer} from '../provider/multi_streams_mixer';
 
-import {LobbyService, Stream, StreamService, SessionService, ParameterService} from 'core';
 
 @Component({
   selector: 'shig-lobby',
@@ -12,8 +22,13 @@ import {LobbyService, Stream, StreamService, SessionService, ParameterService} f
   styleUrls: ['./lobby.component.scss']
 })
 export class LobbyComponent implements OnInit {
+  cbk: DeviceSettingsCbk;
+  displaySettings = false
+
   stream: Stream | undefined;
   mediaStream: MediaStream | undefined;
+  hasMediaStreamSet = false;
+
   private readonly config: RTCConfiguration = {
     iceServers: environment.iceServers
   };
@@ -25,25 +40,34 @@ export class LobbyComponent implements OnInit {
 
   @Output() loadComp = new EventEmitter();
 
-  private session: SessionService;
 
   constructor(
-    session: SessionService,
+    private session: SessionService,
+    private devices: DeviceSettingsService,
     private streamService: StreamService,
     private lobbyService: LobbyService,
     private params: ParameterService,
     private location: Location
   ) {
-    this.session = session;
+    this.cbk = (settings) => {
+      this.startCamera(settings)
+    }
   }
 
   ngOnInit(): void {
     if (this.apiPrefix !== undefined) {
       this.params.API_PREFIX = this.apiPrefix;
     }
-
     this.session.setAuthenticationToken(this.getToken());
     this.getStream();
+
+    const mixer = new MultiStreamsMixer([]);
+
+    // rtcPeerConnection.addStream(mixer.getMixedStream());
+// https://github.com/fzembow/rect-scaler
+// https://codesandbox.io/s/zoom-video-gallery-600ks?file=/index.html:103-1291
+    mixer.frameInterval = 1;
+    mixer.startDrawingFrames();
 
     setTimeout(() => {
       this.loadComp.emit('Component loaded successfully!');
@@ -55,18 +79,18 @@ export class LobbyComponent implements OnInit {
     if (this.streamId !== undefined && this.spaceId !== undefined) {
       this.streamService.getStream(this.streamId, this.spaceId)
         .pipe(tap((stream) => this.stream = stream))
-        .subscribe((_) => this.startCamera());
+        .subscribe();
     }
   }
 
-  startCamera() {
-    navigator.mediaDevices
-      .getUserMedia({audio: true, video: true})
+  startCamera(settings: DeviceSettings) {
+    this.devices.getUserMedia(settings)
       .then((stream) => this.mediaStream = stream)
       .then(() => (document.getElementById('video') as HTMLVideoElement))
       .then(element => {
           if (this.mediaStream) {
             element.srcObject = this.mediaStream;
+            this.hasMediaStreamSet = true;
           }
         }
       );
@@ -82,12 +106,12 @@ export class LobbyComponent implements OnInit {
 
   start(): void {
     if (!!this.stream && !!this.mediaStream && this.streamId !== undefined && this.spaceId !== undefined) {
-      this.lobbyService.add$.pipe(filter(s => s !== null)).subscribe((s) => {
+      this.lobbyService.add$.pipe(filter(s => s !== null)).subscribe((s: any) => {
         if (s !== null) {
           this.getOrCreateVideoElement(s.id).srcObject = s;
         }
       });
-      this.lobbyService.remove$.pipe(filter(s => s !== null)).subscribe((s) => {
+      this.lobbyService.remove$.pipe(filter(s => s !== null)).subscribe((s: any) => {
         if (s !== null && this.hasVideoElement(s)) {
           this.removeVideoElement(s);
         }
@@ -126,5 +150,10 @@ export class LobbyComponent implements OnInit {
       console.error('Invalid token: ', this.token);
     }
     return (this.token === undefined) ? 'unauthorized' : this.token;
+  }
+
+  toggleSettings() {
+
+    this.displaySettings = !this.displaySettings
   }
 }

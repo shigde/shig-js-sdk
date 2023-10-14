@@ -38,6 +38,7 @@ export class IndexStoreService extends Dexie {
         // this.dialog.open(NoticeDialogComponent, {data: {type: 'success', msg: 'Updated profile!'}});
       }
     }).catch(e => {
+      console.log("??????, e")
       // this.dialog.open(NoticeDialogComponent, {data: {type: 'fail', msg: 'Can not update profile!'}});
     });
   }

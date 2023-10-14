@@ -1,9 +1,6 @@
 import {Injectable} from '@angular/core';
-import {DeviceSettings} from '../entities';
+import {DeviceSettings, MediaDevices} from '../entities';
 import {Constraints} from '../entities/constraints';
-
-
-type MediaDevices = { videoDevices: MediaDeviceInfo[], audioDevices: MediaDeviceInfo[], audioOutputDevices: MediaDeviceInfo[] };
 
 @Injectable({
   providedIn: 'root'

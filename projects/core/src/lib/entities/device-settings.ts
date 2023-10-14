@@ -1,3 +1,5 @@
+import {Constraints} from './constraints';
+
 export interface SelectValue {
   value: string;
   viewValue: string;
@@ -83,9 +85,9 @@ export class DeviceSettings {
   public readonly id = 1;
 
   constructor(
-    public camera: string | null,
-    public microphone: string | null,
-    public audioDevice: string | null,
+    public camera: string | null | undefined,
+    public microphone: string | null | undefined,
+    public audioDevice: string | null | undefined,
     public quality: ResolutionValue,
     public videoCodec: VideoCodecValue,
     public bandwidth: BandwidthValue,
