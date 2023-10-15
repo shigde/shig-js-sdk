@@ -13,7 +13,7 @@ import {
     Stream,
     StreamService
 } from 'core';
-import {MultiStreamsMixer} from '../provider/multi_streams_mixer';
+import {StreamMixer} from '../provider/stream_mixer';
 
 
 @Component({
@@ -31,6 +31,8 @@ export class LobbyComponent implements OnInit {
     mediaStream: MediaStream | undefined;
     hasMediaStreamSet = false;
 
+    private mixer?: StreamMixer;
+
     private readonly config: RTCConfiguration = {
         iceServers: environment.iceServers
     };
@@ -41,7 +43,6 @@ export class LobbyComponent implements OnInit {
     @Input('space') spaceId: string | undefined;
 
     @Output() loadComp = new EventEmitter();
-
 
     constructor(
         private session: SessionService,
@@ -54,6 +55,7 @@ export class LobbyComponent implements OnInit {
         this.cbk = (settings) => {
             this.startCamera(settings);
         };
+
     }
 
     ngOnInit(): void {
@@ -91,15 +93,20 @@ export class LobbyComponent implements OnInit {
         if (this.streamId !== undefined && this.spaceId !== undefined) {
             this.streamService.getStream(this.streamId, this.spaceId)
                 .pipe(tap((stream) => this.stream = stream))
-                .subscribe();
+                .subscribe(() => {
+                    setTimeout(() => {
+                        this.mixer = new StreamMixer('canvasOne');
+                        this.mixer.start();
+                    }, 0)
+                });
         }
     }
 
     startCamera(settings: DeviceSettings) {
         this.devices.getUserMedia(settings)
-            .then((stream) => this.mediaStream = stream)
+            .then((stream: any) => this.mediaStream = stream)
             .then(() => (document.getElementById('video') as HTMLVideoElement))
-            .then(element => {
+            .then((element: any) => {
                     if (this.mediaStream) {
                         element.srcObject = this.mediaStream;
                         this.hasMediaStreamSet = true;
@@ -156,12 +163,19 @@ export class LobbyComponent implements OnInit {
         buttonGroup.classList.add('active');
         const checkbox = document.createElement('input');
         checkbox.setAttribute('type', 'checkbox');
-        checkbox.checked = true;
+        checkbox.checked = false;
+        checkbox.id = `checkbox-${id}`;
+        checkbox.disabled = true;
+
         const span = document.createElement('span');
-        span.innerText = 'active';
+        span.innerText = ' active';
         buttonGroup.appendChild(buttonLabal);
         buttonLabal.appendChild(checkbox);
         buttonLabal.appendChild(span);
+
+        buttonLabal.addEventListener('click', (evt) => {
+            this.toggleActive(id, `checkbox-${id}`);
+        });
 
         const video = document.createElement('video');
         video.setAttribute('id', id);
@@ -186,13 +200,29 @@ export class LobbyComponent implements OnInit {
     }
 
     toggleSettings() {
-
         this.displaySettings = !this.displaySettings;
     }
 
+    toggleActive(videoId: string, checkboxId: string) {
+        const isChecked = !(document.getElementById(checkboxId) as HTMLInputElement).checked;
+        (document.getElementById(checkboxId) as HTMLInputElement).checked = isChecked;
 
-    start(): void {
-
+        if (isChecked) {
+            this.mixer?.videoElements.set(videoId, document.getElementById(videoId) as HTMLVideoElement);
+        } else {
+            this.mixer?.videoElements.delete(videoId);
+        }
     }
 
+    start(): void {
+        let stream = this.mixer?.getStream();
+        if(stream) {
+            const video = document.createElement('video');
+            video.setAttribute('id', "test");
+            video.setAttribute('muted', '');
+            video.setAttribute('autoplay', '');
+            document.body.appendChild(video);
+            video.srcObject = stream;
+        }
+    }
 }
