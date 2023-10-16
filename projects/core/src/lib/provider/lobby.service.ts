@@ -23,16 +23,16 @@ export class LobbyService {
   constructor(private http: HttpClient, private messageService: MessageService, private params: ParameterService) {
   }
 
-  public join(stream: MediaStream, spaceId: string, streamId: string, config: RTCConfiguration): Promise<unknown> {
+  public join(stream: MediaStream[], spaceId: string, streamId: string, config: RTCConfiguration): Promise<unknown> {
     return this.createSendingConnection(stream, spaceId, streamId, config)
       .then((messenger) => this.createReceivingConnection(messenger, spaceId, streamId, config));
   }
 
 
-  private createSendingConnection(stream: MediaStream, spaceId: string, streamId: string, config: RTCConfiguration): Promise<ChannelMessenger> {
+  private createSendingConnection(streams: MediaStream[], spaceId: string, streamId: string, config: RTCConfiguration): Promise<ChannelMessenger> {
     const wc = new WebrtcConnection(config);
     const messenger = new ChannelMessenger(wc.createDataChannel());
-    return wc.createOffer(stream)
+    return wc.createOffer(streams)
       .then((offer) => this.sendWhip(offer, spaceId, streamId))
       .then((answer) => wc.setAnswer(answer))
       .then(() => messenger);

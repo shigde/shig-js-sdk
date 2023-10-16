@@ -1,7 +1,7 @@
 import {Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation} from '@angular/core';
 
 import {Location} from '@angular/common';
-import {filter, tap} from 'rxjs';
+import {filter, Observable, tap} from 'rxjs';
 import {environment} from '../../environments/environment';
 import {DeviceSettingsCbk} from '../device-settings/device-settings.component';
 import {
@@ -41,6 +41,7 @@ export class LobbyComponent implements OnInit {
     @Input('api-prefix') apiPrefix: string | undefined;
     @Input('stream') streamId: string | undefined;
     @Input('space') spaceId: string | undefined;
+    @Input() role: string | null = 'guest';
 
     @Output() loadComp = new EventEmitter();
 
@@ -94,10 +95,13 @@ export class LobbyComponent implements OnInit {
             this.streamService.getStream(this.streamId, this.spaceId)
                 .pipe(tap((stream) => this.stream = stream))
                 .subscribe(() => {
-                    setTimeout(() => {
-                        this.mixer = new StreamMixer('canvasOne');
-                        this.mixer.start();
-                    }, 0)
+                    if (this.role === 'owner') {
+                        setTimeout(() => {
+                            this.mixer = new StreamMixer('canvasOne');
+                            this.mixer.start();
+                        }, 0);
+                    }
+
                 });
         }
     }
@@ -135,7 +139,11 @@ export class LobbyComponent implements OnInit {
                     this.removeVideoElement(s);
                 }
             });
-            this.lobbyService.join(this.mediaStream, this.spaceId, this.streamId, this.config).then(() => this.isInLobby = true);
+            const streams = [this.mediaStream];
+            if (!!this.mixer) {
+                streams.push(this.mixer.getStream());
+            }
+            this.lobbyService.join(streams, this.spaceId, this.streamId, this.config).then(() => this.isInLobby = true);
         }
     }
 
@@ -215,14 +223,14 @@ export class LobbyComponent implements OnInit {
     }
 
     start(): void {
-        let stream = this.mixer?.getStream();
-        if(stream) {
-            const video = document.createElement('video');
-            video.setAttribute('id', "test");
-            video.setAttribute('muted', '');
-            video.setAttribute('autoplay', '');
-            document.body.appendChild(video);
-            video.srcObject = stream;
-        }
+        // let stream = this.mixer?.getStream();
+        // if (stream) {
+        //   const video = document.createElement('video');
+        //   video.setAttribute('id', 'test');
+        //   video.setAttribute('muted', '');
+        //   video.setAttribute('autoplay', '');
+        //   document.body.appendChild(video);
+        //   video.srcObject = stream;
+        // }
     }
 }
