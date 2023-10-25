@@ -11,10 +11,11 @@ import {
     ParameterService,
     SessionService,
     Stream,
-    StreamService
+    StreamService,
+    PeerTubeService,
+    StreamLiveData,
 } from 'core';
 import {StreamMixer} from '../provider/stream_mixer';
-
 
 @Component({
     selector: 'shig-lobby',
@@ -26,11 +27,13 @@ export class LobbyComponent implements OnInit {
     cbk: DeviceSettingsCbk;
     displaySettings = false;
     isInLobby = false;
+    state: 'offline' | 'online' = 'offline'
 
     stream: Stream | undefined;
     mediaStream: MediaStream | undefined;
     hasMediaStreamSet = false;
 
+    private streamLiveData: StreamLiveData | undefined;
     private mixer?: StreamMixer;
 
     private readonly config: RTCConfiguration = {
@@ -42,6 +45,7 @@ export class LobbyComponent implements OnInit {
     @Input('stream') streamId: string | undefined;
     @Input('space') spaceId: string | undefined;
     @Input('user') user: string | undefined;
+
     @Input() role: string | null = 'guest';
 
     @Output() loadComp = new EventEmitter();
@@ -51,13 +55,13 @@ export class LobbyComponent implements OnInit {
         private devices: DeviceSettingsService,
         private streamService: StreamService,
         private lobbyService: LobbyService,
+        private peerTubeService: PeerTubeService,
         private params: ParameterService,
         private location: Location
     ) {
         this.cbk = (settings) => {
             this.startCamera(settings);
         };
-
     }
 
     ngOnInit(): void {
@@ -66,29 +70,11 @@ export class LobbyComponent implements OnInit {
         }
         this.session.setAuthenticationToken(this.getToken());
         this.getStream();
-
-//         const mixer = new MultiStreamsMixer([]);
-//         mixer.
-//
-//         var mixer = new MultiStreamsMixer([microphone1, microphone2]);
-//
-// // record using MediaRecorder API
-//         var recorder = new MediaRecorder(mixer.getMixedStream());
-//
-// // or share using WebRTC
-//         rtcPeerConnection.addStream(mixer.getMixedStream());
-
-
-        // rtcPeerConnection.addStream(mixer.getMixedStream());
-// https://github.com/fzembow/rect-scaler
-// https://codesandbox.io/s/zoom-video-gallery-600ks?file=/index.html:103-1291
-//         mixer.frameInterval = 1;
-//         mixer.startDrawingFrames();
+        this.getStreamLiveData();
 
         setTimeout(() => {
             this.loadComp.emit('Component loaded successfully!');
         }, 100);
-
     }
 
     getStream(): void {
@@ -102,6 +88,15 @@ export class LobbyComponent implements OnInit {
                             this.mixer.start();
                         }, 0);
                     }
+                });
+        }
+    }
+
+    getStreamLiveData(): void {
+        if (this.streamId !== undefined && this.token !== undefined) {
+            this.peerTubeService.fetchStreamLiveData(this.token, this.streamId)
+                .pipe(tap((data) => this.streamLiveData = data))
+                .subscribe(() => {
                 });
         }
     }
@@ -132,17 +127,27 @@ export class LobbyComponent implements OnInit {
             this.lobbyService.add$.pipe(filter(s => s !== null)).subscribe((s: any) => {
                 if (s !== null) {
                     this.getOrCreateVideoElement(s.id).srcObject = s;
+                    if (this.mixer) {
+                        this.mixer.appendStream(s)
+                    }
                 }
             });
             this.lobbyService.remove$.pipe(filter(s => s !== null)).subscribe((s: any) => {
                 if (s !== null && this.hasVideoElement(s)) {
                     this.removeVideoElement(s);
+                    if (this.mixer) {
+                        this.mixer.removeStream(s)
+                    }
                 }
             });
-            const streams = [this.mediaStream];
+
+            const streams: MediaStream[] = [];
+            streams.push(this.mediaStream);
+
             if (!!this.mixer) {
-                streams.push(this.mixer.getStream());
+                streams.push(this.mixer.getMixedStream());
             }
+
             this.lobbyService.join(streams, this.spaceId, this.streamId, this.config).then(() => this.isInLobby = true);
         }
     }
@@ -223,14 +228,19 @@ export class LobbyComponent implements OnInit {
     }
 
     start(): void {
-        // let stream = this.mixer?.getStream();
-        // if (stream) {
-        //   const video = document.createElement('video');
-        //   video.setAttribute('id', 'test');
-        //   video.setAttribute('muted', '');
-        //   video.setAttribute('autoplay', '');
-        //   document.body.appendChild(video);
-        //   video.srcObject = stream;
-        // }
+        if (this.streamLiveData != undefined && this.streamId != undefined && this.spaceId != undefined) {
+            this.lobbyService.startLiveStream(this.streamLiveData, this.spaceId, this.streamId)
+                .subscribe(() => {
+                    this.state = 'online'
+                });
+        }
+    }
+
+    stop(): void {
+        if (this.streamId != undefined && this.spaceId != undefined) {
+            this.lobbyService.stopLiveStream(this.spaceId, this.streamId).subscribe(() => {
+                this.state = 'offline'
+            });
+        }
     }
 }

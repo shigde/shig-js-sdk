@@ -4,4 +4,6 @@ export * from './media-devices';
 export * from './media.event';
 export * from './space';
 export * from './stream';
+export * from './stream-live-data';
+export * from './stream-live-status';
 export * from './user';

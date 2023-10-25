@@ -3,7 +3,7 @@
     <div class="row_line">
         <div class="headline">
             <h5>Live Stream: {{stream.uuid | uppercase}}</h5>
-            <span>offline</span>
+            <span>{{state}}</span>
         </div>
         <div class="btn-group" role="group" aria-label="Basic example">
             <button type="button" class="btn btn-secondary" (click)="goBack()">Back</button>
@@ -11,8 +11,11 @@
             <button type="button" class="btn btn-secondary" *ngIf="!isInLobby" (click)="join()"
                     [disabled]="!mediaStream">Join
             </button>
-            <button type="button" class="btn btn-secondary" *ngIf="isInLobby" (click)="start()"
+            <button type="button" class="btn btn-primary" *ngIf="isInLobby && state=='offline'" (click)="start()"
                     [disabled]="!mediaStream">Start
+            </button>
+
+            <button type="button" class="btn btn-warning" *ngIf="isInLobby && state=='online'" (click)="stop()">Stop
             </button>
 
             <button type="button" class="btn btn-secondary" (click)="toggleSettings()">

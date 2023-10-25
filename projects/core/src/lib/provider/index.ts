@@ -8,3 +8,4 @@ export * from './stream.service';
 export * from './webrtc-connection';
 export * from './media-device.service';
 export * from './index-store.service';
+export * from './peertube.service'
