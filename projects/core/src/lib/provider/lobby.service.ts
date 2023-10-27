@@ -5,7 +5,7 @@ import {WebrtcConnection} from './webrtc-connection';
 import {BehaviorSubject, catchError, lastValueFrom, Observable, of, tap} from 'rxjs';
 import {MessageService} from './message.service';
 import {ChannelMessenger} from './channel-messenger';
-import {ChannelMsg, ChannelMsgType, SdpMsgData, StreamLiveData, StreamLiveStatus} from '../entities';
+import {ChannelMsg, ChannelMsgType, SdpMsgData, StreamLiveData, StreamLiveInfo, StreamLiveStatus} from '../entities';
 import {ParameterService} from './parameter.service';
 
 
@@ -118,11 +118,16 @@ export class LobbyService {
         const startUrl = `${this.params.API_PREFIX}/space/${spaceId}/stream/${streamId}/live`;
         const rtmpUrl = (streamLiveData.rtmpUrl) ? streamLiveData.rtmpUrl : streamLiveData.rtmpsUrl;
 
-        const body = {
+        const httpOptions = {
+            headers: new HttpHeaders({'Content-Type': 'application/json', 'Accept': 'application/json'})
+        };
+
+        const body: StreamLiveInfo = {
             streamKey: `${streamLiveData.streamKey}`,
             rtmpUrl: `${rtmpUrl}`
         };
-        return this.http.post<StreamLiveStatus>(startUrl, body).pipe(catchError(this.handleError<any>('', '')));
+
+        return this.http.post(startUrl, body, httpOptions).pipe(catchError(this.handleError<any>('', '')));
     }
 
     stopLiveStream(spaceId: string, streamId: string) {

@@ -24,6 +24,7 @@
     "@angular/router": "^16.2.0",
     "dexie": "^3.2.4",
     "rxjs": "~7.8.0",
+    "sdp-transform": "^2.14.1",
     "tslib": "^2.3.0",
     "zone.js": "~0.13.0"
   },
@@ -32,6 +33,7 @@
     "@angular/cli": "~16.2.2",
     "@angular/compiler-cli": "^16.2.0",
     "@types/jasmine": "~4.3.0",
+    "@types/sdp-transform": "^2.4.8",
     "concat": "^1.0.3",
     "fs-extra": "^11.1.1",
     "jasmine-core": "~4.6.0",

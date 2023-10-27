@@ -36,6 +36,6 @@ export class ReqTokenInterceptor implements HttpInterceptor {
   }
 
   private isUrlInWhiteList(url: string): boolean {
-    return url.endsWith('whep')
+    return url.endsWith('whep') || url.endsWith('live')
   }
 }

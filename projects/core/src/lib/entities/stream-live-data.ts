@@ -6,3 +6,8 @@ export interface StreamLiveData {
     saveReplay?: boolean,
     latencyMode?: number
 }
+
+export interface StreamLiveInfo {
+    streamKey: string;
+    rtmpUrl: string;
+}
