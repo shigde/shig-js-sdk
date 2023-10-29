@@ -41,7 +41,7 @@ export class WebrtcConnection extends EventEmitter<MediaEvent> {
             let streamId = ms.id;
             ms.getTracks().forEach((track) => {
                 this.pc.addTrack(track, ms);
-                trackInfo.set(`${streamId} ${track.id}`, streamType);
+                trackInfo.set(`${streamId} ${track.id}`.trim(), streamType);
             });
         });
 
