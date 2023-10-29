@@ -9,13 +9,14 @@ import {
     DeviceSettingsService,
     LobbyService,
     ParameterService,
+    PeerTubeService,
     SessionService,
     Stream,
-    StreamService,
-    PeerTubeService,
     StreamLiveData,
+    StreamService,
 } from 'core';
 import {StreamMixer} from '../provider/stream_mixer';
+import {MediaStreamType} from '../../../../core';
 
 @Component({
     selector: 'shig-lobby',
@@ -109,6 +110,9 @@ export class LobbyComponent implements OnInit {
                     if (this.mediaStream) {
                         element.srcObject = this.mediaStream;
                         this.hasMediaStreamSet = true;
+                        if(!!this.mixer) {
+                            this.mixer.appendStream(this.mediaStream)
+                        }
                     }
                 }
             );
@@ -141,11 +145,11 @@ export class LobbyComponent implements OnInit {
                 }
             });
 
-            const streams: MediaStream[] = [];
-            streams.push(this.mediaStream);
+            const streams: Map<MediaStreamType, MediaStream> = new Map<MediaStreamType, MediaStream>();
+            streams.set(MediaStreamType.GUEST, this.mediaStream);
 
             if (!!this.mixer) {
-                streams.push(this.mixer.getMixedStream());
+                streams.set(MediaStreamType.STREAM, this.mixer.getMixedStream())
             }
 
             this.lobbyService.join(streams, this.spaceId, this.streamId, this.config).then(() => this.isInLobby = true);

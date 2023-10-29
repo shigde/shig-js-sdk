@@ -1,5 +1,6 @@
 import {EventEmitter} from '@angular/core';
-import {ChannelMsg, ChannelMsgType, MediaEvent} from '../entities';
+import {ChannelMsg, ChannelMsgType, MediaEvent, MediaStreamType} from '../entities';
+import {mungeOfferInfo} from './webrtc-sdp-munge';
 
 
 export class WebrtcConnection extends EventEmitter<MediaEvent> {
@@ -34,17 +35,20 @@ export class WebrtcConnection extends EventEmitter<MediaEvent> {
         return this.dataChannel;
     }
 
-    public createOffer(streams: MediaStream[]): Promise<RTCSessionDescription> {
-        streams.forEach((ms) => {
+    public createOffer(streams: Map<MediaStreamType, MediaStream>): Promise<RTCSessionDescription> {
+        const trackInfo = new Map<string, MediaStreamType>();
+        streams.forEach((ms, streamType) => {
+            let streamId = ms.id;
             ms.getTracks().forEach((track) => {
                 this.pc.addTrack(track, ms);
+                trackInfo.set(`${streamId} ${track.id}`, streamType);
             });
         });
 
         // @ts-ignore
         return this.pc.createOffer()
             .then((offer) => this.pc.setLocalDescription(offer))
-            .then(_ => this.pc.localDescription);
+            .then(_ => mungeOfferInfo(this.pc.localDescription as RTCSessionDescription, trackInfo));
     }
 
     // Ice Gathering ----------------------------

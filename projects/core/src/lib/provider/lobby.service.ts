@@ -5,7 +5,15 @@ import {WebrtcConnection} from './webrtc-connection';
 import {BehaviorSubject, catchError, lastValueFrom, Observable, of, tap} from 'rxjs';
 import {MessageService} from './message.service';
 import {ChannelMessenger} from './channel-messenger';
-import {ChannelMsg, ChannelMsgType, SdpMsgData, StreamLiveData, StreamLiveInfo, StreamLiveStatus} from '../entities';
+import {
+    ChannelMsg,
+    ChannelMsgType,
+    MediaStreamType,
+    SdpMsgData,
+    StreamLiveData,
+    StreamLiveInfo,
+    StreamLiveStatus
+} from '../entities';
 import {ParameterService} from './parameter.service';
 
 
@@ -24,13 +32,13 @@ export class LobbyService {
     constructor(private http: HttpClient, private messageService: MessageService, private params: ParameterService) {
     }
 
-    public join(stream: MediaStream[], spaceId: string, streamId: string, config: RTCConfiguration): Promise<unknown> {
+    public join(stream: Map<MediaStreamType, MediaStream>, spaceId: string, streamId: string, config: RTCConfiguration): Promise<unknown> {
         return this.createSendingConnection(stream, spaceId, streamId, config)
             .then((messenger) => this.createReceivingConnection(messenger, spaceId, streamId, config));
     }
 
 
-    private createSendingConnection(streams: MediaStream[], spaceId: string, streamId: string, config: RTCConfiguration): Promise<ChannelMessenger> {
+    private createSendingConnection(streams: Map<MediaStreamType, MediaStream>, spaceId: string, streamId: string, config: RTCConfiguration): Promise<ChannelMessenger> {
         const wc = new WebrtcConnection(config);
         const messenger = new ChannelMessenger(wc.createDataChannel());
         return wc.createOffer(streams)
