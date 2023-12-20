@@ -4,7 +4,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build",
+    "build": "npm run build:lobby",
     "build:core": "ng build core",
     "build:lobby": "npm run build:core && ng build lobby --output-hashing none && node ./build-lobby.js",
     "build:lobby-dev": "npm run build:core && ng build --configuration development lobby --output-hashing none && node ./build-lobby.js",
@@ -33,7 +33,7 @@
     "@angular/cli": "~16.2.2",
     "@angular/compiler-cli": "^16.2.0",
     "@types/jasmine": "~4.3.0",
-    "@types/sdp-transform": "^2.4.8",
+    "@types/sdp-transform": "^2.4.9",
     "concat": "^1.0.3",
     "fs-extra": "^11.1.1",
     "jasmine-core": "~4.6.0",

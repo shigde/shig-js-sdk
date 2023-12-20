@@ -8,9 +8,11 @@ import {HttpClientModule} from '@angular/common/http';
 import {DeviceSettingsComponent} from './device-settings/device-settings.component';
 import {SvgSettingsComponent} from './svg/settings.component';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
+import {LobbyNextComponent} from '../../../core/src/lib/component/lobby-next/lobby-next.component';
 
 @NgModule({
     declarations: [
+        LobbyNextComponent,
         DeviceSettingsComponent,
         LobbyComponent,
         SvgSettingsComponent
