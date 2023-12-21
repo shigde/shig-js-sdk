@@ -2,20 +2,18 @@
 
 Shig Client-Server SDK for JavaScript
 
-## Build
+## Development
+The Lobby web component is based on the `Shig/core` library. For development, please follow the instructions in the ``Shig/core`` [README](https://github.com/shigde/shig-js-sdk/tree/main/projects/core#readme).
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+## Download Lobby web component artifact
+Please download the last tagged version
 
-## Build Core lib
-
-Run `npm run build:core` or run `ng build core` to build the core library. The build artifacts will be stored in the `dist/` directory.
-
-## Build Lobby web component
+## Build Lobby web component artifact
 
 Run `npm run build:lobby` to build the lobby web component. The build `shig-lobby.js` artifacts will be stored in
-the `dist/` directory.
+the `dist/lobby` directory.
 
-### Use web component
+## Use web component
 
 ```html
 <!DOCTYPE html>
@@ -33,6 +31,9 @@ the `dist/` directory.
   // settings:
   lobby.setAttribute('token', 'your-proxy-api-token');
   lobby.setAttribute('api-prefix', '/your/proxy/api/prefix');
+  lobby.setAttribute('stream', '1234');
+  lobby.setAttribute('space', 'mychannel@video.shig.de');
+  lobby.setAttribute('user', 'user@video.shig.de');
   
   const wrapper = document.getElementById("wrapper");
   wrapper.appendChild(lobby);
@@ -40,3 +41,5 @@ the `dist/` directory.
 </body>
 </html>
 ```
+
+You can find the complete list of parameters here: [Parameter](https://github.com/shigde/shig-js-sdk/tree/main/projects/core#readme)

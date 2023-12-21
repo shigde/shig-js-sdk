@@ -1,24 +1,50 @@
-# Core
+# Shig Core
 
-This library was generated with [Angular CLI](https://github.com/angular/angular-cli) version 16.2.0.
+Shig Core is an AngularJS library designed to serve as the foundation for the Shig Lobby.
+It can be also seamlessly integrated into an Angular application. 
+If you are not using Angular, utilize the JavaScript SDK directly via [Lobby web component](https://github.com/shigde/shig-js-sdk).
 
-## Code scaffolding
+## Install
 
-Run `ng generate component component-name --project core` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module --project core`.
-> Note: Don't forget to add `--project core` or else it will be added to the default project in your `angular.json` file. 
+```
+npm i @shig/core
+```
+
+## Integrate the Shig Lobby component
+
+Shig Core is used in [Shig Web Client](https://github.com/shigde/web-client). Please use the [Shig Web Client](https://github.com/shigde/web-client) as a reference.
+
+To display a Shig Lobby  component in your app you need to import the ShigModule by adding the following lines to your app.module.ts file.
+
+```typescript
+import { ShigModule } from '@shig/core';
+
+@NgModule({
+    imports: [
+        ShigModule,
+    ]
+})
+class AppModule {
+}
+```
+
+Add the ```<shig-lobby>``` tag to your own component html like so:
+
+```html
+
+<shig-lobby [stream]="streamId" [space]="spaceId" [token]="userToken" [api-prefix]="" [user]=user-id"></shig-lobby>
+```
+
+#### Shig Lobby Components Parameters:
+
+| Parameter  | Description                                                                                           |
+|------------|-------------------------------------------------------------------------------------------------------|
+| stream     | UUID for the stream, such as the ActivityPub stream UUID.                                             |
+| space      | Space Identifier, such as a UUID or the ActivityPub Channel Identifier like `mychannel@video.shig.de` |
+| token      | JWT user token provided by the Shig instance                                                          |
+| api-prefix | Prefix path for the Shig REST API. Useful when the API is behind a proxy.                             |
+| user       | Current user Identifier, such as a ActivityPub  Identifier like `user@video.shig.de`                  |
 
 ## Build
 
-Run `ng build core` to build the project. The build artifacts will be stored in the `dist/` directory.
-
-## Publishing
-
-After building your library with `ng build core`, go to the dist folder `cd dist/core` and run `npm publish`.
-
-## Running unit tests
-
-Run `ng test core` to execute the unit tests via [Karma](https://karma-runner.github.io).
-
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+Run `ng build core` from root directory to build the project. The build artifacts will be stored in the `dist/core` directory.
