@@ -1,10 +1,40 @@
 {
-  "name": "@shig/core",
+  "name": "@shigde/core",
   "version": "0.0.1",
+  "description": "Shig Lobby Library",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shigde/shig-js-sdk.git"
+  },
+  "keywords": [
+    "angular",
+    "shig",
+    "interactive streaming",
+    "components"
+  ],
+  "license": "MIT",
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://github.com/shigde/shig-js-sdk/blob/master/LICENSE"
+    }
+  ],
+  "bugs": {
+    "url": "https://github.com/shigde/shig-js-sdk/issues"
+  },
+  "homepage": "https://github.com/shigde/shig-js-sdk/tree/main/projects/core#readme",
   "peerDependencies": {
     "@angular/common": "^16.2.0",
     "@angular/core": "^16.2.0",
-    "dexie": "^3.2.4"
+    "@angular/animations": "^16.2.0",
+    "@angular/compiler": "^16.2.0",
+    "@angular/elements": "^16.2.5",
+    "@angular/forms": "^16.2.0",
+    "@angular/platform-browser": "^16.2.0",
+    "@angular/platform-browser-dynamic": "^16.2.0",
+    "@angular/router": "^16.2.0",
+    "dexie": "^3.2.4",
+    "sdp-transform": "^2.14.1"
   },
   "dependencies": {
     "tslib": "^2.3.0"

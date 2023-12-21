@@ -1,13 +1,14 @@
 import {AfterViewInit, Component, Input, OnInit} from '@angular/core';
 import {FormControl, FormGroup} from '@angular/forms';
 import {Observable, Subscription} from 'rxjs';
-import {DeviceSettings, DeviceSettingsOptions, DeviceSettingsService, IndexStoreService, SelectValue} from 'core';
+import {DeviceSettings, DeviceSettingsOptions, SelectValue} from '../../entities';
+import {DeviceSettingsService, IndexStoreService} from '../../provider'
 import {map} from 'rxjs/operators';
 
 export type DeviceSettingsCbk = (s: DeviceSettings) => void;
 
 @Component({
-    selector: 'app-device-settings',
+    selector: 'shig-device-settings',
     templateUrl: './device-settings.component.html',
     styleUrls: ['./device-settings.component.scss']
 })

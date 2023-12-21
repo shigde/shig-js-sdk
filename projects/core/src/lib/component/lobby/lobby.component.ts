@@ -2,21 +2,24 @@ import {Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation} from 
 
 import {Location} from '@angular/common';
 import {filter, tap} from 'rxjs';
-import {environment} from '../../environments/environment';
-import {DeviceSettingsCbk} from '../device-settings/device-settings.component';
+import {environment} from '../../../environments/environment';
+import {DeviceSettingsCbk} from '../';
 import {
-    DeviceSettings,
     DeviceSettingsService,
     LobbyService,
     ParameterService,
     PeerTubeService,
     SessionService,
+    StreamMixer,
+    StreamService,
+} from '../../provider';
+
+import {
+    DeviceSettings,
     Stream,
     StreamLiveData,
-    StreamService,
-} from 'core';
-import {StreamMixer} from '../provider/stream_mixer';
-import {MediaStreamType} from '../../../../core';
+    MediaStreamType
+} from '../../entities';
 
 @Component({
     selector: 'shig-lobby',
@@ -28,7 +31,7 @@ export class LobbyComponent implements OnInit {
     cbk: DeviceSettingsCbk;
     displaySettings = false;
     isInLobby = false;
-    state: 'offline' | 'online' = 'offline'
+    state: 'offline' | 'online' = 'offline';
 
     stream: Stream | undefined;
     mediaStream: MediaStream | undefined;
@@ -110,8 +113,8 @@ export class LobbyComponent implements OnInit {
                     if (this.mediaStream) {
                         element.srcObject = this.mediaStream;
                         this.hasMediaStreamSet = true;
-                        if(!!this.mixer) {
-                            this.mixer.appendStream(this.mediaStream)
+                        if (!!this.mixer) {
+                            this.mixer.appendStream(this.mediaStream);
                         }
                     }
                 }
@@ -132,7 +135,7 @@ export class LobbyComponent implements OnInit {
                 if (s !== null) {
                     this.getOrCreateVideoElement(s.id).srcObject = s;
                     if (this.mixer) {
-                        this.mixer.appendStream(s)
+                        this.mixer.appendStream(s);
                     }
                 }
             });
@@ -140,7 +143,7 @@ export class LobbyComponent implements OnInit {
                 if (s !== null && this.hasVideoElement(s)) {
                     this.removeVideoElement(s);
                     if (this.mixer) {
-                        this.mixer.removeStream(s)
+                        this.mixer.removeStream(s);
                     }
                 }
             });
@@ -149,7 +152,7 @@ export class LobbyComponent implements OnInit {
             streams.set(MediaStreamType.GUEST, this.mediaStream);
 
             if (!!this.mixer) {
-                streams.set(MediaStreamType.STREAM, this.mixer.getMixedStream())
+                streams.set(MediaStreamType.STREAM, this.mixer.getMixedStream());
             }
 
             this.lobbyService.join(streams, this.spaceId, this.streamId, this.config).then(() => this.isInLobby = true);
@@ -235,7 +238,7 @@ export class LobbyComponent implements OnInit {
         if (this.streamLiveData != undefined && this.streamId != undefined && this.spaceId != undefined) {
             this.lobbyService.startLiveStream(this.streamLiveData, this.spaceId, this.streamId)
                 .subscribe(() => {
-                    this.state = 'online'
+                    this.state = 'online';
                 });
         }
     }
@@ -243,7 +246,7 @@ export class LobbyComponent implements OnInit {
     stop(): void {
         if (this.streamId != undefined && this.spaceId != undefined) {
             this.lobbyService.stopLiveStream(this.spaceId, this.streamId).subscribe(() => {
-                this.state = 'offline'
+                this.state = 'offline';
             });
         }
     }

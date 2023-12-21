@@ -1,17 +1,39 @@
 {
   "name": "shig-js-sdk",
-  "version": "0.0.0",
+  "version": "0.0.1",
+  "description": "Shig Lobby",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shigde/shig-js-sdk.git"
+  },
+  "keywords": [
+    "angular",
+    "shig",
+    "interactive streaming",
+    "components"
+  ],
+  "license": "MIT",
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://github.com/shigde/shig-js-sdk/blob/master/LICENSE"
+    }
+  ],
+  "bugs": {
+    "url": "https://github.com/shigde/shig-js-sdk/issues"
+  },
+  "homepage": "https://github.com/shigde/shig-js-sdk#readme",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build",
+    "build": "npm run build:lobby",
     "build:core": "ng build core",
     "build:lobby": "npm run build:core && ng build lobby --output-hashing none && node ./build-lobby.js",
     "build:lobby-dev": "npm run build:core && ng build --configuration development lobby --output-hashing none && node ./build-lobby.js",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },
-  "private": true,
+  "private": false,
   "dependencies": {
     "@angular/animations": "^16.2.0",
     "@angular/common": "^16.2.0",
@@ -33,7 +55,7 @@
     "@angular/cli": "~16.2.2",
     "@angular/compiler-cli": "^16.2.0",
     "@types/jasmine": "~4.3.0",
-    "@types/sdp-transform": "^2.4.8",
+    "@types/sdp-transform": "^2.4.9",
     "concat": "^1.0.3",
     "fs-extra": "^11.1.1",
     "jasmine-core": "~4.6.0",

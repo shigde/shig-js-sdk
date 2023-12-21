@@ -11,7 +11,7 @@ const build = async () => {
   ];
 
   await fs.ensureDir("dist/lobby");
-  await concat(files, "./dist/shig-lobby.js");
+  await concat(files, "./dist/lobby/shig-lobby.js");
   console.log("Files concatenated successfully!!!");
 };
 build();
