@@ -168,5 +168,6 @@ Thumbs.db
 testem.log
 /typings
 deploy.sh
+publish.sh
 
 

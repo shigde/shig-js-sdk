@@ -7,7 +7,7 @@ If you are not using Angular, utilize the JavaScript SDK directly via [Lobby web
 ## Install
 
 ```
-npm i @shig/core
+npm i @shigde/core
 ```
 
 ## Integrate the Shig Lobby component
@@ -17,7 +17,7 @@ Shig Core is used in [Shig Web Client](https://github.com/shigde/web-client). Pl
 To display a Shig Lobby  component in your app you need to import the ShigModule by adding the following lines to your app.module.ts file.
 
 ```typescript
-import { ShigModule } from '@shig/core';
+import { ShigModule } from '@shigde/core';
 
 @NgModule({
     imports: [
@@ -44,6 +44,23 @@ Add the ```<shig-lobby>``` tag to your own component html like so:
 | token      | JWT user token provided by the Shig instance                                                          |
 | api-prefix | Prefix path for the Shig REST API. Useful when the API is behind a proxy.                             |
 | user       | Current user Identifier, such as a ActivityPub  Identifier like `user@video.shig.de`                  |
+
+
+
+#### Allow Common js
+
+Because `shigde/core` is using `sdp-transform` lib add in your `angular.json`:
+
+```
+"build": {
+  "builder": "@angular-devkit/build-angular:browser",
+  "options": {
+    "allowedCommonJsDependencies": [
+      "sdp-transform"
+    ],
+  }
+}
+```
 
 ## Build
 
