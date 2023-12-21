@@ -7,7 +7,7 @@
       "projectType": "library",
       "root": "projects/core",
       "sourceRoot": "projects/core/src",
-      "prefix": "lib",
+      "prefix": "shig",
       "architect": {
         "build": {
           "builder": "@angular-devkit/build-angular:ng-packagr",
@@ -58,6 +58,9 @@
             ],
             "tsConfig": "projects/lobby/tsconfig.app.json",
             "inlineStyleLanguage": "scss",
+            "allowedCommonJsDependencies": [
+              "sdp-transform"
+            ],
             "assets": [
               "projects/lobby/src/favicon.ico",
               "projects/lobby/src/assets"
@@ -92,10 +95,10 @@
             "development": {
               "buildOptimizer": false,
               "optimization": false
-//              "vendorChunk": true,
-//              "extractLicenses": false,
-//              "sourceMap": true,
-//              "namedChunks": true
+              //              "vendorChunk": true,
+              //              "extractLicenses": false,
+              //              "sourceMap": true,
+              //              "namedChunks": true
             }
           },
           "defaultConfiguration": "production"
