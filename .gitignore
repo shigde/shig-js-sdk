@@ -169,5 +169,6 @@ testem.log
 /typings
 deploy.sh
 publish.sh
+dev-deploy.sh
 
 
