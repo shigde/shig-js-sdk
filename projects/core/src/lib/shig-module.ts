@@ -1,4 +1,4 @@
-import {NgModule} from '@angular/core';
+import {CUSTOM_ELEMENTS_SCHEMA, NgModule} from '@angular/core';
 import {BrowserModule} from '@angular/platform-browser';
 import {CommonModule} from '@angular/common';
 import {DeviceSettingsComponent, LobbyComponent, SvgSettingsComponent} from './component';
@@ -22,7 +22,8 @@ import {HttpClientModule} from '@angular/common/http';
         DeviceSettingsComponent,
         LobbyComponent,
         SvgSettingsComponent
-    ]
+    ],
+    schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ShigModule {
 }
