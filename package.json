@@ -25,7 +25,7 @@
   "homepage": "https://github.com/shigde/shig-js-sdk#readme",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
+    "start": "ng serve --watch",
     "build": "npm run build:lobby",
     "build:core": "ng build core",
     "watch:core": "ng build core --watch",

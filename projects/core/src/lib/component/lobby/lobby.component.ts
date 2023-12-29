@@ -4,7 +4,7 @@ import {Location} from '@angular/common';
 import {filter, tap} from 'rxjs';
 import {environment} from '../../../environments/environment';
 import {DeviceSettingsCbk} from '../';
-import '@material/web/switch/switch';
+
 import {
     DeviceSettingsService,
     LobbyService,

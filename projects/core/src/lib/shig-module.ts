@@ -4,6 +4,9 @@ import {CommonModule} from '@angular/common';
 import {DeviceSettingsComponent, LobbyComponent, SvgSettingsComponent} from './component';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {HttpClientModule} from '@angular/common/http';
+import '@material/web/switch/switch';
+import '@material/web/chips/filter-chip';
+
 
 @NgModule({
     declarations: [
@@ -16,7 +19,7 @@ import {HttpClientModule} from '@angular/common/http';
         BrowserModule,
         FormsModule,
         ReactiveFormsModule,
-        HttpClientModule,
+        HttpClientModule
     ],
     exports: [
         DeviceSettingsComponent,

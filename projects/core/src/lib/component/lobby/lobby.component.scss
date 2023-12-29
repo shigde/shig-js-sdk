@@ -1,4 +1,4 @@
-@import '../../../assets/scss/styles';
+@import '../../../../assets/scss/styles';
 .row_line {
     display: flex;
     align-items: center;
@@ -74,7 +74,7 @@
 #video-stream {
     //width: 100%;
     background-size: cover;
-    background: transparent url("../../../assets/icons/logo.png") center no-repeat;
+    background: transparent url("../../../../assets/icons/logo.png") center no-repeat;
 }
 
 #canvasOne {
