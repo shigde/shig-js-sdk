@@ -1,53 +1,142 @@
-<div *ngIf="stream">
+<div class="lobby">
 
-    <div class="row_line">
-        <div class="headline">
-            <h5>Live Stream: {{stream.uuid | uppercase}}</h5>
-            <span>{{state}}</span>
-            <md-switch selected></md-switch>
-            Was?
-        </div>
-        <div class="btn-group" role="group" aria-label="Basic example">
-            <button type="button" class="btn btn-secondary" (click)="goBack()">Back</button>
-
-            <button type="button" class="btn btn-secondary" *ngIf="!isInLobby" (click)="join()"
-                    [disabled]="!mediaStream">Join
-            </button>
-            <button type="button" class="btn btn-primary" *ngIf="isInLobby && state=='offline'" (click)="start()"
-                    [disabled]="!mediaStream">Start
-            </button>
-
-            <button type="button" class="btn btn-warning" *ngIf="isInLobby && state=='online'" (click)="stop()">Stop
-            </button>
-
-            <button type="button" class="btn btn-secondary" (click)="toggleSettings()">
-                <app-svg-settings>
-                </app-svg-settings>
-            </button>
-        </div>
-    </div>
+    <div class="app-main" *ngIf="stream">
+        <!--// Navigation line -->
+        <div class="navigation">
+            <div class="nav-group" role="group" aria-label="actions">
+                <div class="nav-group-area ">
+                    <button class="nav-icon-button secondary icon" (click)="goBack()">
+                        <!-- Setting icon -->
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="48" viewBox="0 -960 960 960"
+                             width="48">
+                            <path
+                                d="M220-180h150v-250h220v250h150v-390L480-765 220-570v390Zm-60 60v-480l320-240 320 240v480H530v-250H430v250H160Zm320-353Z"/>
+                        </svg>
+                        <!-- Setting icon -->
+                    </button>
+                    <span class="nav-header">{{ stream.uuid | uppercase }} ({{ state }})</span>
+                </div>
+            </div>
 
 
-    <div *ngIf="!hasMediaStreamSet || displaySettings">
-        <shig-device-settings [cbk]="cbk" [closeCbk]=toggleSettings.bind(this)></shig-device-settings>
-    </div>
-
-    <div id="lobby-main">
-        <div id="lobby-stream-video">
-            <canvas id="canvasOne" >
-                Your browser does not support HTML5 Canvas.
-            </canvas>
-        </div>
-
-        <div id="lobby-quest-video">
-            <div class="lobby-quest-video-box">
-                <video id="video" style="background-color: black" muted autoplay></video>
-                <div class="btn-group control-bar" data-toggle="buttons">
-                    <label class="btn btn-primary active" (click)="toggleActive('video', 'local')">
-                        <input id="local" type="checkbox" disabled> active
-                    </label>
+            <div class="nav-group right" role="group" aria-label="actions">
+                <div class="nav-group-area">
+                    <!-- join -->
+                    <button class="nav-icon-button icon" *ngIf="!isInLobby" (click)="join()" [disabled]="!mediaStream">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="48px" viewBox="0 0 24 24" width="48px"
+                             fill="currentColor">
+                            <path d="M0 0h24v24H0V0z" fill="none"/>
+                            <path
+                                d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4zM14 13h-3v3H9v-3H6v-2h3V8h2v3h3v2z"/>
+                        </svg>
+                    </button>
+                    <!-- stop -->
+                    <button class="nav-icon-button icon" *ngIf="isInLobby && state=='online'" (click)="stop()">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="48" viewBox="0 -960 960 960"
+                             width="48">
+                            <path
+                                d="M330-330h300v-300H330v300ZM480.266-80q-82.734 0-155.5-31.5t-127.266-86q-54.5-54.5-86-127.341Q80-397.681 80-480.5q0-82.819 31.5-155.659Q143-709 197.5-763t127.341-85.5Q397.681-880 480.5-880q82.819 0 155.659 31.5Q709-817 763-763t85.5 127Q880-563 880-480.266q0 82.734-31.5 155.5T763-197.684q-54 54.316-127 86Q563-80 480.266-80Zm.234-60Q622-140 721-239.5t99-241Q820-622 721.188-721 622.375-820 480-820q-141 0-240.5 98.812Q140-622.375 140-480q0 141 99.5 240.5t241 99.5Zm-.5-340Z"/>
+                        </svg>
+                    </button>
+                    <!-- broadcast -->
+                    <button class="nav-icon-button icon" *ngIf="isInLobby && state=='offline'" (click)="start()"
+                            [disabled]="!mediaStream">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor">
+                            <path
+                                d="M440-80v-331q-18-11-29-28.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 23-11 41t-29 28v331h-80ZM204-190q-57-55-90.5-129.5T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 86-33.5 161T756-190l-56-56q46-44 73-104.5T800-480q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 69 27 129t74 104l-57 57Zm113-113q-35-33-56-78.5T240-480q0-100 70-170t170-70q100 0 170 70t70 170q0 53-21 99t-56 78l-57-57q25-23 39.5-54t14.5-66q0-66-47-113t-113-47q-66 0-113 47t-47 113q0 36 14.5 66.5T374-360l-57 57Z"/>
+                        </svg>
+                    </button>
+                    <!-- Settings -->
+                    <button class="nav-icon-button secondary icon" (click)="toggleSettings()">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="48" viewBox="0 -960 960 960"
+                             width="48">
+                            <path
+                                d="M797-80H557q-17 0-28.5-11.5T517-120v-240q0-17 11.5-28.5T557-400h240q17 0 28.5 11.5T837-360v80l80-80v240l-80-80v80q0 17-11.5 28.5T797-80ZM480-480Zm.101-130q-53.899 0-92 38.071Q350-533.857 350-480q0 43 24 76t62 47v-68q-11-9-18.5-24.5T410-480q0-29.167 20.382-49.583Q450.765-550 479.882-550 509-550 529-529.875 549-509.75 549-481h60q0-54-37.5-91.5T480.101-610ZM388-80l-20-126q-19-7-40-19t-37-25l-118 54-93-164 108-79q-2-9-2.5-20.5T185-480q0-9 .5-20.5T188-521L80-600l93-164 118 54q16-13 37-25t40-18l20-127h184l20 126q19 7 40.5 18.5T669-710l118-54 93 164-108 77q1 10 1.5 21.5t.5 20.5h-60q0-20-2-35.5t-6-30.5l94-69-40-72-106 46q-23-26-52-43.5T538-708l-14.413-112H436l-14 112q-34 7-63.5 24T306-642l-106-46-40 72 94 69q-4 17-6.5 33.5T245-480q0 17.391 2.5 33.696Q250-430 254-413l-94 69 40 72 106-46q26 26 59.5 43.5T436-249v169h-48Z"/>
+                        </svg>
+                    </button>
                 </div>
             </div>
         </div>
+
+        <div *ngIf="!hasMediaStreamSet || displaySettings">
+            <shig-device-settings [cbk]="cbk" [closeCbk]=toggleSettings.bind(this)></shig-device-settings>
+        </div>
+
+        <!--// Video Stream -->
+        <div class="video-call-wrapper">
+            <div id="lobby-stream-video" class="video-participant">
+                <canvas id="canvasOne">
+                    Your browser does not support HTML5 Canvas.
+                </canvas>
+            </div>
+        </div>
     </div>
+
+
+    <!-- Right Side -->
+    <div class="right-side">
+        <div class="guest-container">
+            <div class="guest-header">
+                <span>Guests</span>
+            </div>
+            <div class="guest-area">
+                <div class="guest-video">
+                    <div class="participant-action">
+                        <button class="btn-mic-off"></button>
+                        <button class="btn-camera-off"></button>
+                        <md-filter-chip label="active"></md-filter-chip>
+                    </div>
+                    <a href="#" class="name-tag">Andy Will</a>
+                    <video id="video" muted autoplay></video>
+                </div>
+                <!-- Video Participant 2 -->
+                <div class="guest-video">
+                    <div class="participant-action">
+                        <button class="btn-mic"></button>
+                        <button class="btn-camera"></button>
+                    </div>
+                    <a href="#" class="name-tag">Emmy Lou</a>
+                    <img
+                        src="https://images.unsplash.com/photo-1500917293891-ef795e70e1f6?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1650&q=80"
+                        alt="participant"
+                    />
+                </div>
+                <!-- Video Participant 3 -->
+                <div class="guest-video">
+                    <div class="participant-action">
+                        <button class="btn-mic"></button>
+                        <button class="btn-camera"></button>
+                    </div>
+                    <a href="#" class="name-tag">Tim Russel</a>
+                    <div class="guest-icon"></div>
+                </div>
+                <!-- Video Participant 4 -->
+                <div class="guest-video">
+                    <div class="participant-action">
+                        <button class="btn-mic"></button>
+                        <button class="btn-camera"></button>
+                    </div>
+                    <a href="#" class="name-tag">Jessica Bell</a>
+                    <img
+                        src="https://images.unsplash.com/photo-1600207438283-a5de6d9df13e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1234&q=80"
+                        alt="participant"
+                    />
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!--<div id="lobby-main">-->
+    <!--    <div id="lobby-quest-video">-->
+    <!--        <div class="lobby-quest-video-box">-->
+    <!--            <video id="video" style="background-color: black" muted autoplay></video>-->
+    <!--            <div class="btn-group control-bar" data-toggle="buttons">-->
+    <!--                <label class="btn btn-primary active" (click)="toggleActive('video', 'local')">-->
+    <!--                    <input id="local" type="checkbox" disabled> active-->
+    <!--                </label>-->
+    <!--            </div>-->
+    <!--        </div>-->
+    <!--    </div>-->
+    <!--</div>-->
 </div>

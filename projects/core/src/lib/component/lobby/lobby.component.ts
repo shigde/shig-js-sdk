@@ -25,7 +25,10 @@ import {
 @Component({
     selector: 'shig-lobby',
     templateUrl: './lobby.component.html',
-    styleUrls: ['./lobby.component.scss'],
+        styleUrls: [
+            './../../../../assets/scss/lobby.scss',
+            './../../../../assets/scss/styles.scss'
+        ],
     encapsulation: ViewEncapsulation.None
 })
 export class LobbyComponent implements OnInit {
