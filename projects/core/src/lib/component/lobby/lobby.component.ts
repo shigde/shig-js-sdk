@@ -26,6 +26,7 @@ import {
     selector: 'shig-lobby',
     templateUrl: './lobby.component.html',
         styleUrls: [
+            'lobby.component.scss',
             './../../../../assets/scss/lobby.scss',
             './../../../../assets/scss/styles.scss'
         ],
