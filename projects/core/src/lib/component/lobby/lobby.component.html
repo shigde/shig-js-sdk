@@ -84,8 +84,7 @@
                     <div class="participant-action">
                         <button class="btn-mic-off"></button>
                         <button class="btn-camera-off"></button>
-                        <md-switch id="switch" icons class="active-video"></md-switch>
-<!--                        <md-filter-chip label="active"></md-filter-chip>-->
+                        <md-switch id="video-switch-local" icons class="active-video" (click)="toggleActive('video', 'video-switch-local')"></md-switch>
                     </div>
                     <a href="#" class="name-tag">Andy Will</a>
                     <video id="video" muted autoplay></video>
@@ -127,17 +126,4 @@
             </div>
         </div>
     </div>
-
-    <!--<div id="lobby-main">-->
-    <!--    <div id="lobby-quest-video">-->
-    <!--        <div class="lobby-quest-video-box">-->
-    <!--            <video id="video" style="background-color: black" muted autoplay></video>-->
-    <!--            <div class="btn-group control-bar" data-toggle="buttons">-->
-    <!--                <label class="btn btn-primary active" (click)="toggleActive('video', 'local')">-->
-    <!--                    <input id="local" type="checkbox" disabled> active-->
-    <!--                </label>-->
-    <!--            </div>-->
-    <!--        </div>-->
-    <!--    </div>-->
-    <!--</div>-->
 </div>

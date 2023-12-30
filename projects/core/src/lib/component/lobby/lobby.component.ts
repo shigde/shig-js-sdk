@@ -26,7 +26,6 @@ import {
     selector: 'shig-lobby',
     templateUrl: './lobby.component.html',
         styleUrls: [
-            'lobby.component.scss',
             './../../../../assets/scss/lobby.scss',
             './../../../../assets/scss/styles.scss'
         ],
@@ -91,12 +90,12 @@ export class LobbyComponent implements OnInit {
             this.streamService.getStream(this.streamId, this.spaceId)
                 .pipe(tap((stream) => this.stream = stream))
                 .subscribe(() => {
-                    if (this.user !== undefined && this.stream?.user === this.user) {
+                    //if (this.user !== undefined && this.stream?.user === this.user) {
                         setTimeout(() => {
                             this.mixer = new StreamMixer('canvasOne');
                             this.mixer.start();
                         }, 0);
-                    }
+                    //}
                 });
         }
     }
@@ -229,10 +228,10 @@ export class LobbyComponent implements OnInit {
     }
 
     toggleActive(videoId: string, checkboxId: string) {
-        const isChecked = !(document.getElementById(checkboxId) as HTMLInputElement).checked;
-        (document.getElementById(checkboxId) as HTMLInputElement).checked = isChecked;
+        const shadowRoot = document.getElementById(checkboxId)?.shadowRoot;
+        const isSelected = !shadowRoot?.querySelector('div')?.classList.contains('selected')
 
-        if (isChecked) {
+        if (isSelected) {
             this.mixer?.videoElements.set(videoId, document.getElementById(videoId) as HTMLVideoElement);
         } else {
             this.mixer?.videoElements.delete(videoId);

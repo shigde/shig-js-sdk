@@ -28,7 +28,11 @@ export class StreamMixer {
 
     drawScreen() {
         //Background
-        this.context.fillStyle = '#ffffff';
+
+        if(this.videoElements.size == 0) {
+            this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        }
+        this.context.fillStyle = 'rgba(255, 255, 255,0)';
         this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
         const gridParams = this.calculateGridParams(this.videoElements.size, this.canvas.width, this.canvas.height);
 
