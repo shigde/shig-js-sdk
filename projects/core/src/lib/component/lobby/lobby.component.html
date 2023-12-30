@@ -81,48 +81,28 @@
             </div>
             <div class="guest-area">
                 <div class="guest-video">
-                    <div class="participant-action">
+                    <div class="participant-action" *ngIf="hasMediaStreamSet">
                         <button class="btn-mic-off"></button>
                         <button class="btn-camera-off"></button>
                         <md-switch id="video-switch-local" icons class="active-video" (click)="toggleActive('video', 'video-switch-local')"></md-switch>
                     </div>
-                    <a href="#" class="name-tag">Andy Will</a>
+                    <a href="#" class="name-tag" *ngIf="hasMediaStreamSet">Me</a>
+
                     <video id="video" muted autoplay></video>
+
                 </div>
                 <!-- Video Participant 2 -->
                 <div class="guest-video">
-                    <div class="participant-action">
-                        <button class="btn-mic"></button>
-                        <button class="btn-camera"></button>
-                    </div>
-                    <a href="#" class="name-tag">Emmy Lou</a>
-                    <img
-                        src="https://images.unsplash.com/photo-1500917293891-ef795e70e1f6?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1650&q=80"
-                        alt="participant"
-                    />
+                    <div class="guest-icon"></div>
                 </div>
                 <!-- Video Participant 3 -->
                 <div class="guest-video">
-                    <div class="participant-action">
-                        <button class="btn-mic"></button>
-                        <button class="btn-camera"></button>
-                    </div>
-                    <a href="#" class="name-tag">Tim Russel</a>
                     <div class="guest-icon"></div>
                 </div>
                 <!-- Video Participant 4 -->
                 <div class="guest-video">
-                    <div class="participant-action">
-                        <button class="btn-mic"></button>
-                        <button class="btn-camera"></button>
-                    </div>
-                    <a href="#" class="name-tag">Jessica Bell</a>
-                    <img
-                        src="https://images.unsplash.com/photo-1600207438283-a5de6d9df13e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1234&q=80"
-                        alt="participant"
-                    />
+                    <div class="guest-icon"></div>
                 </div>
-
             </div>
         </div>
     </div>

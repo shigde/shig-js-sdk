@@ -42,8 +42,8 @@ body {
     --message-text: #2c303a;
     --placeholder-text: #a2a4bc;
     --button-bg: #fff;
-    --border-radius: 2px;
-    --asset-border-radius: 2px;
+    --border-radius: 4px;
+    --asset-border-radius: 4px;
     --common-padding: 10px;
 }
 
@@ -51,13 +51,13 @@ body {
 
 :root {
     // Material select box:
-    --md-sys-color-primary: #3c3f56;
+    --md-sys-color-primary: rgba(38, 42, 66);
     --md-sys-color-outline: #8DCAFF;
     --md-switch-selected-focus-handle-color: #8DCAFF;
     --md-switch-selected-handle-color: #8DCAFF;
     --md-switch-focus-handle-color: #3c3f56;
     --md-switch-handle-color: #3c3f56;
-    --md-switch-track-color: rgba(60, 63, 86, 0.26);
+    --md-switch-track-color: rgba(38, 42, 66, 0.26);
 }
 
 /*========== Variables Dark theme ==========*/
@@ -243,16 +243,15 @@ button:disabled {
     width: 100%;
     height: 25%;
     position: relative;
-    //border-radius: var(--asset-border-radius);
     overflow: hidden;
     background-color: var(--app-background);
-    padding-bottom: 2px;
+    border: 1px var(--chat-background) solid;
+    border-radius: var(--asset-border-radius);
 }
 .canvas-logo,
 .guest-video .guest-icon,
 .guest-video img,
 .guest-video video {
-    border-radius: var(--asset-border-radius);
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -260,6 +259,7 @@ button:disabled {
     background-position: center;
     background-size: 48px;
     background-color: var(--app-background);
+    border-radius: var(--asset-border-radius);
     //border-bottom: 1px solid var(--chat-background);
     //border-top: 1px solid var(--chat-background);
 }
@@ -326,8 +326,8 @@ canvasOne {
     bottom: 12px;
     right: 12px;
     font-size: 12px;
-    color: #fff;
-    background-color: rgba(0, 15, 47, 0.5);
+    color: #8DCAFF;
+    background-color: rgba(38, 42, 66, 0.8);
     border-radius: var(--asset-border-radius);
     padding: 4px 12px;
 }
@@ -347,7 +347,7 @@ canvasOne {
     width: 32px;
     height: 32px;
     border-radius: var(--asset-border-radius);
-    background-color: rgba(0, 15, 47, 0.5);
+    background-color: rgba(38, 42, 66, 0.8);
     background-repeat: no-repeat;
     background-position: center;
     background-size: 24px;
@@ -356,19 +356,19 @@ canvasOne {
 }
 
 .btn-mic {
-    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="white"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/></svg>');
+    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="%238DCAFF"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/></svg>');
 }
 
 .btn-mic-off {
-    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="white"><path d="M0 0h24v24H0zm0 0h24v24H0z" fill="none"/><path d="M19 11h-1.7c0 .74-.16 1.43-.43 2.05l1.23 1.23c.56-.98.9-2.09.9-3.28zm-4.02.17c0-.06.02-.11.02-.17V5c0-1.66-1.34-3-3-3S9 3.34 9 5v.18l5.98 5.99zM4.27 3L3 4.27l6.01 6.01V11c0 1.66 1.33 3 2.99 3 .22 0 .44-.03.65-.08l1.66 1.66c-.71.33-1.5.52-2.31.52-2.76 0-5.3-2.1-5.3-5.1H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c.91-.13 1.77-.45 2.54-.9L19.73 21 21 19.73 4.27 3z"/></svg>');
+    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="%238DCAFF"><path d="M0 0h24v24H0zm0 0h24v24H0z" fill="none"/><path d="M19 11h-1.7c0 .74-.16 1.43-.43 2.05l1.23 1.23c.56-.98.9-2.09.9-3.28zm-4.02.17c0-.06.02-.11.02-.17V5c0-1.66-1.34-3-3-3S9 3.34 9 5v.18l5.98 5.99zM4.27 3L3 4.27l6.01 6.01V11c0 1.66 1.33 3 2.99 3 .22 0 .44-.03.65-.08l1.66 1.66c-.71.33-1.5.52-2.31.52-2.76 0-5.3-2.1-5.3-5.1H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c.91-.13 1.77-.45 2.54-.9L19.73 21 21 19.73 4.27 3z"/></svg>');
 }
 
 .btn-camera-off {
-    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="white"><path d="M0 0h24v24H0zm0 0h24v24H0z" fill="none"/><path d="M21 6.5l-4 4V7c0-.55-.45-1-1-1H9.82L21 17.18V6.5zM3.27 2L2 3.27 4.73 6H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.21 0 .39-.08.54-.18L19.73 21 21 19.73 3.27 2z"/></svg>');
+    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="%238DCAFF"><path d="M0 0h24v24H0zm0 0h24v24H0z" fill="none"/><path d="M21 6.5l-4 4V7c0-.55-.45-1-1-1H9.82L21 17.18V6.5zM3.27 2L2 3.27 4.73 6H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.21 0 .39-.08.54-.18L19.73 21 21 19.73 3.27 2z"/></svg>');
 }
 
 .btn-camera {
-    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="white"><path d="M0 0h24v24H0z" fill="none"/><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>');
+    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="%238DCAFF"><path d="M0 0h24v24H0z" fill="none"/><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>');
 }
 
 .active-video {
