@@ -1,16 +1,17 @@
 import {Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation} from '@angular/core';
 
 import {Location} from '@angular/common';
-import {filter, tap} from 'rxjs';
+import {BehaviorSubject, tap} from 'rxjs';
 import {environment} from '../../../environments/environment';
 import {DeviceSettingsCbk} from '../';
+
 import {
     DeviceSettingsService,
     LobbyService,
     ParameterService,
     PeerTubeService,
     SessionService,
-    StreamMixer,
+    CanvasStreamMixer,
     StreamService,
 } from '../../provider';
 
@@ -18,13 +19,17 @@ import {
     DeviceSettings,
     Stream,
     StreamLiveData,
-    MediaStreamType
+    MediaStreamType, Guest, User, buildGuest
 } from '../../entities';
 
 @Component({
     selector: 'shig-lobby',
     templateUrl: './lobby.component.html',
-    styleUrls: ['./lobby.component.scss'],
+    styleUrls: [
+        './../../../../assets/scss/lobby.scss',
+        './../../../../assets/scss/styles.scss',
+        './lobby.component.scss'
+    ],
     encapsulation: ViewEncapsulation.None
 })
 export class LobbyComponent implements OnInit {
@@ -34,11 +39,12 @@ export class LobbyComponent implements OnInit {
     state: 'offline' | 'online' = 'offline';
 
     stream: Stream | undefined;
-    mediaStream: MediaStream | undefined;
+    localGuest: Guest | undefined;
+    localGuest$ = new BehaviorSubject<Guest | undefined>(undefined);
     hasMediaStreamSet = false;
 
     private streamLiveData: StreamLiveData | undefined;
-    private mixer?: StreamMixer;
+    private mixer?: CanvasStreamMixer;
 
     private readonly config: RTCConfiguration = {
         iceServers: environment.iceServers
@@ -88,7 +94,7 @@ export class LobbyComponent implements OnInit {
                 .subscribe(() => {
                     if (this.user !== undefined && this.stream?.user === this.user) {
                         setTimeout(() => {
-                            this.mixer = new StreamMixer('canvasOne');
+                            this.mixer = new CanvasStreamMixer('canvasOne');
                             this.mixer.start();
                         }, 0);
                     }
@@ -107,14 +113,15 @@ export class LobbyComponent implements OnInit {
 
     startCamera(settings: DeviceSettings) {
         this.devices.getUserMedia(settings)
-            .then((stream: any) => this.mediaStream = stream)
-            .then(() => (document.getElementById('video') as HTMLVideoElement))
-            .then((element: any) => {
-                    if (this.mediaStream) {
-                        element.srcObject = this.mediaStream;
+            .then((stream: any) => {
+                this.localGuest = buildGuest('local', 'me', stream);
+                this.localGuest$.next(this.localGuest);
+            })
+            .then(() => {
+                    if (this.localGuest?.stream) {
                         this.hasMediaStreamSet = true;
                         if (!!this.mixer) {
-                            this.mixer.appendStream(this.mediaStream);
+                            this.mixer.appendStream(this.localGuest.stream);
                         }
                     }
                 }
@@ -122,34 +129,17 @@ export class LobbyComponent implements OnInit {
     }
 
     goBack(): void {
-        if (this.mediaStream) {
-            this.mediaStream.getTracks().forEach(t => t.stop());
-            this.mediaStream = undefined;
+        if (this.localGuest?.stream) {
+            this.localGuest.stream.getTracks().forEach(t => t.stop());
+            this.localGuest = undefined;
         }
         this.location.back();
     }
 
     join(): void {
-        if (!!this.stream && !!this.mediaStream && this.streamId !== undefined && this.spaceId !== undefined) {
-            this.lobbyService.add$.pipe(filter(s => s !== null)).subscribe((s: any) => {
-                if (s !== null) {
-                    this.getOrCreateVideoElement(s.id).srcObject = s;
-                    if (this.mixer) {
-                        this.mixer.appendStream(s);
-                    }
-                }
-            });
-            this.lobbyService.remove$.pipe(filter(s => s !== null)).subscribe((s: any) => {
-                if (s !== null && this.hasVideoElement(s)) {
-                    this.removeVideoElement(s);
-                    if (this.mixer) {
-                        this.mixer.removeStream(s);
-                    }
-                }
-            });
-
+        if (!!this.stream && !!this.localGuest?.stream && this.streamId !== undefined && this.spaceId !== undefined) {
             const streams: Map<MediaStreamType, MediaStream> = new Map<MediaStreamType, MediaStream>();
-            streams.set(MediaStreamType.GUEST, this.mediaStream);
+            streams.set(MediaStreamType.GUEST, this.localGuest.stream);
 
             if (!!this.mixer) {
                 streams.set(MediaStreamType.STREAM, this.mixer.getMixedStream());
@@ -159,57 +149,20 @@ export class LobbyComponent implements OnInit {
         }
     }
 
-    hasVideoElement(id: string): boolean {
-        return document.getElementById(id) !== null;
-    }
-
-    getOrCreateVideoElement(id: string): HTMLVideoElement {
-        if (this.hasVideoElement(id)) {
-            return document.getElementById(id) as HTMLVideoElement;
+    addGuest(guest: Guest): void {
+        if (!!this.mixer) {
+            const videoId = `video-${guest?.stream?.id}`;
+            this.mixer.appendStream(guest.stream);
+            this.mixer?.videoElements.set(videoId, document.getElementById(videoId) as HTMLVideoElement);
         }
-        return this.createVideoElement(id);
     }
 
-    createVideoElement(id: string): HTMLVideoElement {
-        const box = document.createElement('div');
-        box.classList.add('lobby-quest-video-box');
-
-        const buttonGroup = document.createElement('div');
-        buttonGroup.classList.add('btn-group');
-        buttonGroup.classList.add('control-bar');
-        const buttonLabal = document.createElement('div');
-        buttonGroup.classList.add('btn');
-        buttonGroup.classList.add('btn-primary');
-        buttonGroup.classList.add('active');
-        const checkbox = document.createElement('input');
-        checkbox.setAttribute('type', 'checkbox');
-        checkbox.checked = false;
-        checkbox.id = `checkbox-${id}`;
-        checkbox.disabled = true;
-
-        const span = document.createElement('span');
-        span.innerText = ' active';
-        buttonGroup.appendChild(buttonLabal);
-        buttonLabal.appendChild(checkbox);
-        buttonLabal.appendChild(span);
-
-        buttonLabal.addEventListener('click', (evt) => {
-            this.toggleActive(id, `checkbox-${id}`);
-        });
-
-        const video = document.createElement('video');
-        video.setAttribute('id', id);
-        video.setAttribute('muted', '');
-        video.setAttribute('autoplay', '');
-        box.appendChild(video);
-        box.appendChild(buttonGroup);
-        const elem = (document.getElementById('lobby-quest-video') as HTMLDivElement);
-        elem.appendChild(box);
-        return video;
-    }
-
-    removeVideoElement(id: string) {
-        document.getElementById(id)?.remove();
+    removeGuest(guest: Guest): void {
+        if (!!this.mixer) {
+            this.mixer.removeStream(guest.stream);
+            const videoId = `video-${guest?.stream?.id}`;
+            this.mixer?.videoElements.delete(videoId);
+        }
     }
 
     private getToken(): string {
@@ -224,10 +177,10 @@ export class LobbyComponent implements OnInit {
     }
 
     toggleActive(videoId: string, checkboxId: string) {
-        const isChecked = !(document.getElementById(checkboxId) as HTMLInputElement).checked;
-        (document.getElementById(checkboxId) as HTMLInputElement).checked = isChecked;
+        const shadowRoot = document.getElementById(checkboxId)?.shadowRoot;
+        const isSelected = !shadowRoot?.querySelector('div')?.classList.contains('selected');
 
-        if (isChecked) {
+        if (isSelected) {
             this.mixer?.videoElements.set(videoId, document.getElementById(videoId) as HTMLVideoElement);
         } else {
             this.mixer?.videoElements.delete(videoId);

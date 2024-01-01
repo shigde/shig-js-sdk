@@ -9,4 +9,4 @@ export * from './webrtc-connection';
 export * from './media-device.service';
 export * from './index-store.service';
 export * from './peertube.service'
-export * from './stream_mixer'
+export * from './canvas_stream_mixer'
