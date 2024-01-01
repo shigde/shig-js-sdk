@@ -79,7 +79,11 @@
             <div class="guest-header">
                 <span>Guests</span>
             </div>
-            <shig-guest-list [localGuest$]="localGuest$"></shig-guest-list>
+            <shig-guest-list
+                [localGuest$]="localGuest$"
+                (activateGuestStreamEvent)="addGuest($event)"
+                (deactivateGuestStreamEvent)="removeGuest($event)"
+            ></shig-guest-list>
         </div>
     </div>
 </div>

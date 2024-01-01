@@ -40,7 +40,7 @@ export class LobbyComponent implements OnInit {
 
     stream: Stream | undefined;
     localGuest: Guest | undefined;
-    localGuest$ = new BehaviorSubject<Guest | undefined>(undefined)
+    localGuest$ = new BehaviorSubject<Guest | undefined>(undefined);
     hasMediaStreamSet = false;
 
     private streamLiveData: StreamLiveData | undefined;
@@ -114,8 +114,8 @@ export class LobbyComponent implements OnInit {
     startCamera(settings: DeviceSettings) {
         this.devices.getUserMedia(settings)
             .then((stream: any) => {
-                this.localGuest =  buildGuest("me", stream);
-                this.localGuest$.next(this.localGuest)
+                this.localGuest = buildGuest('me', stream);
+                this.localGuest$.next(this.localGuest);
             })
             .then(() => {
                     if (this.localGuest?.stream) {
@@ -151,13 +151,17 @@ export class LobbyComponent implements OnInit {
 
     addGuest(guest: Guest): void {
         if (!!this.mixer) {
-            this.mixer.appendStream(guest.stream);
+            const videoId = `video-${guest?.stream?.id}`;
+            this.mixer?.videoElements.set(videoId, document.getElementById(videoId) as HTMLVideoElement);
+            // this.mixer.appendStream(guest.stream);
         }
     }
 
     removeGuest(guest: Guest): void {
         if (!!this.mixer) {
-            this.mixer.removeStream(guest.stream);
+            //this.mixer.removeStream(guest.stream);
+            const videoId = `video-${guest?.stream?.id}`;
+            this.mixer?.videoElements.delete(videoId);
         }
     }
 
