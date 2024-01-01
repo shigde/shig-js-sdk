@@ -92,12 +92,12 @@ export class LobbyComponent implements OnInit {
             this.streamService.getStream(this.streamId, this.spaceId)
                 .pipe(tap((stream) => this.stream = stream))
                 .subscribe(() => {
-                    //if (this.user !== undefined && this.stream?.user === this.user) {
-                    setTimeout(() => {
-                        this.mixer = new CanvasStreamMixer('canvasOne');
-                        this.mixer.start();
-                    }, 0);
-                    //}
+                    if (this.user !== undefined && this.stream?.user === this.user) {
+                        setTimeout(() => {
+                            this.mixer = new CanvasStreamMixer('canvasOne');
+                            this.mixer.start();
+                        }, 0);
+                    }
                 });
         }
     }
@@ -114,7 +114,7 @@ export class LobbyComponent implements OnInit {
     startCamera(settings: DeviceSettings) {
         this.devices.getUserMedia(settings)
             .then((stream: any) => {
-                this.localGuest = buildGuest('me', stream);
+                this.localGuest = buildGuest('local', 'me', stream);
                 this.localGuest$.next(this.localGuest);
             })
             .then(() => {
@@ -152,14 +152,14 @@ export class LobbyComponent implements OnInit {
     addGuest(guest: Guest): void {
         if (!!this.mixer) {
             const videoId = `video-${guest?.stream?.id}`;
+            this.mixer.appendStream(guest.stream);
             this.mixer?.videoElements.set(videoId, document.getElementById(videoId) as HTMLVideoElement);
-            // this.mixer.appendStream(guest.stream);
         }
     }
 
     removeGuest(guest: Guest): void {
         if (!!this.mixer) {
-            //this.mixer.removeStream(guest.stream);
+            this.mixer.removeStream(guest.stream);
             const videoId = `video-${guest?.stream?.id}`;
             this.mixer?.videoElements.delete(videoId);
         }

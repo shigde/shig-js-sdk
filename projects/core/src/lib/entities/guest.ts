@@ -12,7 +12,7 @@ export class Guest {
     }
 }
 
-export function buildGuest(name: string | undefined, stream: MediaStream): Guest {
-    const id = !!name ? name : 'unknown';
-    return new Guest({id, name: id} as User, stream);
+export function buildGuest(id: string, name: string | undefined, stream: MediaStream): Guest {
+    const username = !!name ? name : 'unknown';
+    return new Guest({id, name: username} as User, stream);
 }
