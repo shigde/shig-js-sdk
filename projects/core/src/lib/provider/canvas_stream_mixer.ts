@@ -1,7 +1,7 @@
 const WIDTH = 1920;
 const HEIGHT = 1080;
 
-export class StreamMixer {
+export class CanvasStreamMixer {
 
     private readonly canvas: HTMLCanvasElement;
     private readonly context: CanvasRenderingContext2D;

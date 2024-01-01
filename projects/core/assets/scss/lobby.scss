@@ -204,6 +204,9 @@ button:disabled {
     transform: translateX(0);
 }
 
+.display-none {
+    display: none !important;
+}
 /*==================== Guest Container ====================*/
 .guest-container {
     background-color: var(--chat-background);
@@ -226,6 +229,7 @@ button:disabled {
 }
 
 .guest-area {
+    display: block;
     flex: 1;
     overflow-y: auto;
     padding: var(--common-padding);
@@ -240,6 +244,7 @@ button:disabled {
 }
 
 .guest-video {
+    display: block;
     width: 100%;
     height: 25%;
     position: relative;
@@ -393,6 +398,7 @@ canvasOne {
     .guest-header {
         display: none;
     }
+
     .guest-video {
         width: 25%;
         height: 150px;
