@@ -113,7 +113,7 @@ export class WebrtcConnection extends EventEmitter<MediaEvent> {
     }
 
     private onRemoteOffer() {
-        SDPParser.parse(this.peerConnection.remoteDescription);
+        // SDPParser.parse(this.peerConnection.remoteDescription);
     }
 
 }

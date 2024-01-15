@@ -21,10 +21,10 @@ export function getInactiveTransceiver(sdp: RTCSessionDescription): SdpMediaLine
     const inactive: SdpMediaLine[] = [];
     res.media.forEach((m) => {
 
-        if (m.mid !== undefined) {
-            m.type
-            inactive.push(m.mid);
-        }
+        // if (m.mid !== undefined) {
+        //     m.type
+        //     inactive.push(m.mid);
+        // }
     });
     return inactive;
 }

@@ -1,0 +1,9 @@
+<div class="participant-action">
+    <button class="btn-mic-off"></button>
+    <button class="btn-camera-off"></button>
+    <md-switch id="switch-{{ guest?.stream?.id }}" icons class="active-video"
+               (click)="toggleActive()"></md-switch>
+</div>
+<a href="#" class="name-tag">{{ guest?.user?.name }}</a>
+<video id="video-{{ guest?.stream?.id }}" #videoElement  muted autoplay></video>
+
