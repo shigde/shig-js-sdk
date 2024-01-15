@@ -79,6 +79,7 @@ export class LobbyService {
                 console.log('###### Add track:stream', event.track.id, stream?.id);
                 this.add$.next(stream);
             }
+
         });
 
         return this.sendWhepOfferReq(spaceId, streamId)

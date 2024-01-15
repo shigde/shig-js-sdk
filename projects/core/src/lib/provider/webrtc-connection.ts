@@ -12,7 +12,12 @@ export class WebrtcConnection extends EventEmitter<MediaEvent> {
     ) {
         super(true);
         this.pc = new RTCPeerConnection(this.config);
-        this.pc.ontrack = (ev) => this.emit({type: 'add', track: ev.track, parent: ev});
+        this.pc.ontrack = (ev: RTCTrackEvent) => this.emit({
+            mediaIndex: Number(ev.transceiver.mid),
+            type: 'add',
+            track: ev.track,
+            parent: ev
+        });
         // @TODO Later
         this.pc.onsignalingstatechange = _ => console.log('onsignalingstatechange');
         this.pc.oniceconnectionstatechange = _ => console.log('oniceconnectionstatechange');
@@ -98,4 +103,17 @@ export class WebrtcConnection extends EventEmitter<MediaEvent> {
     private onReceiveChannelStateChange(ev: Event): void {
         console.log('onReceiveChannelStateChange', ev);
     }
+
+    private onSignalStateChange() {
+        console.log(`signal state: ${this.pc.signalingState}`);
+
+        if (this.pc.signalingState === 'have-remote-offer') {
+            this.onRemoteOffer();
+        }
+    }
+
+    private onRemoteOffer() {
+        SDPParser.parse(this.peerConnection.remoteDescription);
+    }
+
 }
