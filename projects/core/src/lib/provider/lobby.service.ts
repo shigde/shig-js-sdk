@@ -7,8 +7,8 @@ import {MessageService} from './message.service';
 import {ChannelMessenger} from './channel-messenger';
 import {
     ChannelMsg,
-    ChannelMsgType,
-    MediaStreamType,
+    ChannelMsgType, LobbyMedia,
+    LobbyMediaType,
     SdpMsgData,
     StreamLiveData,
     StreamLiveInfo,
@@ -21,8 +21,8 @@ import {ParameterService} from './parameter.service';
     providedIn: 'root'
 })
 export class LobbyService {
-    public add$ = new BehaviorSubject<MediaStream | null>(null);
-    public remove$ = new BehaviorSubject<string | null>(null);
+    public add$ = new BehaviorSubject<{ media: LobbyMedia, stream: MediaStream } | null>(null);
+    public remove$ = new BehaviorSubject<LobbyMedia | null>(null);
 
     httpOptions = {
         headers: new HttpHeaders({'Content-Type': 'application/sdp', 'Accept': 'application/sdp'}),
@@ -32,13 +32,13 @@ export class LobbyService {
     constructor(private http: HttpClient, private messageService: MessageService, private params: ParameterService) {
     }
 
-    public join(stream: Map<MediaStreamType, MediaStream>, spaceId: string, streamId: string, config: RTCConfiguration): Promise<unknown> {
+    public join(stream: Map<LobbyMediaType, MediaStream>, spaceId: string, streamId: string, config: RTCConfiguration): Promise<unknown> {
         return this.createSendingConnection(stream, spaceId, streamId, config)
             .then((messenger) => this.createReceivingConnection(messenger, spaceId, streamId, config));
     }
 
 
-    private createSendingConnection(streams: Map<MediaStreamType, MediaStream>, spaceId: string, streamId: string, config: RTCConfiguration): Promise<ChannelMessenger> {
+    private createSendingConnection(streams: Map<LobbyMediaType, MediaStream>, spaceId: string, streamId: string, config: RTCConfiguration): Promise<ChannelMessenger> {
         const wc = new WebrtcConnection(config);
         const messenger = new ChannelMessenger(wc.createDataChannel());
         return wc.createOffer(streams)
@@ -64,22 +64,16 @@ export class LobbyService {
 
         wc.subscribe((event) => {
             if (event.type === 'add') {
-                let stream = event.parent?.streams[0];
-                if (!stream) {
-                    return;
+                let stream = event.stream;
+                if (stream !== undefined) {
+                    console.log('###### Add track:stream', event.media.kind, event.media.trackId, stream?.id);
+                    this.add$.next({media: event.media, stream});
                 }
-                stream.addEventListener('removetrack', () => {
-                    const x = stream;
-                    console.log('###### Remove track:stream', x?.getTracks().length, x?.id);
-                    console.log('###### This', this);
-                    if (x?.getTracks().length === 0) {
-                        this.remove$.next(x?.id);
-                    }
-                });
-                console.log('###### Add track:stream', event.track.id, stream?.id);
-                this.add$.next(stream);
             }
-
+            if (event.type === 'remove') {
+                console.log('###### Add track:stream', event.media.kind, event.media.trackId, event.media.streamId,);
+                this.remove$.next(event.media);
+            }
         });
 
         return this.sendWhepOfferReq(spaceId, streamId)

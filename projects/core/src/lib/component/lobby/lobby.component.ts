@@ -19,7 +19,7 @@ import {
     DeviceSettings,
     Stream,
     StreamLiveData,
-    MediaStreamType, Guest, User, buildGuest
+    LobbyMediaType, Guest, User, buildGuest
 } from '../../entities';
 
 @Component({
@@ -138,11 +138,11 @@ export class LobbyComponent implements OnInit {
 
     join(): void {
         if (!!this.stream && !!this.localGuest?.stream && this.streamId !== undefined && this.spaceId !== undefined) {
-            const streams: Map<MediaStreamType, MediaStream> = new Map<MediaStreamType, MediaStream>();
-            streams.set(MediaStreamType.GUEST, this.localGuest.stream);
+            const streams: Map<LobbyMediaType, MediaStream> = new Map<LobbyMediaType, MediaStream>();
+            streams.set(LobbyMediaType.GUEST, this.localGuest.stream);
 
             if (!!this.mixer) {
-                streams.set(MediaStreamType.STREAM, this.mixer.getMixedStream());
+                streams.set(LobbyMediaType.STREAM, this.mixer.getMixedStream());
             }
 
             this.lobbyService.join(streams, this.spaceId, this.streamId, this.config).then(() => this.isInLobby = true);

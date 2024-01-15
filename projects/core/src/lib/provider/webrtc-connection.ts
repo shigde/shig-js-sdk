@@ -1,10 +1,10 @@
 import {EventEmitter} from '@angular/core';
-import {ChannelMsg, ChannelMsgType, MediaEvent, MediaStreamType} from '../entities';
-import {mungeOfferInfo} from './webrtc-sdp-munge';
+import {ChannelMsg, ChannelMsgType, LobbyMedia, LobbyMediaEvent, LobbyMediaIndex, LobbyMediaType} from '../entities';
+import {SdpParser} from './sdp-parser';
 
-
-export class WebrtcConnection extends EventEmitter<MediaEvent> {
+export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
     private readonly pc: RTCPeerConnection;
+    private readonly remoteMedia: Map<LobbyMediaIndex, LobbyMedia> = new Map<LobbyMediaIndex, LobbyMedia>();
     private dataChannel: RTCDataChannel | undefined;
 
     constructor(
@@ -12,14 +12,8 @@ export class WebrtcConnection extends EventEmitter<MediaEvent> {
     ) {
         super(true);
         this.pc = new RTCPeerConnection(this.config);
-        this.pc.ontrack = (ev: RTCTrackEvent) => this.emit({
-            mediaIndex: Number(ev.transceiver.mid),
-            type: 'add',
-            track: ev.track,
-            parent: ev
-        });
-        // @TODO Later
-        this.pc.onsignalingstatechange = _ => console.log('onsignalingstatechange');
+        this.pc.ontrack = (ev: RTCTrackEvent) => this.onTrack(ev);
+        this.pc.onsignalingstatechange = _ => this.onSignalStateChange();
         this.pc.oniceconnectionstatechange = _ => console.log('oniceconnectionstatechange');
         this.pc.onicecandidate = event => this.onicecandidate(event);
         this.pc.onnegotiationneeded = _ => console.log('onnegotiationneeded');
@@ -40,8 +34,8 @@ export class WebrtcConnection extends EventEmitter<MediaEvent> {
         return this.dataChannel;
     }
 
-    public createOffer(streams: Map<MediaStreamType, MediaStream>): Promise<RTCSessionDescription> {
-        const trackInfo = new Map<string, MediaStreamType>();
+    public createOffer(streams: Map<LobbyMediaType, MediaStream>): Promise<RTCSessionDescription> {
+        const trackInfo = new Map<string, LobbyMediaType>();
         streams.forEach((ms, streamType) => {
             let streamId = ms.id;
             ms.getTracks().forEach((track) => {
@@ -53,7 +47,7 @@ export class WebrtcConnection extends EventEmitter<MediaEvent> {
         // @ts-ignore
         return this.pc.createOffer()
             .then((offer) => this.pc.setLocalDescription(offer))
-            .then(_ => mungeOfferInfo(this.pc.localDescription as RTCSessionDescription, trackInfo));
+            .then(_ => SdpParser.mungeOfferInfo(this.pc.localDescription as RTCSessionDescription, trackInfo));
     }
 
     // Ice Gathering ----------------------------
@@ -70,7 +64,7 @@ export class WebrtcConnection extends EventEmitter<MediaEvent> {
         return this.pc.setRemoteDescription(answer);
     }
 
-    setRemoteOffer(offer: RTCSessionDescription) {
+    public setRemoteOffer(offer: RTCSessionDescription) {
         let aw: RTCSessionDescriptionInit;
         return this.pc.setRemoteDescription(offer)
             .then(() => this.pc.createAnswer())
@@ -104,16 +98,56 @@ export class WebrtcConnection extends EventEmitter<MediaEvent> {
         console.log('onReceiveChannelStateChange', ev);
     }
 
+    private onTrack(ev: RTCTrackEvent): void {
+        if (ev.transceiver.mid === null) {
+            return
+        }
+        const media = this.remoteMedia.get(ev.transceiver.mid);
+        const track = ev.track;
+        const stream = ev.streams[0];
+        if (media !== undefined) {
+            media.streamId = stream.id;
+            media.trackId = track.id;
+            this.remoteMedia.set(media.mediaIndex, media);
+            this.emit({type: 'add', media, track, stream});
+        }
+    }
+
     private onSignalStateChange() {
         console.log(`signal state: ${this.pc.signalingState}`);
-
         if (this.pc.signalingState === 'have-remote-offer') {
             this.onRemoteOffer();
         }
     }
 
     private onRemoteOffer() {
-        // SDPParser.parse(this.peerConnection.remoteDescription);
-    }
+        const mediaLines = SdpParser.getSdpMediaLine(this.pc.remoteDescription);
+        mediaLines.forEach((line) => {
+            const tc = this.pc.getTransceivers().find((t) => t.mid === line.mid);
+            const track = tc?.receiver.track;
+            const media = this.remoteMedia.get(line.mid);
 
+            if (line.direction === 'inactive' && media !== undefined) {
+                this.remoteMedia.delete(line.mid);
+                this.emit({type: 'remove', media, track});
+            }
+            if (line.direction === 'recvonly' && media === undefined) {
+                // @ts-ignore
+                if (track?.id !== media.trackId) {
+                    throw new Error('Inconsistent media state');
+                }
+            }
+            if (line.direction === 'recvonly' && media !== undefined) {
+                this.remoteMedia.set(line.mid, {
+                    mediaIndex: line.mid,
+                    mediaType: line.mediaType,
+                    info: line.info,
+                    kind: line.kind,
+                    muted: true,
+                    trackId: (track) ? track.id : '-',
+                    streamId: '-'
+                });
+            }
+        });
+    }
 }

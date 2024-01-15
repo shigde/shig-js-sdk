@@ -8,7 +8,7 @@ import {
     ViewChild,
     ViewEncapsulation
 } from '@angular/core';
-import {buildGuest, Guest} from '../../entities';
+import {buildGuest, Guest, LobbyMedia} from '../../entities';
 import {filter, Observable} from 'rxjs';
 import {LobbyService} from '../../provider';
 import {GuestComponent} from '../guest/guest.component';
@@ -34,13 +34,13 @@ export class GuestListComponent implements OnInit {
 
     constructor(private ref: ChangeDetectorRef, private lobbyService: LobbyService) {
 
-        this.lobbyService.add$.pipe(filter(s => s !== null)).subscribe((s: any) => {
+        this.lobbyService.add$.pipe(filter(s => s !== null)).subscribe((s) => {
             if (s !== null) {
-                this.upsertGuest(buildGuest(s.id, 'unknown', s));
+                this.upsertGuest(buildGuest(s.media.streamId, s.media.info, s.stream));
             }
         });
-        this.lobbyService.remove$.pipe(filter(s => s !== null)).subscribe((s: any) => {
-            const guest = buildGuest( s.id,'unknown', s);
+        this.lobbyService.remove$.pipe(filter(s => s !== null)).subscribe((s) => {
+            const guest = buildGuest(s.streamId, s.info, null);
             if (this.hasGuest(guest)) {
                 this.removeGuest(guest);
             }
