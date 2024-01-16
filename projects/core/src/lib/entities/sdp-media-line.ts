@@ -1,7 +1,7 @@
 import {LobbyMediaType} from './lobby-media-type';
 
 export interface SdpMediaLine {
-    mid: string;
+    mid: number;
     msid: string;
     kind: 'audio' | 'video';
     mediaType: LobbyMediaType;

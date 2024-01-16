@@ -39,10 +39,9 @@ export class GuestListComponent implements OnInit {
                 this.upsertGuest(buildGuest(s.media.streamId, s.media.info, s.stream));
             }
         });
-        this.lobbyService.remove$.pipe(filter(s => s !== null)).subscribe((s) => {
-            const guest = buildGuest(s.streamId, s.info, null);
-            if (this.hasGuest(guest)) {
-                this.removeGuest(guest);
+        this.lobbyService.remove$.pipe(filter(s => s !== null)).subscribe((media: any) => {
+            if (media !== null || this.hasGuest(media.streamId)) {
+                this.removeGuest(media.streamId);
             }
         });
     }
@@ -55,14 +54,14 @@ export class GuestListComponent implements OnInit {
         });
     }
 
-    private hasGuest(guest: Guest): boolean {
-        return this.cmpRefMap.has(guest.user.id);
+    private hasGuest(guestId: string): boolean {
+        return this.cmpRefMap.has(guestId);
     }
 
     private upsertGuest(guest: Guest): void {
         console.log(guest);
 
-        if (this.hasGuest(guest)) {
+        if (this.hasGuest(guest.user.id)) {
             this.cmpRefMap.get(guest.user.id)?.instance.updateGuest(guest);
             return;
         }
@@ -71,19 +70,19 @@ export class GuestListComponent implements OnInit {
         componentRef.instance.activateGuestStreamCbk = (g: Guest) => this.activateGuestStreamEvent.emit(g);
         componentRef.instance.deactivateGuestStreamCbk = (g: Guest) => this.deactivateGuestStreamEvent.emit(g);
         this.cmpRefMap.set(guest.user.id, componentRef);
-        this.ref.detectChanges()
+        this.ref.detectChanges();
     }
 
-    public removeGuest(guest: Guest): void {
-        if (this.shigGuestList.viewContainerRef.length < 1 || !this.hasGuest(guest)) return;
-        const componentRef = this.cmpRefMap.get(guest.user.id);
+    public removeGuest(guestId: string): void {
+        if (this.shigGuestList.viewContainerRef.length < 1 || !this.hasGuest(guestId)) return;
+        const componentRef = this.cmpRefMap.get(guestId);
 
         if (componentRef !== undefined) {
             const vcrIndex: number = this.shigGuestList.viewContainerRef.indexOf(componentRef.hostView);
             // removing component from html container
             this.shigGuestList.viewContainerRef.remove(vcrIndex);
             // removing component from the ref list
-            this.cmpRefMap.delete(guest.user.id);
+            this.cmpRefMap.delete(guestId);
             componentRef.hostView.destroy();
         }
     }

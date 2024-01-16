@@ -100,9 +100,10 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
 
     private onTrack(ev: RTCTrackEvent): void {
         if (ev.transceiver.mid === null) {
-            return
+            console.log('#### Oha wenn das neu ist?');
+            return;
         }
-        const media = this.remoteMedia.get(ev.transceiver.mid);
+        const media = this.remoteMedia.get(Number(ev.transceiver.mid));
         const track = ev.track;
         const stream = ev.streams[0];
         if (media !== undefined) {
@@ -110,44 +111,43 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
             media.trackId = track.id;
             this.remoteMedia.set(media.mediaIndex, media);
             this.emit({type: 'add', media, track, stream});
+            this.emit({type: 'add', media, track, stream});
+        }
+        if (media === undefined) {
+            console.log('#### Misst!', ev.transceiver.mid, this.remoteMedia);
         }
     }
 
     private onSignalStateChange() {
         console.log(`signal state: ${this.pc.signalingState}`);
         if (this.pc.signalingState === 'have-remote-offer') {
-            this.onRemoteOffer();
+            this.onRemoteOffer(this.pc.remoteDescription);
         }
     }
 
-    private onRemoteOffer() {
-        const mediaLines = SdpParser.getSdpMediaLine(this.pc.remoteDescription);
+    private onRemoteOffer(sdp: RTCSessionDescription | null) {
+        const mediaLines = SdpParser.getSdpMediaLine(sdp);
+        console.log('#### Remote SDP', sdp);
         mediaLines.forEach((line) => {
-            const tc = this.pc.getTransceivers().find((t) => t.mid === line.mid);
+            const tc = this.pc.getTransceivers().find((t) => Number(t.mid) === line.mid);
             const track = tc?.receiver.track;
             const media = this.remoteMedia.get(line.mid);
 
-            if (line.direction === 'inactive' && media !== undefined) {
+            if ((line.direction === 'inactive' || line.direction === 'recvonly') && media !== undefined) {
                 this.remoteMedia.delete(line.mid);
                 this.emit({type: 'remove', media, track});
+                return;
             }
-            if (line.direction === 'recvonly' && media === undefined) {
-                // @ts-ignore
-                if (track?.id !== media.trackId) {
-                    throw new Error('Inconsistent media state');
-                }
-            }
-            if (line.direction === 'recvonly' && media !== undefined) {
-                this.remoteMedia.set(line.mid, {
-                    mediaIndex: line.mid,
-                    mediaType: line.mediaType,
-                    info: line.info,
-                    kind: line.kind,
-                    muted: true,
-                    trackId: (track) ? track.id : '-',
-                    streamId: '-'
-                });
-            }
+
+            this.remoteMedia.set(line.mid, {
+                mediaIndex: line.mid,
+                mediaType: line.mediaType,
+                info: line.info,
+                kind: line.kind,
+                muted: true,
+                trackId: (track) ? track.id : '-',
+                streamId: '-'
+            });
         });
     }
 }

@@ -27,7 +27,7 @@ export class SdpParser {
         res.media.forEach((m) => {
             if(m.type !== 'application') {
                 const line: SdpMediaLine = {
-                    mid: (m.mid !== undefined) ? m.mid : "-",
+                    mid: (m.mid !== undefined) ? Number(m.mid) : -1,
                     msid: (m.msid !== undefined) ? m.msid : '',
                     kind: (m.type === 'audio' || m.type === 'video') ? m.type : 'audio',
                     direction: (m.direction !== undefined) ? m.direction : 'inactive',

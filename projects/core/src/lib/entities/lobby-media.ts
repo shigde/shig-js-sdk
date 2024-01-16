@@ -1,6 +1,6 @@
 import {LobbyMediaType} from './lobby-media-type';
 
-export type LobbyMediaIndex = string
+export type LobbyMediaIndex = number
 
 export interface LobbyMedia {
     mediaIndex: LobbyMediaIndex;

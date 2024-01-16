@@ -71,7 +71,7 @@ export class LobbyService {
                 }
             }
             if (event.type === 'remove') {
-                console.log('###### Add track:stream', event.media.kind, event.media.trackId, event.media.streamId,);
+                console.log('###### Remove track:stream', event.media.kind, event.media.trackId, event.media.streamId,);
                 this.remove$.next(event.media);
             }
         });
