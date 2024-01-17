@@ -6,7 +6,7 @@ import {
     OnDestroy, ViewChild,
     ViewEncapsulation
 } from '@angular/core';
-import {Guest} from '../../entities';
+import {LobbyMediaStream} from '../../entities';
 
 @Component({
     selector: 'shig-guest',
@@ -22,38 +22,42 @@ export class GuestComponent implements AfterViewInit, OnDestroy {
     @HostBinding('class.guest-video') public hostClass = true;
     @ViewChild('videoElement') videoRef!: ElementRef<HTMLVideoElement>;
 
-    @Input() activateGuestStreamCbk!: (g: Guest) => void;
-    @Input() deactivateGuestStreamCbk!: (g: Guest) => void;
-    @Input('guest') guest!: Guest;
+    @Input() activateGuestStreamCbk!: (g: LobbyMediaStream) => void;
+    @Input() deactivateGuestStreamCbk!: (g: LobbyMediaStream) => void;
+    @Input('media') media!: LobbyMediaStream;
 
     ngAfterViewInit() {
-        this.getVideoElement().srcObject = this.guest?.stream;
+        if(this.media && this.media.stream) {
+            this.getVideoElement().srcObject = this.media.stream;
+        }
     }
 
-    public updateGuest(guest: Guest): void {
-        const oldGuest = this.guest;
-        this.guest = guest;
-        this.getVideoElement().srcObject = this.guest?.stream;
-        if (oldGuest.stream.id !== this.guest.stream.id) {
+    public updateGuest(media: LobbyMediaStream): void {
+        const oldMedia = this.media;
+        this.media = media;
+        if(this.media.stream) {
+            this.getVideoElement().srcObject = this.media.stream;
+        }
+        if (oldMedia.streamId !== this.media.streamId) {
             // if get a complete new stream, stop the old stream
             // this happens often for local users
-            oldGuest.stopStream();
+            oldMedia.stopStream();
         }
     }
 
     ngOnDestroy(): void {
         this.getVideoElement().srcObject = null;
-        this.guest.stopStream();
+        this.media.stopStream();
     }
 
     toggleActive() {
-        const shadowRoot = document.getElementById(`switch-${this.guest.stream.id}`)?.shadowRoot;
+        const shadowRoot = document.getElementById(`switch-${this.media.streamId}`)?.shadowRoot;
         const isSelected = !shadowRoot?.querySelector('div')?.classList.contains('selected');
 
         if (isSelected) {
-            this.activateGuestStreamCbk(this.guest);
+            this.activateGuestStreamCbk(this.media);
         } else {
-            this.deactivateGuestStreamCbk(this.guest);
+            this.deactivateGuestStreamCbk(this.media);
         }
     }
 

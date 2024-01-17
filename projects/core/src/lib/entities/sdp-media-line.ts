@@ -1,10 +1,11 @@
-import {LobbyMediaType} from './lobby-media-type';
+import {LobbyMediaPurpose} from './lobby-media-purpose';
 
 export interface SdpMediaLine {
     mid: number;
-    msid: string;
+    trackId: string;
+    streamId: string
     kind: 'audio' | 'video';
-    mediaType: LobbyMediaType;
     direction: 'sendrecv' | 'recvonly' | 'sendonly' | 'inactive';
+    purpose: LobbyMediaPurpose;
     info: string;
 }

@@ -69,6 +69,7 @@
                     Your browser does not support HTML5 Canvas.
                 </canvas>
             </div>
+            <video id="video-stream" #videoStreamElement  muted autoplay *ngIf="!isHost"></video>
         </div>
     </div>
 
@@ -81,8 +82,8 @@
             </div>
             <shig-guest-list
                 [localGuest$]="localGuest$"
-                (activateGuestStreamEvent)="addGuest($event)"
-                (deactivateGuestStreamEvent)="removeGuest($event)"
+                (activateLobbyMediaStreamEvent)="addLobbyMediaStream($event)"
+                (deactivateLobbyMediaStreamEvent)="removeLobbyMediaStream($event)"
             ></shig-guest-list>
         </div>
     </div>

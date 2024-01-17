@@ -1,14 +1,16 @@
 import {
     ChangeDetectorRef,
-    Component, ComponentRef,
-    EventEmitter, HostBinding,
+    Component,
+    ComponentRef,
+    EventEmitter,
+    HostBinding,
     Input,
     OnInit,
     Output,
     ViewChild,
     ViewEncapsulation
 } from '@angular/core';
-import {buildGuest, Guest, LobbyMedia} from '../../entities';
+import {LobbyMediaPurpose, LobbyMediaStream} from '../../entities';
 import {filter, Observable} from 'rxjs';
 import {LobbyService} from '../../provider';
 import {GuestComponent} from '../guest/guest.component';
@@ -25,23 +27,29 @@ import {GuestListDirective} from './guest-list.directive';
 })
 export class GuestListComponent implements OnInit {
     @HostBinding('class.guest-area') public hostClass = true;
-    @Output() activateGuestStreamEvent = new EventEmitter<Guest>();
-    @Output() deactivateGuestStreamEvent = new EventEmitter<Guest>();
+    @Output() activateLobbyMediaStreamEvent = new EventEmitter<LobbyMediaStream>();
+    @Output() deactivateLobbyMediaStreamEvent = new EventEmitter<LobbyMediaStream>();
     @Input() localGuest$!: Observable<any>;
 
     @ViewChild(GuestListDirective, {static: true}) shigGuestList!: GuestListDirective;
     public readonly cmpRefMap = new Map<string, ComponentRef<GuestComponent>>();
 
     constructor(private ref: ChangeDetectorRef, private lobbyService: LobbyService) {
-
         this.lobbyService.add$.pipe(filter(s => s !== null)).subscribe((s) => {
-            if (s !== null) {
-                this.upsertGuest(buildGuest(s.media.streamId, s.media.info, s.stream));
+            if(s !== null && s?.media.purpose == LobbyMediaPurpose.GUEST) {
+                this.upsertGuest(LobbyMediaStream.build(s.media, s.stream));
+            }
+            if(s !== null && s?.media.purpose == LobbyMediaPurpose.STREAM) {
+                this.activateLobbyMediaStreamEvent.emit(LobbyMediaStream.build(s.media, s.stream))
             }
         });
-        this.lobbyService.remove$.pipe(filter(s => s !== null)).subscribe((media: any) => {
-            if (media !== null || this.hasGuest(media.streamId)) {
+        this.lobbyService.remove$.pipe(filter(s => s !== null)).subscribe((media) => {
+            console.log("###", media)
+            if(media !== null && media.purpose == LobbyMediaPurpose.GUEST && this.hasGuest(media.streamId)) {
                 this.removeGuest(media.streamId);
+            }
+            if(media !== null && media.purpose == LobbyMediaPurpose.STREAM) {
+                this.deactivateLobbyMediaStreamEvent.emit(LobbyMediaStream.build(media));
             }
         });
     }
@@ -58,31 +66,29 @@ export class GuestListComponent implements OnInit {
         return this.cmpRefMap.has(guestId);
     }
 
-    private upsertGuest(guest: Guest): void {
-        console.log(guest);
-
-        if (this.hasGuest(guest.user.id)) {
-            this.cmpRefMap.get(guest.user.id)?.instance.updateGuest(guest);
+    private upsertGuest(lobbyMediaStream: LobbyMediaStream): void {
+        if (this.hasGuest(lobbyMediaStream.streamId)) {
+            this.cmpRefMap.get(lobbyMediaStream.streamId)?.instance.updateGuest(lobbyMediaStream);
             return;
         }
         const componentRef = this.shigGuestList.viewContainerRef.createComponent<GuestComponent>(GuestComponent);
-        componentRef.instance.guest = guest;
-        componentRef.instance.activateGuestStreamCbk = (g: Guest) => this.activateGuestStreamEvent.emit(g);
-        componentRef.instance.deactivateGuestStreamCbk = (g: Guest) => this.deactivateGuestStreamEvent.emit(g);
-        this.cmpRefMap.set(guest.user.id, componentRef);
+        componentRef.instance.media = lobbyMediaStream;
+        componentRef.instance.activateGuestStreamCbk = (g: LobbyMediaStream) => this.activateLobbyMediaStreamEvent.emit(g);
+        componentRef.instance.deactivateGuestStreamCbk = (g: LobbyMediaStream) => this.deactivateLobbyMediaStreamEvent.emit(g);
+        this.cmpRefMap.set(lobbyMediaStream.streamId, componentRef);
         this.ref.detectChanges();
     }
 
-    public removeGuest(guestId: string): void {
-        if (this.shigGuestList.viewContainerRef.length < 1 || !this.hasGuest(guestId)) return;
-        const componentRef = this.cmpRefMap.get(guestId);
+    public removeGuest(streamId: string): void {
+        if (this.shigGuestList.viewContainerRef.length < 1 || !this.hasGuest(streamId)) return;
+        const componentRef = this.cmpRefMap.get(streamId);
 
         if (componentRef !== undefined) {
             const vcrIndex: number = this.shigGuestList.viewContainerRef.indexOf(componentRef.hostView);
             // removing component from html container
             this.shigGuestList.viewContainerRef.remove(vcrIndex);
             // removing component from the ref list
-            this.cmpRefMap.delete(guestId);
+            this.cmpRefMap.delete(streamId);
             componentRef.hostView.destroy();
         }
     }

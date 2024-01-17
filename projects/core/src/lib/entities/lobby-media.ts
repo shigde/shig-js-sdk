@@ -1,10 +1,10 @@
-import {LobbyMediaType} from './lobby-media-type';
+import {LobbyMediaPurpose} from './lobby-media-purpose';
 
 export type LobbyMediaIndex = number
 
 export interface LobbyMedia {
     mediaIndex: LobbyMediaIndex;
-    mediaType: LobbyMediaType;
+    purpose: LobbyMediaPurpose;
     info: string;
     kind: 'audio' | 'video';
     muted: boolean;

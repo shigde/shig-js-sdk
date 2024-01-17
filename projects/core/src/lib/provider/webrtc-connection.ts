@@ -1,5 +1,5 @@
 import {EventEmitter} from '@angular/core';
-import {ChannelMsg, ChannelMsgType, LobbyMedia, LobbyMediaEvent, LobbyMediaIndex, LobbyMediaType} from '../entities';
+import {ChannelMsg, ChannelMsgType, LobbyMedia, LobbyMediaEvent, LobbyMediaIndex, LobbyMediaPurpose} from '../entities';
 import {SdpParser} from './sdp-parser';
 
 export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
@@ -34,8 +34,8 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
         return this.dataChannel;
     }
 
-    public createOffer(streams: Map<LobbyMediaType, MediaStream>): Promise<RTCSessionDescription> {
-        const trackInfo = new Map<string, LobbyMediaType>();
+    public createOffer(streams: Map<LobbyMediaPurpose, MediaStream>): Promise<RTCSessionDescription> {
+        const trackInfo = new Map<string, LobbyMediaPurpose>();
         streams.forEach((ms, streamType) => {
             let streamId = ms.id;
             ms.getTracks().forEach((track) => {
@@ -66,6 +66,7 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
 
     public setRemoteOffer(offer: RTCSessionDescription) {
         let aw: RTCSessionDescriptionInit;
+        this.beforeRemoteOffer(offer);
         return this.pc.setRemoteDescription(offer)
             .then(() => this.pc.createAnswer())
             .then((answer) => aw = answer)
@@ -100,7 +101,6 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
 
     private onTrack(ev: RTCTrackEvent): void {
         if (ev.transceiver.mid === null) {
-            console.log('#### Oha wenn das neu ist?');
             return;
         }
         const media = this.remoteMedia.get(Number(ev.transceiver.mid));
@@ -110,7 +110,6 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
             media.streamId = stream.id;
             media.trackId = track.id;
             this.remoteMedia.set(media.mediaIndex, media);
-            this.emit({type: 'add', media, track, stream});
             this.emit({type: 'add', media, track, stream});
         }
         if (media === undefined) {
@@ -125,29 +124,32 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
         }
     }
 
-    private onRemoteOffer(sdp: RTCSessionDescription | null) {
+    private beforeRemoteOffer(sdp: RTCSessionDescription): void {
         const mediaLines = SdpParser.getSdpMediaLine(sdp);
-        console.log('#### Remote SDP', sdp);
         mediaLines.forEach((line) => {
-            const tc = this.pc.getTransceivers().find((t) => Number(t.mid) === line.mid);
-            const track = tc?.receiver.track;
             const media = this.remoteMedia.get(line.mid);
-
-            if ((line.direction === 'inactive' || line.direction === 'recvonly') && media !== undefined) {
-                this.remoteMedia.delete(line.mid);
-                this.emit({type: 'remove', media, track});
-                return;
+            if (!media) {
+                this.remoteMedia.set(line.mid, {
+                    mediaIndex: line.mid,
+                    purpose: line.purpose,
+                    info: line.info,
+                    kind: line.kind,
+                    muted: true,
+                    trackId: line.trackId,
+                    streamId: line.streamId,
+                });
             }
+        });
+    }
 
-            this.remoteMedia.set(line.mid, {
-                mediaIndex: line.mid,
-                mediaType: line.mediaType,
-                info: line.info,
-                kind: line.kind,
-                muted: true,
-                trackId: (track) ? track.id : '-',
-                streamId: '-'
-            });
+    private onRemoteOffer(sdp: RTCSessionDescription | null): void {
+        const mediaLines = SdpParser.getSdpMediaLine(sdp);
+        mediaLines.forEach((line) => {
+            const media = this.remoteMedia.get(line.mid);
+            if ((line.direction === 'inactive' || line.direction === 'recvonly') && !!media) {
+                this.emit({type: 'remove', media});
+                this.remoteMedia.delete(line.mid);
+            }
         });
     }
 }

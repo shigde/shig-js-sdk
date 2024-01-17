@@ -8,7 +8,7 @@ import {ChannelMessenger} from './channel-messenger';
 import {
     ChannelMsg,
     ChannelMsgType, LobbyMedia,
-    LobbyMediaType,
+    LobbyMediaPurpose,
     SdpMsgData,
     StreamLiveData,
     StreamLiveInfo,
@@ -32,13 +32,13 @@ export class LobbyService {
     constructor(private http: HttpClient, private messageService: MessageService, private params: ParameterService) {
     }
 
-    public join(stream: Map<LobbyMediaType, MediaStream>, spaceId: string, streamId: string, config: RTCConfiguration): Promise<unknown> {
+    public join(stream: Map<LobbyMediaPurpose, MediaStream>, spaceId: string, streamId: string, config: RTCConfiguration): Promise<unknown> {
         return this.createSendingConnection(stream, spaceId, streamId, config)
             .then((messenger) => this.createReceivingConnection(messenger, spaceId, streamId, config));
     }
 
 
-    private createSendingConnection(streams: Map<LobbyMediaType, MediaStream>, spaceId: string, streamId: string, config: RTCConfiguration): Promise<ChannelMessenger> {
+    private createSendingConnection(streams: Map<LobbyMediaPurpose, MediaStream>, spaceId: string, streamId: string, config: RTCConfiguration): Promise<ChannelMessenger> {
         const wc = new WebrtcConnection(config);
         const messenger = new ChannelMessenger(wc.createDataChannel());
         return wc.createOffer(streams)
