@@ -213,6 +213,14 @@ export class LobbyComponent implements OnInit {
         }
     }
 
+    leaveLobby(): void {
+        if (this.streamId != undefined && this.spaceId != undefined) {
+            this.lobbyService.leaveLobby(this.spaceId, this.streamId).subscribe(() => {
+                this.state = 'offline';
+            });
+        }
+    }
+
     private getStreamVideoElement(): HTMLVideoElement {
         return this.videoStreamRef.nativeElement;
     }

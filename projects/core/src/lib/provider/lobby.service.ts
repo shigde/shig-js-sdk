@@ -37,7 +37,6 @@ export class LobbyService {
             .then((messenger) => this.createReceivingConnection(messenger, spaceId, streamId, config));
     }
 
-
     private createSendingConnection(streams: Map<LobbyMediaPurpose, MediaStream>, spaceId: string, streamId: string, config: RTCConfiguration): Promise<ChannelMessenger> {
         const wc = new WebrtcConnection(config);
         const messenger = new ChannelMessenger(wc.createDataChannel());
@@ -143,6 +142,11 @@ export class LobbyService {
         return this.http.get<StreamLiveStatus>(getUrl).pipe(catchError(this.handleError<any>('', '')));
     }
 
+
+    leaveLobby(spaceId: string, streamId: string) {
+        const whipUrl = `${this.params.API_PREFIX}/space/${spaceId}/stream/${streamId}/whip`;
+        return this.http.delete<any>(whipUrl).pipe(catchError(this.handleError<any>('', '')));
+    }
     /**
      * Handle Http operation that failed.
      * Let the app continue.
