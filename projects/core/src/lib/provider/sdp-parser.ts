@@ -45,7 +45,7 @@ export class SdpParser {
 
     private static readDescription(description: string | undefined): { purpose: LobbyMediaPurpose, info: string } {
         let purpose: LobbyMediaPurpose = LobbyMediaPurpose.GUEST;
-        let info: string = '';
+        let info: string = 'Guest';
         if (description !== undefined) {
             purpose = getMediaStreamTypeByNumber(Number(description));
         }

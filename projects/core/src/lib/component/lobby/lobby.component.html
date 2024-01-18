@@ -65,14 +65,13 @@
         <!--// Video Stream -->
         <div class="video-call-wrapper">
             <div id="lobby-stream-video" class="stream-video canvas-logo">
-                <canvas id="canvasOne">
+                <canvas id="canvasOne" *ngIf="isHost">
                     Your browser does not support HTML5 Canvas.
                 </canvas>
+                <video id="video-stream" #videoStreamElement  muted autoplay *ngIf="!isHost"></video>
             </div>
-            <video id="video-stream" #videoStreamElement  muted autoplay *ngIf="!isHost"></video>
         </div>
     </div>
-
 
     <!-- Right Side -->
     <div class="right-side">
@@ -82,6 +81,7 @@
             </div>
             <shig-guest-list
                 [localGuest$]="localGuest$"
+                [istHost]="isHost"
                 (activateLobbyMediaStreamEvent)="addLobbyMediaStream($event)"
                 (deactivateLobbyMediaStreamEvent)="removeLobbyMediaStream($event)"
             ></shig-guest-list>

@@ -30,6 +30,7 @@ export class GuestListComponent implements OnInit {
     @Output() activateLobbyMediaStreamEvent = new EventEmitter<LobbyMediaStream>();
     @Output() deactivateLobbyMediaStreamEvent = new EventEmitter<LobbyMediaStream>();
     @Input() localGuest$!: Observable<any>;
+    @Input() istHost: boolean = false;
 
     @ViewChild(GuestListDirective, {static: true}) shigGuestList!: GuestListDirective;
     public readonly cmpRefMap = new Map<string, ComponentRef<GuestComponent>>();
@@ -57,7 +58,7 @@ export class GuestListComponent implements OnInit {
     ngOnInit() {
         this.localGuest$.subscribe((local) => {
             if (local !== undefined) {
-                this.upsertGuest(local);
+                this.upsertGuest(local, true);
             }
         });
     }
@@ -66,13 +67,15 @@ export class GuestListComponent implements OnInit {
         return this.cmpRefMap.has(guestId);
     }
 
-    private upsertGuest(lobbyMediaStream: LobbyMediaStream): void {
+    private upsertGuest(lobbyMediaStream: LobbyMediaStream, isLocal: boolean = false): void {
         if (this.hasGuest(lobbyMediaStream.streamId)) {
             this.cmpRefMap.get(lobbyMediaStream.streamId)?.instance.updateGuest(lobbyMediaStream);
             return;
         }
         const componentRef = this.shigGuestList.viewContainerRef.createComponent<GuestComponent>(GuestComponent);
         componentRef.instance.media = lobbyMediaStream;
+        componentRef.instance.isLocal = isLocal
+        componentRef.instance.onHost = this.istHost;
         componentRef.instance.activateGuestStreamCbk = (g: LobbyMediaStream) => this.activateLobbyMediaStreamEvent.emit(g);
         componentRef.instance.deactivateGuestStreamCbk = (g: LobbyMediaStream) => this.deactivateLobbyMediaStreamEvent.emit(g);
         this.cmpRefMap.set(lobbyMediaStream.streamId, componentRef);

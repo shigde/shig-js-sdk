@@ -25,9 +25,11 @@ export class GuestComponent implements AfterViewInit, OnDestroy {
     @Input() activateGuestStreamCbk!: (g: LobbyMediaStream) => void;
     @Input() deactivateGuestStreamCbk!: (g: LobbyMediaStream) => void;
     @Input('media') media!: LobbyMediaStream;
+    @Input('onHost') onHost!: boolean;
+    @Input('isLocal') isLocal!: boolean;
 
     ngAfterViewInit() {
-        if(this.media && this.media.stream) {
+        if (this.media && this.media.stream) {
             this.getVideoElement().srcObject = this.media.stream;
         }
     }
@@ -35,7 +37,7 @@ export class GuestComponent implements AfterViewInit, OnDestroy {
     public updateGuest(media: LobbyMediaStream): void {
         const oldMedia = this.media;
         this.media = media;
-        if(this.media.stream) {
+        if (this.media.stream) {
             this.getVideoElement().srcObject = this.media.stream;
         }
         if (oldMedia.streamId !== this.media.streamId) {
@@ -46,14 +48,16 @@ export class GuestComponent implements AfterViewInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
+        const isSelected = this.isSelected();
+        if (isSelected) {
+            this.deactivateGuestStreamCbk(this.media);
+        }
         this.getVideoElement().srcObject = null;
         this.media.stopStream();
     }
 
     toggleActive() {
-        const shadowRoot = document.getElementById(`switch-${this.media.streamId}`)?.shadowRoot;
-        const isSelected = !shadowRoot?.querySelector('div')?.classList.contains('selected');
-
+        const isSelected = this.isSelected();
         if (isSelected) {
             this.activateGuestStreamCbk(this.media);
         } else {
@@ -63,6 +67,11 @@ export class GuestComponent implements AfterViewInit, OnDestroy {
 
     private getVideoElement(): HTMLVideoElement {
         return this.videoRef.nativeElement;
+    }
+
+    private isSelected(): boolean {
+        const shadowRoot = document.getElementById(`switch-${this.media.streamId}`)?.shadowRoot;
+        return !shadowRoot?.querySelector('div')?.classList.contains('selected');
     }
 }
 

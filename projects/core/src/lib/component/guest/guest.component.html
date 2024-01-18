@@ -1,7 +1,7 @@
 <div class="participant-action">
-    <button class="btn-mic-off"></button>
-    <button class="btn-camera-off"></button>
-    <md-switch id="switch-{{  media?.streamId}}" icons class="active-video"
+    <button class="btn-mic-off" *ngIf="onHost || isLocal"></button>
+    <button class="btn-camera-off" *ngIf="onHost || isLocal"></button>
+    <md-switch id="switch-{{  media?.streamId}}" icons class="active-video" *ngIf="onHost"
                (click)="toggleActive()"></md-switch>
 </div>
 <a href="#" class="name-tag">{{  media?.name }}</a>

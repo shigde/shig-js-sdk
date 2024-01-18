@@ -66,7 +66,7 @@ export class LobbyService {
             if (event.type === 'add') {
                 let stream = event.stream;
                 if (stream !== undefined) {
-                    console.log('###### Add track:stream', event.media.kind, event.media.trackId, stream?.id);
+                    console.log('###### Add track:stream', event.media.kind, event.media.trackId, event.media.streamId);
                     this.add$.next({media: event.media, stream});
                 }
             }

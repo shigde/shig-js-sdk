@@ -74,7 +74,6 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
             .then(() => aw);
     }
 
-
     public close(): Promise<void> {
         this.pc.ontrack = null;
         this.pc.oniceconnectionstatechange = null;
@@ -91,7 +90,6 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
     private onReceiveChannelMessageCallback(me: MessageEvent<any>): void {
         const msg = JSON.parse(new TextDecoder().decode(me.data as ArrayBuffer)) as ChannelMsg;
         if (msg?.type === ChannelMsgType.OfferMsg) {
-
         }
     }
 
@@ -107,13 +105,11 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
         const track = ev.track;
         const stream = ev.streams[0];
         if (media !== undefined) {
-            media.streamId = stream.id;
-            media.trackId = track.id;
             this.remoteMedia.set(media.mediaIndex, media);
             this.emit({type: 'add', media, track, stream});
         }
         if (media === undefined) {
-            console.log('#### Misst!', ev.transceiver.mid, this.remoteMedia);
+            console.log('error! an transceiver without a media should not exits', ev.transceiver.mid, this.remoteMedia);
         }
     }
 
@@ -128,16 +124,24 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
         const mediaLines = SdpParser.getSdpMediaLine(sdp);
         mediaLines.forEach((line) => {
             const media = this.remoteMedia.get(line.mid);
-            if (!media) {
-                this.remoteMedia.set(line.mid, {
-                    mediaIndex: line.mid,
-                    purpose: line.purpose,
-                    info: line.info,
-                    kind: line.kind,
-                    muted: true,
-                    trackId: line.trackId,
-                    streamId: line.streamId,
-                });
+            const updateMedia: LobbyMedia  =  {
+                mediaIndex: line.mid,
+                purpose: line.purpose,
+                info: line.info,
+                kind: line.kind,
+                muted: true,
+                trackId: line.trackId,
+                streamId: line.streamId,
+            }
+
+            if ((line.direction === 'inactive' || line.direction === 'recvonly') && !!media) {
+                updateMedia.trackId = media.trackId
+                updateMedia.streamId = media.streamId
+                this.remoteMedia.set(line.mid, updateMedia)
+            }
+
+            if (line.direction !== 'inactive' && line.direction !== 'recvonly') {
+                this.remoteMedia.set(line.mid, updateMedia)
             }
         });
     }
@@ -147,8 +151,8 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
         mediaLines.forEach((line) => {
             const media = this.remoteMedia.get(line.mid);
             if ((line.direction === 'inactive' || line.direction === 'recvonly') && !!media) {
-                this.emit({type: 'remove', media});
                 this.remoteMedia.delete(line.mid);
+                this.emit({type: 'remove', media});
             }
         });
     }
