@@ -23,15 +23,12 @@
                 <div class="nav-group-area">
                     <!-- join -->
                     <button class="nav-icon-button icon" *ngIf="!isInLobby" (click)="join()" [disabled]="!hasMediaStreamSet">
-                        <svg xmlns="http://www.w3.org/2000/svg" height="48px" viewBox="0 0 24 24" width="48px"
-                             fill="currentColor">
-                            <path d="M0 0h24v24H0V0z" fill="none"/>
-                            <path
-                                d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4zM14 13h-3v3H9v-3H6v-2h3V8h2v3h3v2z"/>
+                        <svg xmlns="http://www.w3.org/2000/svg" height="48" viewBox="0 -960 960 960" width="48" fill="currentColor">
+                            <path d="M824.941-305Q802-305 786-321.042 770-337.083 770-360v-100q0-22.917 16.059-38.958 16.059-16.042 39-16.042T864-498.958q16 16.041 16 38.958v100q0 22.917-16.059 38.958-16.059 16.042-39 16.042ZM810-160v-66q-51-8-85-43.5T690-355h30q2 42 32.5 71t72.5 29q42 0 72.5-29t32.5-71h30q-1 50-35 85.5t-85 43.957V-160h-30ZM399-500q-67 0-108.5-41.5T249-650q0-67 41.5-108.5T399-800q7 0 19 1.5t22 3.5q-26 31-38.5 66.5T389-650q0 43 12.5 78.5T440-505q-11.05 2.778-22.525 3.889Q406-500 399-500ZM40-160v-94q0-37 17.5-63t51.5-45q39-22 98-37.5T340-423q-65 31-90.5 75T224-254v94H40Zm559-340q-63 0-106.5-43.5T449-650q0-63 43.5-106.5T599-800q63 0 106.5 43.5T749-650q0 63-43.5 106.5T599-500Zm0-60q38 0 64-26.438 26-26.437 26-63.562 0-38-26-64t-63.5-26q-37.5 0-64 26T509-650.5q0 37.5 26.438 64Q561.875-560 599-560ZM284-160v-94q0-35 18.5-63.5T353-360q47-21 108.5-40.5T599-420q5 0 13.5.5t14.5.5q-6 15-10 29.5t-6 29.5h-12q-72 0-124 16.5T377-306q-16 8-24.5 21.5T344-254v34h304q11 16 26 31.5t35 28.5H284Zm315-490Zm0 430Z"/>
                         </svg>
                     </button>
                     <!-- stop -->
-                    <button class="nav-icon-button icon" *ngIf="isInLobby && state=='online'" (click)="stop()">
+                    <button class="nav-icon-button warning icon" *ngIf="isInLobby && state=='online' && isHost" (click)="stop()">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="48" viewBox="0 -960 960 960"
                              width="48">
                             <path
@@ -39,11 +36,17 @@
                         </svg>
                     </button>
                     <!-- broadcast -->
-                    <button class="nav-icon-button icon" *ngIf="isInLobby && state=='offline'" (click)="start()"
+                    <button class="nav-icon-button action icon" *ngIf="isInLobby && state=='offline' && isHost" (click)="start()"
                             [disabled]="!hasMediaStreamSet">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor">
                             <path
                                 d="M440-80v-331q-18-11-29-28.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 23-11 41t-29 28v331h-80ZM204-190q-57-55-90.5-129.5T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 86-33.5 161T756-190l-56-56q46-44 73-104.5T800-480q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 69 27 129t74 104l-57 57Zm113-113q-35-33-56-78.5T240-480q0-100 70-170t170-70q100 0 170 70t70 170q0 53-21 99t-56 78l-57-57q25-23 39.5-54t14.5-66q0-66-47-113t-113-47q-66 0-113 47t-47 113q0 36 14.5 66.5T374-360l-57 57Z"/>
+                        </svg>
+                    </button>
+                    <!-- leave -->
+                    <button class="nav-icon-button secondary icon" *ngIf="isInLobby && ((state!='online' && isHost) || (!isHost))" (click)="leaveLobby()">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="48" viewBox="0 -960 960 960" width="48" fill="currentColor">
+                            <path d="M180-120q-24 0-42-18t-18-42v-600q0-24 18-42t42-18h299v60H180v600h299v60H180Zm486-185-43-43 102-102H360v-60h363L621-612l43-43 176 176-174 174Z"/>
                         </svg>
                     </button>
                     <!-- Settings -->
@@ -65,13 +68,13 @@
         <!--// Video Stream -->
         <div class="video-call-wrapper">
             <div id="lobby-stream-video" class="stream-video canvas-logo">
-                <canvas id="canvasOne">
+                <canvas id="canvasOne" *ngIf="isHost">
                     Your browser does not support HTML5 Canvas.
                 </canvas>
+                <video id="video-stream" #videoStreamElement  muted autoplay *ngIf="!isHost"></video>
             </div>
         </div>
     </div>
-
 
     <!-- Right Side -->
     <div class="right-side">
@@ -81,8 +84,9 @@
             </div>
             <shig-guest-list
                 [localGuest$]="localGuest$"
-                (activateGuestStreamEvent)="addGuest($event)"
-                (deactivateGuestStreamEvent)="removeGuest($event)"
+                [istHost]="isHost"
+                (activateLobbyMediaStreamEvent)="addLobbyMediaStream($event)"
+                (deactivateLobbyMediaStreamEvent)="removeLobbyMediaStream($event)"
             ></shig-guest-list>
         </div>
     </div>

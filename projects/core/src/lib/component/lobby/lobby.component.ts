@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation} from '@angular/core';
+import {Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild, ViewEncapsulation} from '@angular/core';
 
 import {Location} from '@angular/common';
 import {BehaviorSubject, tap} from 'rxjs';
@@ -6,20 +6,21 @@ import {environment} from '../../../environments/environment';
 import {DeviceSettingsCbk} from '../';
 
 import {
+    CanvasStreamMixer,
     DeviceSettingsService,
     LobbyService,
     ParameterService,
     PeerTubeService,
     SessionService,
-    CanvasStreamMixer,
     StreamService,
 } from '../../provider';
 
 import {
     DeviceSettings,
+    LobbyMediaPurpose,
+    LobbyMediaStream,
     Stream,
-    StreamLiveData,
-    MediaStreamType, Guest, User, buildGuest
+    StreamLiveData
 } from '../../entities';
 
 @Component({
@@ -33,15 +34,19 @@ import {
     encapsulation: ViewEncapsulation.None
 })
 export class LobbyComponent implements OnInit {
+
+    @ViewChild('videoStreamElement') videoStreamRef!: ElementRef<HTMLVideoElement>;
+
     cbk: DeviceSettingsCbk;
     displaySettings = false;
     isInLobby = false;
     state: 'offline' | 'online' = 'offline';
 
     stream: Stream | undefined;
-    localGuest: Guest | undefined;
-    localGuest$ = new BehaviorSubject<Guest | undefined>(undefined);
+    localGuest: LobbyMediaStream | undefined;
+    localGuest$ = new BehaviorSubject<LobbyMediaStream | undefined>(undefined);
     hasMediaStreamSet = false;
+    isHost = false;
 
     private streamLiveData: StreamLiveData | undefined;
     private mixer?: CanvasStreamMixer;
@@ -92,7 +97,8 @@ export class LobbyComponent implements OnInit {
             this.streamService.getStream(this.streamId, this.spaceId)
                 .pipe(tap((stream) => this.stream = stream))
                 .subscribe(() => {
-                    if (this.user !== undefined && this.stream?.user === this.user) {
+                    this.isHost = this.user !== undefined && this.stream?.user === this.user;
+                    if (this.isHost) {
                         setTimeout(() => {
                             this.mixer = new CanvasStreamMixer('canvasOne');
                             this.mixer.start();
@@ -114,7 +120,7 @@ export class LobbyComponent implements OnInit {
     startCamera(settings: DeviceSettings) {
         this.devices.getUserMedia(settings)
             .then((stream: any) => {
-                this.localGuest = buildGuest('local', 'me', stream);
+                this.localGuest = LobbyMediaStream.buildLocal('me', stream);
                 this.localGuest$.next(this.localGuest);
             })
             .then(() => {
@@ -138,29 +144,32 @@ export class LobbyComponent implements OnInit {
 
     join(): void {
         if (!!this.stream && !!this.localGuest?.stream && this.streamId !== undefined && this.spaceId !== undefined) {
-            const streams: Map<MediaStreamType, MediaStream> = new Map<MediaStreamType, MediaStream>();
-            streams.set(MediaStreamType.GUEST, this.localGuest.stream);
+            const streams: Map<LobbyMediaPurpose, MediaStream> = new Map<LobbyMediaPurpose, MediaStream>();
+            streams.set(LobbyMediaPurpose.GUEST, this.localGuest.stream);
 
             if (!!this.mixer) {
-                streams.set(MediaStreamType.STREAM, this.mixer.getMixedStream());
+                streams.set(LobbyMediaPurpose.STREAM, this.mixer.getMixedStream());
             }
 
             this.lobbyService.join(streams, this.spaceId, this.streamId, this.config).then(() => this.isInLobby = true);
         }
     }
 
-    addGuest(guest: Guest): void {
-        if (!!this.mixer) {
-            const videoId = `video-${guest?.stream?.id}`;
-            this.mixer.appendStream(guest.stream);
+    addLobbyMediaStream(media: LobbyMediaStream): void {
+        if (!!this.mixer && media.purpose === LobbyMediaPurpose.GUEST && !!media.stream) {
+            const videoId = `video-${media.streamId}`;
+            this.mixer.appendStream(media.stream);
             this.mixer?.videoElements.set(videoId, document.getElementById(videoId) as HTMLVideoElement);
+        }
+        if (!this.isHost && media.purpose === LobbyMediaPurpose.STREAM && !!media.stream) {
+            this.getStreamVideoElement().srcObject = media.stream;
         }
     }
 
-    removeGuest(guest: Guest): void {
-        if (!!this.mixer) {
-            this.mixer.removeStream(guest.stream);
-            const videoId = `video-${guest?.stream?.id}`;
+    removeLobbyMediaStream(media: LobbyMediaStream): void {
+        if (!!this.mixer && media.purpose === LobbyMediaPurpose.GUEST && !!media.stream) {
+            this.mixer.removeStream(media.stream);
+            const videoId = `video-${media.streamId}`;
             this.mixer?.videoElements.delete(videoId);
         }
     }
@@ -202,5 +211,17 @@ export class LobbyComponent implements OnInit {
                 this.state = 'offline';
             });
         }
+    }
+
+    leaveLobby(): void {
+        if (this.streamId != undefined && this.spaceId != undefined) {
+            this.lobbyService.leaveLobby(this.spaceId, this.streamId).subscribe(() => {
+                window.location.reload()
+            });
+        }
+    }
+
+    private getStreamVideoElement(): HTMLVideoElement {
+        return this.videoStreamRef.nativeElement;
     }
 }

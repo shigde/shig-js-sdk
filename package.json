@@ -28,10 +28,9 @@
     "start": "ng serve --watch",
     "build": "npm run build:lobby",
     "build:core": "ng build core",
-    "watch:core": "ng build core --watch",
+    "watch": "ng build core --watch",
     "build:lobby": "npm run build:core && ng build lobby --output-hashing none && node ./build-lobby.js",
     "build:lobby-dev": "npm run build:core && ng build --configuration development lobby --output-hashing none && node ./build-lobby.js",
-    "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },
   "private": false,
