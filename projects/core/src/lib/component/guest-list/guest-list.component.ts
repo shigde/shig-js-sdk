@@ -74,6 +74,7 @@ export class GuestListComponent implements OnInit {
         }
         const componentRef = this.shigGuestList.viewContainerRef.createComponent<GuestComponent>(GuestComponent);
         componentRef.instance.media = lobbyMediaStream;
+
         componentRef.instance.isLocal = isLocal
         componentRef.instance.onHost = this.istHost;
         componentRef.instance.activateGuestStreamCbk = (g: LobbyMediaStream) => this.activateLobbyMediaStreamEvent.emit(g);

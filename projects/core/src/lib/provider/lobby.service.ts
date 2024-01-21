@@ -8,7 +8,7 @@ import {ChannelMessenger} from './channel-messenger';
 import {
     ChannelMsg,
     ChannelMsgType, LobbyMedia,
-    LobbyMediaPurpose,
+    LobbyMediaPurpose, LobbyMediaStream, MuteMsgData,
     SdpMsgData,
     StreamLiveData,
     StreamLiveInfo,
@@ -22,7 +22,11 @@ import {ParameterService} from './parameter.service';
 })
 export class LobbyService {
     public add$ = new BehaviorSubject<{ media: LobbyMedia, stream: MediaStream } | null>(null);
+    public mute$ = new BehaviorSubject<LobbyMedia | null>(null);
     public remove$ = new BehaviorSubject<LobbyMedia | null>(null);
+    private messenger: ChannelMessenger | undefined;
+    private ingress: WebrtcConnection | undefined;
+    private egress: WebrtcConnection | undefined;
 
     httpOptions = {
         headers: new HttpHeaders({'Content-Type': 'application/sdp', 'Accept': 'application/sdp'}),
@@ -38,16 +42,18 @@ export class LobbyService {
     }
 
     private createSendingConnection(streams: Map<LobbyMediaPurpose, MediaStream>, spaceId: string, streamId: string, config: RTCConfiguration): Promise<ChannelMessenger> {
-        const wc = new WebrtcConnection(config);
-        const messenger = new ChannelMessenger(wc.createDataChannel());
-        return wc.createOffer(streams)
+        this.ingress = new WebrtcConnection(config, "ingress");
+        const msg = new ChannelMessenger(this.ingress.createDataChannel());
+        this.messenger = msg;
+        return this.ingress.createOffer(streams)
             .then((offer) => this.sendWhip(offer, spaceId, streamId))
-            .then((answer) => wc.setAnswer(answer))
-            .then(() => messenger);
+            .then((answer) => this.ingress?.setAnswer(answer))
+            .then(() => msg);
     }
 
     private createReceivingConnection(messenger: ChannelMessenger, spaceId: string, streamId: string, config: RTCConfiguration): Promise<unknown> {
-        const wc = new WebrtcConnection(config);
+        const wc = new WebrtcConnection(config, "egress");
+        this.egress = wc;
 
         messenger.subscribe((msg) => {
             if (msg.type === ChannelMsgType.OfferMsg) {
@@ -58,6 +64,9 @@ export class LobbyService {
                         data: {sdp: answer, number: msg.data.number} as SdpMsgData
                     }) as ChannelMsg)
                     .then((answer) => messenger.send(answer));
+            }
+            if (msg.type === ChannelMsgType.MuteMsg) {
+                wc.muteRemoteMedia(msg.data.mid, msg.data.mute);
             }
         });
 
@@ -72,6 +81,11 @@ export class LobbyService {
             if (event.type === 'remove') {
                 console.log('###### Remove track:stream', event.media.kind, event.media.trackId, event.media.streamId,);
                 this.remove$.next(event.media);
+            }
+
+            if (event.type === 'mute') {
+                console.log('###### Mute track:stream', event.media.kind, event.media.trackId, event.media.streamId,);
+                this.mute$.next(event.media);
             }
         });
 
@@ -147,6 +161,7 @@ export class LobbyService {
         const whipUrl = `${this.params.API_PREFIX}/space/${spaceId}/stream/${streamId}/whip`;
         return this.http.delete<any>(whipUrl).pipe(catchError(this.handleError<any>('', '')));
     }
+
     /**
      * Handle Http operation that failed.
      * Let the app continue.
@@ -166,6 +181,21 @@ export class LobbyService {
             // Let the app keep running by returning an empty result.
             return of(result as T);
         };
+    }
+
+    public broadcastMute(trackId: string, mute: boolean) {
+        if (this.messenger === undefined) {
+            return;
+        }
+        const mid = this.ingress?.getMid(trackId);
+        if (mid !== null) {
+            console.log("##############-mid", mid)
+            this.messenger?.send(({
+                type: ChannelMsgType.MuteMsg,
+                id: 0,
+                data: {mute, mid} as MuteMsgData
+            }) as ChannelMsg);
+        }
     }
 
     /** Log a LobbyService message with the MessageService */
