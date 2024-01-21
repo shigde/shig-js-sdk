@@ -1,6 +1,13 @@
 const WIDTH = 1920;
 const HEIGHT = 1080;
 
+let img = new Image;
+img.src = './assets/icons/face.svg';
+img.onload = function () {
+    console.log('Image loaded');
+};
+
+
 export class CanvasStreamMixer {
 
     private readonly canvas: HTMLCanvasElement;
@@ -29,7 +36,7 @@ export class CanvasStreamMixer {
     drawScreen() {
         //Background
 
-        if(this.videoElements.size == 0) {
+        if (this.videoElements.size == 0) {
             this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
         }
         this.context.fillStyle = 'rgba(255, 255, 255,0)';
@@ -43,7 +50,20 @@ export class CanvasStreamMixer {
                 let placeX = c * gridParams.partWidth + c * gridParams.xPad;
                 let placeY = r * gridParams.partHeight + r * gridParams.yPad;
                 if (!!v) {
-                    this.context.drawImage(v, placeX, placeY, gridParams.partWidth, gridParams.partHeight);
+                    if (v.classList.contains("camera-off")) {
+                        let imgW = img.naturalWidth ;
+                        let imgH = img.naturalHeight;
+                        let ratio =  imgW/ gridParams.partWidth;
+                        let ratioH =  imgH/ gridParams.partHeight;
+                        let startW = placeX + ((gridParams.partWidth  - (imgW))/ 2)
+                        let startH = placeY + ((gridParams.partHeight  - (imgH))/ 2)
+                        this.context.fillStyle = 'rgba(60, 63, 86, 100)';
+                        this.context.fillRect(placeX, placeY, gridParams.partWidth, gridParams.partHeight);
+                        this.context.drawImage(img, startW, startH, gridParams.partWidth * ratio, gridParams.partHeight * ratioH);
+                    } else {
+                        //this.context.drawImage(img, 0, 0, gridParams.partWidth, gridParams.partHeight);
+                        this.context.drawImage(v, placeX, placeY, gridParams.partWidth, gridParams.partHeight);
+                    }
                 }
             }
         }
@@ -166,7 +186,7 @@ export class CanvasStreamMixer {
 
     removeStream(stream: MediaStream) {
         if (this.mediaStreams.has(stream.id)) {
-            this.mediaStreams.delete(stream.id)
+            this.mediaStreams.delete(stream.id);
         }
     }
 

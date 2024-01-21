@@ -120,6 +120,11 @@ export class LobbyComponent implements OnInit {
     startCamera(settings: DeviceSettings) {
         this.devices.getUserMedia(settings)
             .then((stream: any) => {
+                if(this.localGuest?.stream) {
+                    this.localGuest?.stream.getTracks().forEach(t => {
+                        t.stop()
+                    })
+                }
                 this.localGuest = LobbyMediaStream.buildLocal('me', stream);
                 this.localGuest$.next(this.localGuest);
             })

@@ -6,5 +6,6 @@
   },
   "assets": [
     "./assets/scss/*.*"
+    "./assets/icons/*.*"
   ]
 }

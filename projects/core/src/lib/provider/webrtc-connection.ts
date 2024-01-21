@@ -8,7 +8,8 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
     private dataChannel: RTCDataChannel | undefined;
 
     constructor(
-        private readonly config: RTCConfiguration
+        private readonly config: RTCConfiguration,
+        private readonly type: "ingress" | "egress"
     ) {
         super(true);
         this.pc = new RTCPeerConnection(this.config);
@@ -124,7 +125,7 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
         const mediaLines = SdpParser.getSdpMediaLine(sdp);
         mediaLines.forEach((line) => {
             const media = this.remoteMedia.get(line.mid);
-            const updateMedia: LobbyMedia  =  {
+            const updateMedia: LobbyMedia = {
                 mediaIndex: line.mid,
                 purpose: line.purpose,
                 info: line.info,
@@ -132,16 +133,16 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
                 muted: true,
                 trackId: line.trackId,
                 streamId: line.streamId,
-            }
+            };
 
             if ((line.direction === 'inactive' || line.direction === 'recvonly') && !!media) {
-                updateMedia.trackId = media.trackId
-                updateMedia.streamId = media.streamId
-                this.remoteMedia.set(line.mid, updateMedia)
+                updateMedia.trackId = media.trackId;
+                updateMedia.streamId = media.streamId;
+                this.remoteMedia.set(line.mid, updateMedia);
             }
 
             if (line.direction !== 'inactive' && line.direction !== 'recvonly') {
-                this.remoteMedia.set(line.mid, updateMedia)
+                this.remoteMedia.set(line.mid, updateMedia);
             }
         });
     }
@@ -155,5 +156,26 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
                 this.emit({type: 'remove', media});
             }
         });
+    }
+
+    public muteRemoteMedia(mid: string, mute: boolean) {
+        const media = this.remoteMedia.get(Number(mid));
+        console.log("####---", this.type)
+        if (!!media) {
+            media.muted = mute;
+            this.remoteMedia.set(Number(mid), media);
+            this.emit({type: 'mute', media});
+        }
+    }
+
+    public getMid(trackId: string): string | null {
+        const tsList = this.pc.getTransceivers();
+        for (let transceiver of tsList) {
+            const track = transceiver.sender.track;
+            if (!!track && track.id === trackId) {
+                return transceiver.mid;
+            }
+        }
+        return null;
     }
 }

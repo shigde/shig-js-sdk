@@ -1,6 +1,6 @@
 import {EventEmitter} from '@angular/core';
 
-import {ChannelMsg, ChannelMsgType, SdpMsgData} from '../entities/channel.msg';
+import {ChannelMsg, ChannelMsgType, MuteMsgData, SdpMsgData} from '../entities/channel.msg';
 
 export class ChannelMessenger extends EventEmitter<ChannelMsg> {
 
@@ -15,6 +15,11 @@ export class ChannelMessenger extends EventEmitter<ChannelMsg> {
       msg.data = msg.data as SdpMsgData
       this.emit(msg);
     }
+      if (msg?.type === ChannelMsgType.MuteMsg) {
+          msg.data = msg.data as MuteMsgData
+          console.log("##############-mid", msg.data)
+          this.emit(msg);
+      }
   }
 
   public send(msg: ChannelMsg): void {
