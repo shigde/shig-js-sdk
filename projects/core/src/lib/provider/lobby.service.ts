@@ -36,23 +36,23 @@ export class LobbyService {
     constructor(private http: HttpClient, private messageService: MessageService, private params: ParameterService) {
     }
 
-    public join(stream: Map<LobbyMediaPurpose, MediaStream>, spaceId: string, streamId: string, config: RTCConfiguration): Promise<unknown> {
-        return this.createSendingConnection(stream, spaceId, streamId, config)
+    public join(stream: Map<LobbyMediaPurpose, MediaStream>, spaceId: string, streamId: string, config: RTCConfiguration, info: string): Promise<unknown> {
+        return this.createSendingConnection(stream, spaceId, streamId, config, info)
             .then((messenger) => this.createReceivingConnection(messenger, spaceId, streamId, config));
     }
 
-    private createSendingConnection(streams: Map<LobbyMediaPurpose, MediaStream>, spaceId: string, streamId: string, config: RTCConfiguration): Promise<ChannelMessenger> {
-        this.ingress = new WebrtcConnection(config, "ingress");
+    private createSendingConnection(streams: Map<LobbyMediaPurpose, MediaStream>, spaceId: string, streamId: string, config: RTCConfiguration, info: string): Promise<ChannelMessenger> {
+        this.ingress = new WebrtcConnection(config, 'ingress');
         const msg = new ChannelMessenger(this.ingress.createDataChannel());
         this.messenger = msg;
-        return this.ingress.createOffer(streams)
+        return this.ingress.createOffer(streams, info)
             .then((offer) => this.sendWhip(offer, spaceId, streamId))
             .then((answer) => this.ingress?.setAnswer(answer))
             .then(() => msg);
     }
 
     private createReceivingConnection(messenger: ChannelMessenger, spaceId: string, streamId: string, config: RTCConfiguration): Promise<unknown> {
-        const wc = new WebrtcConnection(config, "egress");
+        const wc = new WebrtcConnection(config, 'egress');
         this.egress = wc;
 
         messenger.subscribe((msg) => {
@@ -189,7 +189,7 @@ export class LobbyService {
         }
         const mid = this.ingress?.getMid(trackId);
         if (mid !== null) {
-            console.log("##############-mid", mid)
+            console.log('##############-mid', mid);
             this.messenger?.send(({
                 type: ChannelMsgType.MuteMsg,
                 id: 0,

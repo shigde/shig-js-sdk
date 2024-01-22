@@ -120,10 +120,10 @@ export class LobbyComponent implements OnInit {
     startCamera(settings: DeviceSettings) {
         this.devices.getUserMedia(settings)
             .then((stream: any) => {
-                if(this.localGuest?.stream) {
+                if (this.localGuest?.stream) {
                     this.localGuest?.stream.getTracks().forEach(t => {
-                        t.stop()
-                    })
+                        t.stop();
+                    });
                 }
                 this.localGuest = LobbyMediaStream.buildLocal('me', stream);
                 this.localGuest$.next(this.localGuest);
@@ -156,7 +156,7 @@ export class LobbyComponent implements OnInit {
                 streams.set(LobbyMediaPurpose.STREAM, this.mixer.getMixedStream());
             }
 
-            this.lobbyService.join(streams, this.spaceId, this.streamId, this.config).then(() => this.isInLobby = true);
+            this.lobbyService.join(streams, this.spaceId, this.streamId, this.config, 'Guest').then(() => this.isInLobby = true);
         }
     }
 
@@ -221,7 +221,7 @@ export class LobbyComponent implements OnInit {
     leaveLobby(): void {
         if (this.streamId != undefined && this.spaceId != undefined) {
             this.lobbyService.leaveLobby(this.spaceId, this.streamId).subscribe(() => {
-                window.location.reload()
+                window.location.reload();
             });
         }
     }

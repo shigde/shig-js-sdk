@@ -1,5 +1,13 @@
 import {EventEmitter} from '@angular/core';
-import {ChannelMsg, ChannelMsgType, LobbyMedia, LobbyMediaEvent, LobbyMediaIndex, LobbyMediaPurpose} from '../entities';
+import {
+    ChannelMsg,
+    ChannelMsgType,
+    LobbyMedia,
+    LobbyMediaEvent,
+    LobbyMediaIndex,
+    LobbyMediaPurpose,
+    SdpMediaInfo
+} from '../entities';
 import {SdpParser} from './sdp-parser';
 
 export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
@@ -9,7 +17,7 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
 
     constructor(
         private readonly config: RTCConfiguration,
-        private readonly type: "ingress" | "egress"
+        private readonly type: 'ingress' | 'egress'
     ) {
         super(true);
         this.pc = new RTCPeerConnection(this.config);
@@ -35,13 +43,17 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
         return this.dataChannel;
     }
 
-    public createOffer(streams: Map<LobbyMediaPurpose, MediaStream>): Promise<RTCSessionDescription> {
-        const trackInfo = new Map<string, LobbyMediaPurpose>();
+    public createOffer(streams: Map<LobbyMediaPurpose, MediaStream>, info: string): Promise<RTCSessionDescription> {
+        const trackInfo = new Map<string, SdpMediaInfo>();
         streams.forEach((ms, streamType) => {
             let streamId = ms.id;
             ms.getTracks().forEach((track) => {
                 this.pc.addTrack(track, ms);
-                trackInfo.set(`${streamId} ${track.id}`.trim(), streamType);
+                trackInfo.set(`${streamId} ${track.id}`.trim(), {
+                    purpose: streamType,
+                    muted: !track.enabled,
+                    info: info
+                });
             });
         });
 
@@ -130,7 +142,7 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
                 purpose: line.purpose,
                 info: line.info,
                 kind: line.kind,
-                muted: true,
+                muted: line.muted,
                 trackId: line.trackId,
                 streamId: line.streamId,
             };
@@ -160,7 +172,7 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
 
     public muteRemoteMedia(mid: string, mute: boolean) {
         const media = this.remoteMedia.get(Number(mid));
-        console.log("####---", this.type)
+        console.log('####---', this.type);
         if (!!media) {
             media.muted = mute;
             this.remoteMedia.set(Number(mid), media);
