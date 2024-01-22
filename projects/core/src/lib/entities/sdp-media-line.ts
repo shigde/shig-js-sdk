@@ -6,6 +6,7 @@ export interface SdpMediaLine {
     streamId: string
     kind: 'audio' | 'video';
     direction: 'sendrecv' | 'recvonly' | 'sendonly' | 'inactive';
+    muted: boolean;
     purpose: LobbyMediaPurpose;
     info: string;
 }

@@ -1,15 +1,19 @@
 import * as sdpTransform from 'sdp-transform';
-import {getMediaStreamTypeByNumber, LobbyMediaPurpose} from '../entities';
+import {getMediaStreamTypeByNumber, LobbyMediaPurpose, SdpMediaInfo} from '../entities';
 import {SdpMediaLine} from '../entities/sdp-media-line';
+import {getLobbyMediaMuted, getMuted, LobbyMediaMuted} from '../entities/lobby-media-muted';
 
 export class SdpParser {
 
-    public static mungeOfferInfo(sdp: RTCSessionDescription, info: Map<string, LobbyMediaPurpose>): RTCSessionDescription {
+    public static mungeOfferInfo(sdp: RTCSessionDescription, info: Map<string, SdpMediaInfo>): RTCSessionDescription {
         const res = sdpTransform.parse(sdp.sdp);
         res.media.forEach((m) => {
-            m.description = (m.msid && info.has(m.msid))
-                ? `${info.get(m.msid.trim())}`
-                : `${LobbyMediaPurpose.GUEST}`;
+            if (m.msid && info.has(m.msid)) {
+                const val = info.get(m.msid);
+                m.description = `${val?.purpose} ${getLobbyMediaMuted(val?.muted)} ${val?.info}`;
+            } else {
+                m.description = `${LobbyMediaPurpose.GUEST} ${LobbyMediaMuted.Muted} Guest`;
+            }
         });
         const sdpStr = sdpTransform.write(res);
         return {
@@ -27,7 +31,7 @@ export class SdpParser {
         res.media.forEach((m) => {
             if (m.type !== 'application') {
                 let {track, stream} = SdpParser.readMediaId(m.msid);
-                let {purpose, info} = SdpParser.readDescription(m.description);
+                let {purpose, muted, info} = SdpParser.readDescription(m.description);
                 const line: SdpMediaLine = {
                     mid: (m.mid !== undefined) ? Number(m.mid) : -1,
                     trackId: track,
@@ -35,7 +39,8 @@ export class SdpParser {
                     kind: (m.type === 'audio' || m.type === 'video') ? m.type : 'audio',
                     direction: (m.direction !== undefined) ? m.direction : 'inactive',
                     purpose: purpose,
-                    info: info
+                    info: info,
+                    muted: muted
                 };
                 mediaLines.push(line);
             }
@@ -43,13 +48,17 @@ export class SdpParser {
         return mediaLines;
     }
 
-    private static readDescription(description: string | undefined): { purpose: LobbyMediaPurpose, info: string } {
+    private static readDescription(description: string | undefined): SdpMediaInfo {
         let purpose: LobbyMediaPurpose = LobbyMediaPurpose.GUEST;
+        let muted: boolean = false;
         let info: string = 'Guest';
         if (description !== undefined) {
-            purpose = getMediaStreamTypeByNumber(Number(description));
+            const dataArray = description.split(' ');
+            purpose = getMediaStreamTypeByNumber(Number(dataArray[0]));
+            muted = getMuted(dataArray[1]);
+            info = dataArray[2];
         }
-        return {purpose, info};
+        return {purpose, muted, info};
     }
 
     private static readMediaId(msid: string | undefined): { track: string, stream: string } {
