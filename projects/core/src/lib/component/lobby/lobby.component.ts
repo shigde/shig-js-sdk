@@ -60,10 +60,14 @@ export class LobbyComponent implements OnInit {
     @Input('stream') streamId: string | undefined;
     @Input('space') spaceId: string | undefined;
     @Input('user') user: string | undefined;
+    @Input('base-path') basePath: string | undefined;
+
 
     @Input() role: string | null = 'guest';
 
     @Output() loadComp = new EventEmitter();
+
+    private image: HTMLImageElement = new Image;
 
     constructor(
         private session: SessionService,
@@ -83,6 +87,16 @@ export class LobbyComponent implements OnInit {
         if (this.apiPrefix !== undefined) {
             this.params.API_PREFIX = this.apiPrefix;
         }
+        if (this.basePath === undefined) {
+            this.basePath = "./assets";
+        }
+
+
+        this.image.src = this.basePath + '/images/face.svg';
+        this.image.onload = function () {
+            console.log('Image loaded');
+        };
+
         this.session.setAuthenticationToken(this.getToken());
         this.getStream();
         this.getStreamLiveData();
@@ -100,7 +114,7 @@ export class LobbyComponent implements OnInit {
                     this.isHost = this.user !== undefined && this.stream?.user === this.user;
                     if (this.isHost) {
                         setTimeout(() => {
-                            this.mixer = new CanvasStreamMixer('canvasOne');
+                            this.mixer = new CanvasStreamMixer('canvasOne', this.image);
                             this.mixer.start();
                         }, 0);
                     }
@@ -202,6 +216,8 @@ export class LobbyComponent implements OnInit {
     }
 
     start(): void {
+        console.log("Hey ####################")
+        console.log("Hey ####################", this.streamLiveData, this.streamId,this.spaceId )
         if (this.streamLiveData != undefined && this.streamId != undefined && this.spaceId != undefined) {
             this.lobbyService.startLiveStream(this.streamLiveData, this.spaceId, this.streamId)
                 .subscribe(() => {

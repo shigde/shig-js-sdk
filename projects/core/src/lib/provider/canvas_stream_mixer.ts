@@ -1,17 +1,12 @@
 const WIDTH = 1920;
 const HEIGHT = 1080;
 
-let img = new Image;
-img.src = './assets/icons/face.svg';
-img.onload = function () {
-    console.log('Image loaded');
-};
-
 
 export class CanvasStreamMixer {
 
     private readonly canvas: HTMLCanvasElement;
     private readonly context: CanvasRenderingContext2D;
+    private readonly img: HTMLImageElement;
     public readonly videoElements: Map<string, HTMLVideoElement> = new Map<string, HTMLVideoElement>();
 
     private mediaStreams: Map<string, MediaStream> = new Map<string, MediaStream>();
@@ -21,12 +16,14 @@ export class CanvasStreamMixer {
     private gainNode?: GainNode;
     private useGainNode = false;
 
-    constructor(elementId: string) {
+    constructor(elementId: string, img: HTMLImageElement) {
+        this.img = img;
         this.canvas = window.document.getElementById(elementId) as HTMLCanvasElement;
         this.canvas.width = WIDTH;
         this.canvas.height = HEIGHT;
         this.context = this.canvas.getContext('2d') as CanvasRenderingContext2D;
         this.context.imageSmoothingEnabled = true;
+
     }
 
     start() {
@@ -50,16 +47,16 @@ export class CanvasStreamMixer {
                 let placeX = c * gridParams.partWidth + c * gridParams.xPad;
                 let placeY = r * gridParams.partHeight + r * gridParams.yPad;
                 if (!!v) {
-                    if (v.classList.contains("camera-off")) {
-                        let imgW = img.naturalWidth ;
-                        let imgH = img.naturalHeight;
-                        let ratio =  imgW/ gridParams.partWidth;
-                        let ratioH =  imgH/ gridParams.partHeight;
-                        let startW = placeX + ((gridParams.partWidth  - (imgW))/ 2)
-                        let startH = placeY + ((gridParams.partHeight  - (imgH))/ 2)
+                    if (v.classList.contains('camera-off')) {
+                        let imgW = this.img.naturalWidth;
+                        let imgH = this.img.naturalHeight;
+                        let ratio = imgW / gridParams.partWidth;
+                        let ratioH = imgH / gridParams.partHeight;
+                        let startW = placeX + ((gridParams.partWidth - (imgW)) / 2);
+                        let startH = placeY + ((gridParams.partHeight - (imgH)) / 2);
                         this.context.fillStyle = 'rgba(60, 63, 86, 100)';
                         this.context.fillRect(placeX, placeY, gridParams.partWidth, gridParams.partHeight);
-                        this.context.drawImage(img, startW, startH, gridParams.partWidth * ratio, gridParams.partHeight * ratioH);
+                        this.context.drawImage(this.img, startW, startH, gridParams.partWidth * ratio, gridParams.partHeight * ratioH);
                     } else {
                         //this.context.drawImage(img, 0, 0, gridParams.partWidth, gridParams.partHeight);
                         this.context.drawImage(v, placeX, placeY, gridParams.partWidth, gridParams.partHeight);

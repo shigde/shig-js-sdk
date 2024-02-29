@@ -13,7 +13,7 @@ export class PeerTubeService {
     }
 
     public fetchStreamLiveData(token: string, stream: string): Observable<StreamLiveData> {
-        return this.http.get<StreamLiveData>(`api/v1/videos/live/${stream}`, {
+        return this.http.get<StreamLiveData>(`/api/v1/videos/live/${stream}`, {
             headers: new HttpHeaders({
                 'Authorization': token,
                 'Content-Type': 'application/json'
