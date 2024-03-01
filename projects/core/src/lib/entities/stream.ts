@@ -1,4 +1,5 @@
 export interface Stream {
-  uuid: string;
-  user: string
+    uuid: string;
+    title: string;
+    user: string;
 }
