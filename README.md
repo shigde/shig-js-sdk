@@ -43,3 +43,9 @@ the `dist/lobby` directory.
 ```
 
 You can find the complete list of parameters here: [Parameter](https://github.com/shigde/shig-js-sdk/tree/main/projects/core#readme)
+
+## Funded by
+
+<p style="display: flex; flex-direction: row; justify-content: flex-start; align-items: center;">
+<a href="https://www.bmbf.de/bmbf/en" rel="nofollow"><img src="docs/img/BMBF.jpg" alt="Logo of the German Ministry for Education and Research" style="max-width:100%; padding:20px;" height="150px"></a>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a href="https://prototypefund.de/en/" rel="nofollow"><img src="docs/img/PF.svg" alt="Logo of the Prototype Fund" style="max-width:100%; padding:20px;" height="150px"></a>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a href="https://okfn.de/en/" rel="nofollow"><img src="docs/img/OKFD.svg" alt="Logo of the Open Knowledge Foundation Germany" style="max-width:100%; padding:20px;" height="150px"></a>
+</p>
