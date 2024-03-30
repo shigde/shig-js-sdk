@@ -37,6 +37,7 @@ export class GuestListComponent implements OnInit {
 
     constructor(private ref: ChangeDetectorRef, private lobbyService: LobbyService) {
         this.lobbyService.add$.pipe(filter(s => s !== null)).subscribe((s) => {
+            console.log("### lobby service - add", s)
             if(s !== null && s?.media.purpose == LobbyMediaPurpose.GUEST) {
                 this.upsertGuest(LobbyMediaStream.build(s.media, s.stream));
             }
@@ -45,7 +46,7 @@ export class GuestListComponent implements OnInit {
             }
         });
         this.lobbyService.remove$.pipe(filter(s => s !== null)).subscribe((media) => {
-            console.log("###", media)
+            console.log("### lobby service - remove", media)
             if(media !== null && media.purpose == LobbyMediaPurpose.GUEST && this.hasGuest(media.streamId)) {
                 this.removeGuest(media.streamId);
             }
@@ -68,8 +69,10 @@ export class GuestListComponent implements OnInit {
     }
 
     private upsertGuest(lobbyMediaStream: LobbyMediaStream, isLocal: boolean = false): void {
+        console.log("### lobby service - upsert Gust", lobbyMediaStream)
         if (this.hasGuest(lobbyMediaStream.streamId)) {
             this.cmpRefMap.get(lobbyMediaStream.streamId)?.instance.updateGuest(lobbyMediaStream);
+            this.ref.detectChanges();
             return;
         }
         const componentRef = this.shigGuestList.viewContainerRef.createComponent<GuestComponent>(GuestComponent);

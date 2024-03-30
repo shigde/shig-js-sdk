@@ -60,13 +60,17 @@ export class GuestComponent implements AfterViewInit, OnDestroy {
         const oldMedia = this.media;
         this.media = media;
         if (this.media.stream) {
+            console.log("### lobby service - add media")
             this.getVideoElement().srcObject = this.media.stream;
+            console.log("##### Tracks:", this.media.stream.getVideoTracks())
         }
         if (oldMedia.streamId !== this.media.streamId) {
             // if get a complete new stream, stop the old stream
             // this happens often for local users
+            console.log("### lobby service - stop media")
             oldMedia.stopStream();
         }
+        this.ref.detectChanges();
     }
 
     ngOnDestroy(): void {

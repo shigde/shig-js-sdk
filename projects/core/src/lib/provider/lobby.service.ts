@@ -54,6 +54,7 @@ export class LobbyService {
     private createReceivingConnection(messenger: ChannelMessenger, spaceId: string, streamId: string, config: RTCConfiguration): Promise<unknown> {
         const wc = new WebrtcConnection(config, 'egress');
         this.egress = wc;
+        new ChannelMessenger(this.egress.createDataChannel());
 
         messenger.subscribe((msg) => {
             if (msg.type === ChannelMsgType.OfferMsg) {
@@ -89,9 +90,9 @@ export class LobbyService {
             }
         });
 
-        return this.sendWhepOfferReq(spaceId, streamId)
-            .then((offer) => wc.setRemoteOffer(offer))
-            .then((answer) => this.sendWhepAnswer(answer, spaceId, streamId));
+        return this.egress.createOffer(new Map<LobbyMediaPurpose, MediaStream>(),"")
+            .then((offer) => this.sendWhep(offer, spaceId, streamId))
+            .then((answer) => this.egress?.setAnswer(answer))
     }
 
 
@@ -107,15 +108,16 @@ export class LobbyService {
         ).then(answer => ({type: 'answer', sdp: answer} as RTCSessionDescription));
     }
 
-    sendWhepOfferReq(spaceId: string, streamId: string) {
+    sendWhep(offer: RTCSessionDescriptionInit, spaceId: string, streamId: string) {
         const whepUrl = `${this.params.API_PREFIX}/space/${spaceId}/stream/${streamId}/whep`;
 
+        const body = offer.sdp;
         // @ts-ignore
-        return lastValueFrom(this.http.post(whepUrl, null, this.httpOptions).pipe(
+        return lastValueFrom(this.http.post(whepUrl, body, this.httpOptions).pipe(
                 tap(a => console.log('---', a)),
-                catchError(this.handleError<string>('sendWhepOfferReq', ''))
+                catchError(this.handleError<string>('sendWhep', ''))
             )
-        ).then(offer => ({type: 'offer', sdp: offer} as RTCSessionDescription));
+        ).then(answer => ({type: 'answer', sdp: answer} as RTCSessionDescription));
     }
 
     sendWhepAnswer(answer: RTCSessionDescriptionInit, spaceId: string, streamId: string) {
