@@ -128,6 +128,7 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
 
     private onSignalStateChange() {
         console.log(`signal state: ${this.pc.signalingState}`);
+        this.logTransceiversState(this.pc.signalingState)
         if (this.pc.signalingState === 'have-remote-offer') {
             this.onRemoteOffer(this.pc.remoteDescription);
         }
@@ -189,5 +190,21 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
             }
         }
         return null;
+    }
+
+    private logTransceiversState(sdpState: string): void {
+        this.pc.getTransceivers().forEach((t) => {
+            console.log(`### TS:
+            state: ${sdpState}
+            mid: ${t.mid}
+            direction: ${t.direction}
+            track: ${t.receiver.track.id}
+            kind: ${t.receiver.track.kind}
+            muted: ${t.receiver.track.muted}
+            enabled: ${t.receiver.track.enabled}
+            state: ${t.receiver.track.readyState}
+            `
+            );
+        });
     }
 }

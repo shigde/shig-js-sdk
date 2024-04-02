@@ -35,9 +35,5 @@ export class LobbyMediaStream {
     public setStream(stream: MediaStream) {
         this.stream = stream;
     }
-
-    public stopStream() {
-        this.stream?.getTracks().forEach(t => t.stop());
-    }
 }
 

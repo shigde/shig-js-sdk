@@ -216,8 +216,7 @@ export class LobbyComponent implements OnInit {
     }
 
     start(): void {
-        console.log("Hey ####################")
-        console.log("Hey ####################", this.streamLiveData, this.streamId,this.spaceId )
+        console.log("Start ####################", this.streamLiveData, this.streamId,this.spaceId )
         if (this.streamLiveData != undefined && this.streamId != undefined && this.spaceId != undefined) {
             this.lobbyService.startLiveStream(this.streamLiveData, this.spaceId, this.streamId)
                 .subscribe(() => {

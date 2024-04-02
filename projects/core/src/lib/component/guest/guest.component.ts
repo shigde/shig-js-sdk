@@ -64,12 +64,6 @@ export class GuestComponent implements AfterViewInit, OnDestroy {
             this.getVideoElement().srcObject = this.media.stream;
             console.log("##### Tracks:", this.media.stream.getVideoTracks())
         }
-        if (oldMedia.streamId !== this.media.streamId) {
-            // if get a complete new stream, stop the old stream
-            // this happens often for local users
-            console.log("### lobby service - stop media")
-            oldMedia.stopStream();
-        }
         this.ref.detectChanges();
     }
 
@@ -80,7 +74,6 @@ export class GuestComponent implements AfterViewInit, OnDestroy {
             this.deactivateGuestStreamCbk(this.media);
         }
         this.getVideoElement().srcObject = null;
-        this.media.stopStream();
     }
 
     toggleMuteVideo() {
