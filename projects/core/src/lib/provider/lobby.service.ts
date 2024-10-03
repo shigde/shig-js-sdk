@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {HttpClient, HttpHeaders} from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 
 import {WebrtcConnection} from './webrtc-connection';
 import {BehaviorSubject, catchError, lastValueFrom, Observable, of, tap} from 'rxjs';

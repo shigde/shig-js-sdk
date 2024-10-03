@@ -48,11 +48,12 @@
       "prefix": "shig",
       "architect": {
         "build": {
-          "builder": "@angular-devkit/build-angular:browser",
+          "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "outputPath": "dist/lobby",
+            "outputPath": {
+              "base": "dist/lobby"
+            },
             "index": "projects/lobby/src/index.html",
-            "main": "projects/lobby/src/main.ts",
             "polyfills": [
               "zone.js"
             ],
@@ -68,7 +69,8 @@
             "styles": [
               "projects/lobby/src/styles.scss"
             ],
-            "scripts": []
+            "scripts": [],
+            "browser": "projects/lobby/src/main.ts"
           },
           "configurations": {
             "production": {
@@ -93,7 +95,6 @@
               "outputHashing": "all"
             },
             "development": {
-              "buildOptimizer": false,
               "optimization": false
               //              "vendorChunk": true,
               //              "extractLicenses": false,
