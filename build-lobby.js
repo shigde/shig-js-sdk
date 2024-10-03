@@ -3,11 +3,11 @@ const concat = require("concat");
 
 const build = async () => {
   const files = [
-    "./dist/lobby/runtime.js",
-    "./dist/lobby/polyfills.js",
+    //"./dist/lobby/runtime.js",
+    "./dist/lobby/browser/polyfills.js",
     //"./dist/lobby/styles.js",
     //"./dist/lobby/vendor.js",
-    "./dist/lobby/main.js",
+    "./dist/lobby/browser/main.js",
   ];
 
   await fs.ensureDir("dist/lobby");
