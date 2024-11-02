@@ -1,10 +1,9 @@
 import {Injectable} from '@angular/core';
 import {BehaviorSubject, Observable, of, Subject} from 'rxjs';
-import {ClientUser} from '../entities';
+import {Role} from '../entities';
 import {User} from '../entities/user';
 
-const USER_NAME_KEY = 'user-name';
-const USER_DOMAIN_KEY = 'user-domain';
+const USER_KEY = 'user';
 const SESSION_TOKEN_KEY = 'jwt';
 
 @Injectable({
@@ -15,8 +14,8 @@ export class SessionService {
     private readonly anonymous = 'anonymous';
 
     constructor() {
-        const user = window.localStorage.getItem(USER_NAME_KEY);
-        this.userName$ = new BehaviorSubject<string>(user === null ? this.anonymous : user);
+        const user = this.loadUser();
+        this.userName$ = new BehaviorSubject<string>(user === null ? this.anonymous : user.name);
     }
 
     public setAuthenticationToken(token: string) {
@@ -31,7 +30,7 @@ export class SessionService {
         if (this.getAuthenticationToken() !== null) {
             return of(true);
         }
-       return of(false)
+        return of(false);
     }
 
     getUserName(): Observable<string> {
@@ -43,16 +42,37 @@ export class SessionService {
         this.userName$.next(this.anonymous);
     }
 
+    getUserRole(): Role {
+        if (!this.isActive()) {
+            return Role.ANONYMOUS;
+        }
+
+        const user = this.loadUser();
+        if (user === null) {
+            return Role.ANONYMOUS;
+        }
+        return user.role;
+    }
 
     public setUser(user: User) {
-        window.localStorage.setItem(USER_NAME_KEY, user.name);
-        window.localStorage.setItem(USER_DOMAIN_KEY, user.domain);
+        this.saveUser(user);
         this.userName$.next(user.name);
     }
 
     public removeUser(key: string) {
-        window.localStorage.removeItem(USER_NAME_KEY);
-        window.localStorage.removeItem(USER_DOMAIN_KEY);
+        window.localStorage.removeItem(USER_KEY);
         this.userName$.next(this.anonymous);
+    }
+
+    private loadUser(): User | null {
+        const user = window.localStorage.getItem(USER_KEY);
+        if (user !== null) {
+            return JSON.parse(user) as User;
+        }
+        return null;
+    }
+
+    private saveUser(user: User): void {
+        window.localStorage.setItem(USER_KEY, JSON.stringify(user));
     }
 }

@@ -19,7 +19,6 @@ export class ReqTokenInterceptor implements HttpInterceptor {
                 if (httpEvent.type === HttpEventType.Sent) {
                     return;
                 }
-                console.log('response: ', httpEvent);
 
                 if (httpEvent instanceof HttpResponse) {
                     if (httpEvent.headers.has(headerName)) {

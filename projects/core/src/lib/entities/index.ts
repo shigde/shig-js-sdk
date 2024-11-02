@@ -9,6 +9,7 @@ export * from './lobby-media-muted';
 export * from './lobby-media-purpose';
 export * from './lobby-media-stream';
 export * from './media-devices';
+export * from './role';
 export * from './token';
 export * from './sdp-media-info';
 export * from './sdp-media-line';
