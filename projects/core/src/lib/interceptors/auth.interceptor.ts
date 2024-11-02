@@ -14,10 +14,10 @@ export class AuthInterceptor implements HttpInterceptor {
       .pipe(
         map(isActive => {
           if (isActive) {
-            const token = this.session.getToken();
+            const token = this.session.getAuthenticationToken();
             request = request.clone({
               setHeaders: {
-                Authorization: token,
+                Authorization: `Bearer ${token}`,
               },
             });
           }

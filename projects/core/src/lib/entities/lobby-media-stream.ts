@@ -1,4 +1,3 @@
-import {User} from './user';
 import {LobbyMedia} from './lobby-media';
 import {LobbyMediaPurpose} from './lobby-media-purpose';
 

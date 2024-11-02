@@ -10,8 +10,8 @@ import {
 } from './component';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-import '@material/web/switch/switch';
-import '@material/web/chips/filter-chip';
+// import '@material/web/common';
+
 
 
 @NgModule({ declarations: [
