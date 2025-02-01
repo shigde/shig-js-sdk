@@ -18,6 +18,7 @@ export * from './stream';
 export * from './stream-live-data';
 export * from './stream-live-status';
 export * from './user';
+export * from './video';
 
 
 

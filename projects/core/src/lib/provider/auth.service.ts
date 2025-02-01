@@ -41,37 +41,30 @@ export class AuthService {
         return this.http.put<void>(url, {token}, this.httpOptions);
     }
 
-    forgetPassword(email: string) {
-        const url = `${this.params.API_PREFIX}/auth/forgotPassword`;
-        const body = {email};
+    sendForgotPasswordMail(email: string): Observable<void>  {
+        const url = `${this.params.API_PREFIX}/auth/sendForgotPasswordMail`;
+        // returns 201 || 400
+        return this.http.post<void>(url, {email}, this.httpOptions);
 
-        return lastValueFrom(this.http.post(url, body, this.httpOptions).pipe(
-                tap(a => console.log('Forgot Password Finish', a)),
-                catchError(handleError<string>('forgot password', ''))
-            )
-        );
     }
 
-    newPassword(password: string, token: string) {
-        const url = `${this.params.API_PREFIX}/auth/newPassword`;
-        const body = {password, token};
+    updateForgotPassword(password: string, token: string) {
+        const url = `${this.params.API_PREFIX}/auth/updateForgotPassword`;
+        // returns 201 || 400
+        return this.http.put<void>(url, {password, token}, this.httpOptions);
+    }
 
-        return lastValueFrom(this.http.post(url, body, this.httpOptions).pipe(
-                tap(a => console.log('New Password Finish', a)),
-                catchError(handleError<string>('new password', ''))
-            )
-        );
+    updatePassword(oldPassword: string, newPassword: string) {
+        const url = `${this.params.API_PREFIX}/auth/updatePassword`;
+        // returns 201 || 400
+        return this.http.put<void>(url, {oldPassword, newPassword}, this.httpOptions);
     }
 
     deleteAccount(email: string) {
         const url = `${this.params.API_PREFIX}/auth/deleteAccount`;
         const body = {email};
 
-        return lastValueFrom(this.http.post(url, body, this.httpOptions).pipe(
-                tap(a => console.log('Delete Account', a)),
-                catchError(handleError<string>('delete account', ''))
-            )
-        );
+        return this.http.post<void>(url, {email}, this.httpOptions);
     }
 
     private getUser(): Observable<User> {
