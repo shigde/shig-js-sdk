@@ -1,10 +1,10 @@
 import {Injectable} from '@angular/core';
 import {BehaviorSubject, Observable, of, Subject} from 'rxjs';
-import {Role} from '../entities';
-import {User} from '../entities/user';
+import {Role, Token, User} from '../entities';
 
 const USER_KEY = 'user';
 const SESSION_TOKEN_KEY = 'jwt';
+const REFRESH_TOKEN_KEY = 'refresh';
 
 @Injectable({
     providedIn: 'root'
@@ -24,6 +24,14 @@ export class SessionService {
 
     public getAuthenticationToken(): string | null {
         return window.localStorage.getItem(SESSION_TOKEN_KEY);
+    }
+
+    public setRefreshToken(token: string) {
+        window.localStorage.setItem(REFRESH_TOKEN_KEY, token);
+    }
+
+    public getRefreshToken(): string | null {
+        return window.localStorage.getItem(REFRESH_TOKEN_KEY);
     }
 
     isActive(): Observable<boolean> {
@@ -59,7 +67,7 @@ export class SessionService {
         this.userName$.next(user.name);
     }
 
-    public removeUser(key: string) {
+    public removeUser() {
         window.localStorage.removeItem(USER_KEY);
         this.userName$.next(this.anonymous);
     }
@@ -74,5 +82,10 @@ export class SessionService {
 
     private saveUser(user: User): void {
         window.localStorage.setItem(USER_KEY, JSON.stringify(user));
+    }
+
+    public setToken(token: Token) {
+        this.setAuthenticationToken(token.jwt);
+        this.setRefreshToken(token.refresh);
     }
 }

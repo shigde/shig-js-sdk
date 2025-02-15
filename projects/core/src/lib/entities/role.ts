@@ -3,5 +3,7 @@ export enum Role {
     ADMIN,
     USER,
     GUEST,
+    APPLICATION,
     SERVICE,
+    ORGANISATION
 }
