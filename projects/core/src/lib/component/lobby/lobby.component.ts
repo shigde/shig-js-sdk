@@ -31,7 +31,8 @@ import {
         './../../../../assets/scss/styles.scss',
         './lobby.component.scss'
     ],
-    encapsulation: ViewEncapsulation.None
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class LobbyComponent implements OnInit {
 

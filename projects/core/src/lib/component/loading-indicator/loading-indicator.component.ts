@@ -6,11 +6,11 @@ import {AsyncPipe} from '@angular/common';
 
 @Component({
     selector: 'shig-loading-indicator',
-    standalone: true,
     imports: [
         AsyncPipe
     ],
     templateUrl: './loading-indicator.component.html',
+    standalone: true,
     styleUrl: './loading-indicator.component.css'
 })
 export class LoadingIndicatorComponent implements OnInit {

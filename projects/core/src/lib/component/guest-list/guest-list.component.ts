@@ -23,7 +23,8 @@ import {GuestListDirective} from './guest-list.directive';
         './../../../../assets/scss/lobby.scss',
         './../../../../assets/scss/styles.scss'
     ],
-    encapsulation: ViewEncapsulation.None
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class GuestListComponent implements OnInit {
     @HostBinding('class.guest-area') public hostClass = true;

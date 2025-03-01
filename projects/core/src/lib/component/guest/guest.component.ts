@@ -17,7 +17,8 @@ import {filter, Subscription} from 'rxjs';
         './../../../../assets/scss/lobby.scss',
         './../../../../assets/scss/styles.scss'
     ],
-    encapsulation: ViewEncapsulation.None
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class GuestComponent implements AfterViewInit, OnDestroy {
 
