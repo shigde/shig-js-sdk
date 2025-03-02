@@ -17,7 +17,8 @@ import {filter, Subscription} from 'rxjs';
         './../../../../assets/scss/lobby.scss',
         './../../../../assets/scss/styles.scss'
     ],
-    encapsulation: ViewEncapsulation.None
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class GuestComponent implements AfterViewInit, OnDestroy {
 
@@ -60,13 +61,11 @@ export class GuestComponent implements AfterViewInit, OnDestroy {
         const oldMedia = this.media;
         this.media = media;
         if (this.media.stream) {
+            console.log("### lobby service - add media")
             this.getVideoElement().srcObject = this.media.stream;
+            console.log("##### Tracks:", this.media.stream.getVideoTracks())
         }
-        if (oldMedia.streamId !== this.media.streamId) {
-            // if get a complete new stream, stop the old stream
-            // this happens often for local users
-            oldMedia.stopStream();
-        }
+        this.ref.detectChanges();
     }
 
     ngOnDestroy(): void {
@@ -76,7 +75,6 @@ export class GuestComponent implements AfterViewInit, OnDestroy {
             this.deactivateGuestStreamCbk(this.media);
         }
         this.getVideoElement().srcObject = null;
-        this.media.stopStream();
     }
 
     toggleMuteVideo() {

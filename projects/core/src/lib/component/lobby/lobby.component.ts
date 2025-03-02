@@ -31,7 +31,8 @@ import {
         './../../../../assets/scss/styles.scss',
         './lobby.component.scss'
     ],
-    encapsulation: ViewEncapsulation.None
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class LobbyComponent implements OnInit {
 
@@ -216,8 +217,7 @@ export class LobbyComponent implements OnInit {
     }
 
     start(): void {
-        console.log("Hey ####################")
-        console.log("Hey ####################", this.streamLiveData, this.streamId,this.spaceId )
+        console.log("Start ####################", this.streamLiveData, this.streamId,this.spaceId )
         if (this.streamLiveData != undefined && this.streamId != undefined && this.spaceId != undefined) {
             this.lobbyService.startLiveStream(this.streamLiveData, this.spaceId, this.streamId)
                 .subscribe(() => {

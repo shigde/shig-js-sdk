@@ -10,7 +10,8 @@ export type DeviceSettingsCbk = (s: DeviceSettings) => void;
 @Component({
     selector: 'shig-device-settings',
     templateUrl: './device-settings.component.html',
-    styleUrls: ['./device-settings.component.scss']
+    styleUrls: ['./device-settings.component.scss'],
+    standalone: false
 })
 export class DeviceSettingsComponent implements OnInit, AfterViewInit {
     @Input() cbk: undefined | DeviceSettingsCbk;

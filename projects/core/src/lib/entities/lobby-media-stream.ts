@@ -1,4 +1,3 @@
-import {User} from './user';
 import {LobbyMedia} from './lobby-media';
 import {LobbyMediaPurpose} from './lobby-media-purpose';
 
@@ -34,10 +33,6 @@ export class LobbyMediaStream {
 
     public setStream(stream: MediaStream) {
         this.stream = stream;
-    }
-
-    public stopStream() {
-        this.stream?.getTracks().forEach(t => t.stop());
     }
 }
 

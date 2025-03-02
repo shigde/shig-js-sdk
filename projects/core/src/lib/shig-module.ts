@@ -9,31 +9,25 @@ import {
     LobbyComponent,
 } from './component';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
-import {HttpClientModule} from '@angular/common/http';
-import '@material/web/switch/switch';
-import '@material/web/chips/filter-chip';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+// import '@material/web/common';
 
 
-@NgModule({
-    declarations: [
+
+@NgModule({ declarations: [
         DeviceSettingsComponent,
         LobbyComponent,
         GuestListDirective,
         GuestListComponent,
         GuestComponent
     ],
-    imports: [
-        CommonModule,
-        BrowserModule,
-        FormsModule,
-        ReactiveFormsModule,
-        HttpClientModule
-    ],
     exports: [
         DeviceSettingsComponent,
         LobbyComponent
     ],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA]
-})
+    schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA], imports: [CommonModule,
+        BrowserModule,
+        FormsModule,
+        ReactiveFormsModule], providers: [provideHttpClient(withInterceptorsFromDi())] })
 export class ShigModule {
 }

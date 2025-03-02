@@ -1,10 +1,5 @@
 import {Injectable} from '@angular/core';
-import {
-    HttpRequest,
-    HttpHandler,
-    HttpEvent,
-    HttpInterceptor, HttpResponse, HttpEventType
-} from '@angular/common/http';
+import { HttpRequest, HttpHandler, HttpEvent, HttpInterceptor, HttpResponse, HttpEventType } from '@angular/common/http';
 import {Observable, tap} from 'rxjs';
 
 const headerName = 'X-Req-Token';
@@ -24,7 +19,6 @@ export class ReqTokenInterceptor implements HttpInterceptor {
                 if (httpEvent.type === HttpEventType.Sent) {
                     return;
                 }
-                console.log('response: ', httpEvent);
 
                 if (httpEvent instanceof HttpResponse) {
                     if (httpEvent.headers.has(headerName)) {

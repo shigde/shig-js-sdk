@@ -3,23 +3,16 @@ import {BrowserModule} from '@angular/platform-browser';
 
 import {createCustomElement} from '@angular/elements';
 import {httpInterceptorProviders, ShigModule, LobbyComponent} from 'core';
-import {HttpClientModule} from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 
-@NgModule({
-    declarations: [
-    ],
-    imports: [
-        BrowserModule,
+@NgModule({ declarations: [], imports: [BrowserModule,
         FormsModule,
         ReactiveFormsModule,
-        HttpClientModule,
-        ShigModule
-    ],
-    providers: [
+        ShigModule], providers: [
         httpInterceptorProviders,
-    ],
-})
+        provideHttpClient(withInterceptorsFromDi()),
+    ] })
 export class AppModule {
     constructor(private injector: Injector) {
     }

@@ -1,3 +1,4 @@
+export * from './auth.service';
 export * from './channel-messenger';
 export * from './lobby.service';
 export * from './message.service';

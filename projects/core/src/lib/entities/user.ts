@@ -1,5 +1,7 @@
+import {Role} from './role';
+
 export interface User {
-  id: string,
-  name: string,
-  token: string,
+    name: string,
+    domain: string,
+    role: Role,
 }
