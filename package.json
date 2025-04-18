@@ -1,6 +1,6 @@
 {
   "name": "shig-js-sdk",
-  "version": "0.0.3",
+  "version": "0.0.6",
   "description": "Shig Lobby",
   "repository": {
     "type": "git",
@@ -34,7 +34,7 @@
     "test": "ng test"
   },
   "private": false,
-  "dependencies": {
+  "peerDependencies": {
     "@angular/animations": "^19.2.0",
     "@angular/common": "^19.2.0",
     "@angular/compiler": "^19.2.0",

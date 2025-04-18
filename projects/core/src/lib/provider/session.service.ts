@@ -45,6 +45,13 @@ export class SessionService {
         return this.userName$;
     }
 
+    getUser(): Observable<User | null> {
+        if (!this.isActive()) {
+            return of(null);
+        }
+        return of(this.loadUser());
+    }
+
     public clearData() {
         window.localStorage.clear();
         this.userName$.next(this.anonymous);

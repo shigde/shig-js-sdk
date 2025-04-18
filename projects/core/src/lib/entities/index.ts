@@ -1,5 +1,6 @@
 export * from './account';
 export * from './api-response';
+export * from './channel';
 export * from './channel.msg';
 export * from './client-user';
 export * from './constraints';
