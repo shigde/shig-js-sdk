@@ -75,7 +75,7 @@ export class AuthService {
         return this.http.delete<void>(url, this.httpOptions);
     }
 
-    private getUser(): Observable<User> {
+    getUser(): Observable<User> {
         const userUrl = `${this.params.API_PREFIX}/auth/user`;
         // returns 200 || 403
         return this.http.get<ApiResponse<User>>(userUrl, this.httpOptions).pipe(map((res) => res.data));

@@ -1,10 +1,9 @@
 import {Injectable} from '@angular/core';
 import {filter, map, mergeMap, Observable, tap} from 'rxjs';
-import {ApiResponse, Token} from '../entities';
+import {ApiResponse, Channel} from '../entities';
 import {HttpClient, HttpEventType, HttpHeaders} from '@angular/common/http';
 import {ParameterService} from './parameter.service';
 import {SessionService} from './session.service';
-import {Channel} from '../entities/channel';
 
 @Injectable({
     providedIn: 'root'
@@ -18,26 +17,26 @@ export class ChannelService {
     constructor(private http: HttpClient, private params: ParameterService, private session: SessionService) {
     }
 
-    save(channel: Channel, progress: {upload: number}): Observable<ApiResponse<Channel>| null> {
+    save(channel: Channel, file: File | null, progress: { upload: number }): Observable<ApiResponse<Channel> | null> {
         const httpOptions = {
-            headers: new HttpHeaders({'Content-Type': 'multipart/form-data', 'Accept': 'multipart/form-data'}),
+            headers: new HttpHeaders({
+                'Content-Type': 'multipart/form-data',
+                'Accept': 'multipart/form-data',
+                'Enctype': 'multipart/form-data'
+            }),
         };
 
         const url = `${this.params.API_PREFIX}/channel`;
         const form = new FormData();
-        form.append('actor', channel.actor);
-        form.append('user', channel.user);
-        form.append('name', channel.name);
-        form.append('description', channel.description);
-        form.append('support', channel.support);
-        if (channel.bannerFile) {
-            form.append('bannerFile', channel.bannerFile, 'channel-banner');
+        let json = new Blob([JSON.stringify(channel)], {type: 'application/json'});
+        form.append('channel', json);
+        if (file != null) {
+            form.append('file', file, 'banner');
+        } else {
+            form.append('file', new Blob(), 'banner');
         }
-        form.append('public', channel.public ? 'true' : 'false');
-
         // returns 200 || 400
-        return this.http.post<ApiResponse<Channel>>(url, form, {
-            ...httpOptions,
+        return this.http.put<ApiResponse<Channel>>(url, form, {
             reportProgress: true,
             observe: 'events'
         }).pipe(
@@ -59,8 +58,8 @@ export class ChannelService {
         );
     }
 
-    fetch(actor: string): Observable<ApiResponse<Channel>> {
-        const url = `${this.params.API_PREFIX}/channel/${actor}`;
+    fetch(channelUuid: string): Observable<ApiResponse<Channel>> {
+        const url = `${this.params.API_PREFIX}/pub/channel/${channelUuid}`;
         // returns 200 || 403
         return this.http.get<ApiResponse<Channel>>(url, this.httpOptions);
     }
