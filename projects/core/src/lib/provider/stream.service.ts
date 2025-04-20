@@ -1,63 +1,50 @@
 import {Injectable} from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import {HttpClient, HttpHeaders} from '@angular/common/http';
 import {MessageService} from './message.service';
 import {catchError, map, Observable, of, tap} from 'rxjs';
-import {Stream} from '../entities';
+import {ApiResponse, Stream} from '../entities';
 import {ParameterService} from './parameter.service';
 
 @Injectable({providedIn: 'root'})
 export class StreamService {
 
   httpOptions = {
-    headers: new HttpHeaders({ 'Content-Type': 'application/json' })
+    headers: new HttpHeaders({'Content-Type': 'application/json'})
   };
 
   constructor(
     private http: HttpClient,
     private messageService: MessageService,
     private params: ParameterService
-  ) { }
+  ) {
+  }
 
   /** GET Streams from the server */
-  getStreams(spaceId: string ): Observable<Stream[]> {
-    return this.http.get<Stream[]>(`${this.params.API_PREFIX}/space/${spaceId}/streams`)
+  getChannelStreams(channelUuid: string): Observable<ApiResponse<Stream[]>> {
+    return this.http.get<ApiResponse<Stream[]>>(`${this.params.API_PREFIX}/pub/channel/${channelUuid}/streams`)
       .pipe(
-        tap(_ => this.log('fetched streams')),
-        catchError(this.handleError<Stream[]>('getStreams', []))
+        tap(_ => this.log(`get streams for channel ${channelUuid}`)),
+        catchError(this.handleError<Stream[]>(`get streams for channel ${channelUuid}`, []))
       );
   }
 
   /** GET stream by id. Return `undefined` when id not found */
-  getStreamNo404<Data>(id: number): Observable<Stream> {
-    const url = `${this.params.API_PREFIX}/space/123/stream/?id=${id}`;
-    return this.http.get<Stream[]>(url)
+  getStream(uuid: number): Observable<ApiResponse<Stream>> {
+    return this.http.get<ApiResponse<Stream>>(`${this.params.API_PREFIX}/pub/stream/${uuid}`)
       .pipe(
-        map(streams => streams[0]), // returns a {0|1} element array
-        tap(h => {
-          const outcome = h ? 'fetched' : 'did not find';
-          this.log(`${outcome} stream id=${id}`);
-        }),
-        catchError(this.handleError<Stream>(`getStream id=${id}`))
+        tap(_ => this.log(`get stream uuid=${uuid}`)),
+        catchError(this.handleError<Stream>(`get stream uuid=${uuid}`))
       );
   }
 
-  /** GET stream by id. Will 404 if id not found */
-  getStream(id: string, space: string): Observable<Stream> {
-    const url = `${this.params.API_PREFIX}/space/${space}/stream/${id}`;
-    return this.http.get<Stream>(url).pipe(
-      tap(_ => this.log(`fetched stream id=${id}`)),
-      catchError(this.handleError<Stream>(`getStream id=${id}`))
-    );
-  }
-
   /* GET streames whose name contains search term */
-  searchStreams(term: string): Observable<Stream[]> {
+  searchStreams(term: string): Observable<ApiResponse<Stream[]>> {
     if (!term.trim()) {
       // if not search term, return empty stream array.
-      return of([]);
+      return of({data: [], message: 'no results found'});
     }
-    return this.http.get<Stream[]>(`${this.params.API_PREFIX}/space/123/stream/?name=${term}`).pipe(
-      tap(x => x.length ?
+    return this.http.get<ApiResponse<Stream[]>>(`${this.params.API_PREFIX}/pub/stream/search?name=${term}`).pipe(
+      tap(x => x.data.length ?
         this.log(`found streams matching "${term}"`) :
         this.log(`no streams matching "${term}"`)),
       catchError(this.handleError<Stream[]>('searchStreams', []))
@@ -67,28 +54,28 @@ export class StreamService {
   //////// Save methods //////////
 
   /** POST: add a new stream to the server */
-  addStream(stream: Stream): Observable<Stream> {
-    return this.http.post<Stream>(`${this.params.API_PREFIX}/space/123/stream`, stream, this.httpOptions).pipe(
-      tap((newStream: Stream) => this.log(`added stream w/ id=${newStream.uuid}`)),
-      catchError(this.handleError<Stream>('addStream'))
+  addStream(stream: Stream): Observable<ApiResponse<Stream>> {
+    return this.http.post<ApiResponse<Stream>>(`${this.params.API_PREFIX}/stream`, stream, this.httpOptions).pipe(
+      tap((response) => this.log(`added stream w/ id=${response.data.uuid}`)),
+      catchError(this.handleError<Stream>('add stream'))
     );
   }
 
   /** DELETE: delete the stream from the server */
-  deleteStream(id: number): Observable<Stream> {
-    const url = `${this.params.API_PREFIX}/space/123/stream/${id}`;
+  deleteStream(uuid: string): Observable<ApiResponse<string>> {
+    const url = `${this.params.API_PREFIX}/stream/${uuid}`;
 
-    return this.http.delete<Stream>(url, this.httpOptions).pipe(
-      tap(_ => this.log(`deleted stream id=${id}`)),
-      catchError(this.handleError<Stream>('deleteStream'))
+    return this.http.delete<ApiResponse<string>>(url, this.httpOptions).pipe(
+      tap(_ => this.log(`deleted stream uuid=${uuid}`)),
+      catchError(this.handleError<string>('deleteStream'))
     );
   }
 
   /** PUT: update the stream on the server */
-  updateStream(stream: Stream): Observable<any> {
-    return this.http.put(`${this.params.API_PREFIX}/space/123/stream`, stream, this.httpOptions).pipe(
+  updateStream(stream: Stream): Observable<ApiResponse<Stream>> {
+    return this.http.put<ApiResponse<Stream>>(`${this.params.API_PREFIX}/stream`, stream, this.httpOptions).pipe(
       tap(_ => this.log(`updated stream id=${stream.uuid}`)),
-      catchError(this.handleError<any>('updateStream'))
+      catchError(this.handleError<Stream>('update stream'))
     );
   }
 
@@ -99,8 +86,8 @@ export class StreamService {
    * @param operation - name of the operation that failed
    * @param result - optional value to return as the observable result
    */
-  private handleError<T>(operation = 'operation', result?: T) {
-    return (error: any): Observable<T> => {
+  private handleError<T>(operation = 'operation', result?: T): (error: any) => Observable<ApiResponse<T>> {
+    return (error: any): Observable<ApiResponse<T>> => {
 
       // TODO: send the error to remote logging infrastructure
       console.error(error); // log to console instead
@@ -108,8 +95,13 @@ export class StreamService {
       // TODO: better job of transforming error for user consumption
       this.log(`${operation} failed: ${error.message}`);
 
+      const response: ApiResponse<T> = {
+        data: result as T,
+        message: error.message,
+      };
+
       // Let the app keep running by returning an empty result.
-      return of(result as T);
+      return of(response);
     };
   }
 
@@ -117,6 +109,4 @@ export class StreamService {
   private log(message: string) {
     this.messageService.add(`StreamService: ${message}`);
   }
-
-
 }

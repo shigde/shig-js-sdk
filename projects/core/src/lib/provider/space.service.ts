@@ -5,12 +5,21 @@ import {catchError, map, Observable, of, tap} from 'rxjs';
 import {Space} from '../entities/space';
 import {ParameterService} from './parameter.service';
 
+/**
+ * @deprecate
+ */
 @Injectable({providedIn: 'root'})
 export class SpaceService {
   httpOptions = {
     headers: new HttpHeaders({'Content-Type': 'application/json'})
   };
 
+    /**
+     * @deprecate
+     * @param http
+     * @param messageService
+     * @param params
+     */
   constructor(
     private http: HttpClient,
     private messageService: MessageService,

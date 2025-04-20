@@ -21,6 +21,7 @@ export * from './stream-live-data';
 export * from './stream-live-status';
 export * from './user';
 export * from './video';
+export * from './weekday';
 
 
 

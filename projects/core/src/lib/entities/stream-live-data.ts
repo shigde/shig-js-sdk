@@ -1,3 +1,6 @@
+/**
+ * @deprecated
+ */
 export interface StreamLiveData {
     streamKey?: string
     rtmpUrl?: string | null
@@ -7,6 +10,9 @@ export interface StreamLiveData {
     latencyMode?: number
 }
 
+/**
+ * @deprecated
+ */
 export interface StreamLiveInfo {
     streamKey: string;
     rtmpUrl: string;
