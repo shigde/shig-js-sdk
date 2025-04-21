@@ -4,6 +4,7 @@ import {MessageService} from './message.service';
 import {catchError, map, Observable, of, tap} from 'rxjs';
 import {ApiResponse, Stream} from '../entities';
 import {ParameterService} from './parameter.service';
+import {streams} from '../entities/stream-fixtures';
 
 @Injectable({providedIn: 'root'})
 export class StreamService {
@@ -21,20 +22,41 @@ export class StreamService {
 
   /** GET Streams from the server */
   getChannelStreams(channelUuid: string): Observable<ApiResponse<Stream[]>> {
-    return this.http.get<ApiResponse<Stream[]>>(`${this.params.API_PREFIX}/pub/channel/${channelUuid}/streams`)
-      .pipe(
-        tap(_ => this.log(`get streams for channel ${channelUuid}`)),
-        catchError(this.handleError<Stream[]>(`get streams for channel ${channelUuid}`, []))
-      );
+    // return this.http.get<ApiResponse<Stream[]>>(`${this.params.API_PREFIX}/pub/channel/${channelUuid}/stream`)
+    //   .pipe(
+    //     tap(_ => this.log(`get streams for channel ${channelUuid}`)),
+    //     catchError(this.handleError<Stream[]>(`get streams for channel ${channelUuid}`, []))
+    //   );
+    return of({
+      data: streams,
+      message: 'fetched',
+    })
+  }
+
+  /** GET Streams from the server */
+  getPublicStreams(channelUuid: string): Observable<ApiResponse<Stream[]>> {
+    // return this.http.get<ApiResponse<Stream[]>>(`${this.params.API_PREFIX}/pub/stream`)
+    //   .pipe(
+    //     tap(_ => this.log(`get streams for channel ${channelUuid}`)),
+    //     catchError(this.handleError<Stream[]>(`get streams for channel ${channelUuid}`, []))
+    //   );
+    return of({
+      data: streams,
+      message: 'fetched',
+    })
   }
 
   /** GET stream by id. Return `undefined` when id not found */
-  getStream(uuid: number): Observable<ApiResponse<Stream>> {
-    return this.http.get<ApiResponse<Stream>>(`${this.params.API_PREFIX}/pub/stream/${uuid}`)
-      .pipe(
-        tap(_ => this.log(`get stream uuid=${uuid}`)),
-        catchError(this.handleError<Stream>(`get stream uuid=${uuid}`))
-      );
+  getStream(uuid: string): Observable<ApiResponse<Stream>> {
+    // return this.http.get<ApiResponse<Stream>>(`${this.params.API_PREFIX}/pub/stream/${uuid}`)
+    //   .pipe(
+    //     tap(_ => this.log(`get stream uuid=${uuid}`)),
+    //     catchError(this.handleError<Stream>(`get stream uuid=${uuid}`))
+    //   );
+    return of({
+      data: streams[0],
+      message: 'fetched',
+    })
   }
 
   /* GET streames whose name contains search term */
