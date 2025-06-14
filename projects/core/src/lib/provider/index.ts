@@ -5,8 +5,10 @@ export * from './lobby.service';
 export * from './message.service';
 export * from './parameter.service';
 export * from './session.service';
+export * from './settings.service';
 export * from './space.service';
 export * from './stream.service';
+export * from './user.service'
 export * from './webrtc-connection';
 export * from './media-device.service';
 export * from './index-store.service';

@@ -57,11 +57,11 @@ export class LobbyComponent implements OnInit {
   };
 
   @Input() token: string | undefined;
-  @Input('api-prefix') apiPrefix: string | undefined;
-  @Input('stream') streamUuid: string | undefined;
-  @Input('channel') channelUuid: string | undefined;
-  @Input('user') userUuid: string | undefined;
-  @Input('base-path') basePath: string | undefined;
+  @Input('apiPrefix') apiPrefix: string | undefined;
+  @Input('streamUuid') streamUuid: string | undefined;
+  @Input('channelUuid') channelUuid: string | undefined;
+  @Input('userUuid') userUuid: string | undefined;
+  @Input('basePath') basePath: string | undefined;
 
 
   @Input() role: string | null = 'guest';

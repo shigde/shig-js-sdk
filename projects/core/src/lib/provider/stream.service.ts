@@ -1,10 +1,10 @@
 import {Injectable} from '@angular/core';
-import {HttpClient, HttpHeaders} from '@angular/common/http';
+import {HttpClient, HttpEventType, HttpHeaders} from '@angular/common/http';
 import {MessageService} from './message.service';
-import {catchError, map, Observable, of, tap} from 'rxjs';
-import {ApiResponse, Stream} from '../entities';
+import {catchError, filter, map, Observable, of, tap} from 'rxjs';
+import {ApiResponse, Channel, Stream, StreamPreview} from '../entities';
 import {ParameterService} from './parameter.service';
-import {streams} from '../entities/stream-fixtures';
+import {streamPreviews, streams} from '../entities/stream-fixtures';
 
 @Injectable({providedIn: 'root'})
 export class StreamService {
@@ -30,20 +30,20 @@ export class StreamService {
     return of({
       data: streams,
       message: 'fetched',
-    })
+    });
   }
 
   /** GET Streams from the server */
-  getPublicStreams(channelUuid: string): Observable<ApiResponse<Stream[]>> {
-    // return this.http.get<ApiResponse<Stream[]>>(`${this.params.API_PREFIX}/pub/stream`)
+  getPublicStreams(): Observable<ApiResponse<StreamPreview[]>> {
+    // return this.http.get<ApiResponse<StreamPreview[]>>(`${this.params.API_PREFIX}/pub/stream`)
     //   .pipe(
-    //     tap(_ => this.log(`get streams for channel ${channelUuid}`)),
-    //     catchError(this.handleError<Stream[]>(`get streams for channel ${channelUuid}`, []))
+    //     tap(_ => this.log(`get public streams`)),
+    //     catchError(this.handleError<StreamPreview[]>(`get public streams`, []))
     //   );
     return of({
-      data: streams,
+      data: streamPreviews,
       message: 'fetched',
-    })
+    });
   }
 
   /** GET stream by id. Return `undefined` when id not found */
@@ -56,30 +56,59 @@ export class StreamService {
     return of({
       data: streams[0],
       message: 'fetched',
-    })
+    });
   }
 
   /* GET streames whose name contains search term */
-  searchStreams(term: string): Observable<ApiResponse<Stream[]>> {
+  searchStreams(term: string): Observable<ApiResponse<StreamPreview[]>> {
     if (!term.trim()) {
       // if not search term, return empty stream array.
       return of({data: [], message: 'no results found'});
     }
-    return this.http.get<ApiResponse<Stream[]>>(`${this.params.API_PREFIX}/pub/stream/search?name=${term}`).pipe(
-      tap(x => x.data.length ?
-        this.log(`found streams matching "${term}"`) :
-        this.log(`no streams matching "${term}"`)),
-      catchError(this.handleError<Stream[]>('searchStreams', []))
+    return this.http.get<ApiResponse<StreamPreview[]>>(`${this.params.API_PREFIX}/pub/stream/search?name=${term}`).pipe(
+      tap((x: any) => {
+        x.data.length ?
+          this.log(`found streams matching "${term}"`) :
+          this.log(`no streams matching "${term}"`);
+      }),
+      catchError(this.handleError<StreamPreview[]>('searchStreams', []))
     );
   }
 
   //////// Save methods //////////
 
   /** POST: add a new stream to the server */
-  addStream(stream: Stream): Observable<ApiResponse<Stream>> {
-    return this.http.post<ApiResponse<Stream>>(`${this.params.API_PREFIX}/stream`, stream, this.httpOptions).pipe(
-      tap((response) => this.log(`added stream w/ id=${response.data.uuid}`)),
-      catchError(this.handleError<Stream>('add stream'))
+  save(stream: Stream, file: File | null, progress: { upload: number }): Observable<ApiResponse<Stream> | null> {
+    const url = `${this.params.API_PREFIX}/stream`;
+    const form = new FormData();
+    let json = new Blob([JSON.stringify(stream)], {type: 'application/json'});
+    form.append('stream', json);
+    if (file != null) {
+      form.append('file', file, 'thumbnail');
+    } else {
+      form.append('file', new Blob(), 'thumbnail');
+    }
+    // returns 200 || 400
+    return this.http.put<ApiResponse<Stream>>(url, form, {
+      reportProgress: true,
+      observe: 'events'
+    }).pipe(
+      tap((event: any) => {
+        if (event.type === HttpEventType.UploadProgress) {
+          if (event.total) {
+            progress.upload = Math.round((100 * event.loaded) / event.total);
+          }
+        } else if (event.type === HttpEventType.Response) {
+          progress.upload = 100; // Ensure progress reaches 100%
+          // setTimeout(() => {
+          //     this.isUploading = false; // Stop the progress indicator after a delay
+          //     // this.uploadProgress = 0; // Reset for the next upload
+          // }, 1000); // Optional delay for smoother UX
+        }
+      }),
+      filter((event:any) => event.type === HttpEventType.Response),
+      map((event: any) => event.body),
+      catchError(this.handleError<Stream>('add stream')),
     );
   }
 
