@@ -9,8 +9,8 @@ export const streams: Stream[] = [
     description: 'Stream 1 description',
     support: 'Stream 1 support',
     date: new Date('2025-04-20T16:45:30'), // mm:hh/dd:MM:YYYY
-    start: new Date('2025-04-20T16:46:00'), // mm:hh/dd:MM:YYYY
-    end: new Date('2025-04-20T17:45:30'), // mm:hh/dd:MM:YYYY
+    start_time: new Date('2025-04-20T16:46:00'), // mm:hh/dd:MM:YYYY
+    end_time: new Date('2025-04-20T17:45:30'), // mm:hh/dd:MM:YYYY
     viewer: 20,
     likes: 1,
     dislikes: 2,
@@ -40,8 +40,8 @@ export const streams: Stream[] = [
     description: 'Stream 2 description',
     support: 'Stream 2 support',
     date: new Date('2025-05-20T16:45:30'), // mm:hh/dd:MM:YYYY
-    start: new Date('2025-04-20T16:46:00'), // mm:hh/dd:MM:YYYY
-    end: new Date('2025-04-20T17:45:30'), // mm:hh/dd:MM:YYYY
+    start_time: new Date('2025-04-20T16:46:00'), // mm:hh/dd:MM:YYYY
+    end_time: new Date('2025-04-20T17:45:30'), // mm:hh/dd:MM:YYYY
     viewer: 20,
     likes: 1,
     dislikes: 2,
@@ -71,8 +71,8 @@ export const streams: Stream[] = [
     description: 'Stream 3 description',
     support: 'Stream 3 support',
     date: new Date('2025-04-21T11:45:30'), // mm:hhTdd:MM:YYYY
-    start: new Date('2025-04-20T16:46:00'), // mm:hh/dd:MM:YYYY
-    end: new Date('2025-04-20T17:45:30'), // mm:hh/dd:MM:YYYY
+    start_time: new Date('2025-04-20T16:46:00'), // mm:hh/dd:MM:YYYY
+    end_time: new Date('2025-04-20T17:45:30'), // mm:hh/dd:MM:YYYY
     viewer: 50000,
     likes: 244,
     dislikes: 100,
@@ -106,8 +106,8 @@ export const streamPreviews: StreamPreview[] = [
     description: 'Stream 1 description',
     support: 'Stream 1 support',
     date: new Date('2025-04-20T16:45:30'), // mm:hh/dd:MM:YYYY
-    start: new Date('2025-04-20T16:46:00'), // mm:hh/dd:MM:YYYY
-    end: new Date('2025-04-20T17:45:30'), // mm:hh/dd:MM:YYYY
+    start_time: new Date('2025-04-20T16:46:00'), // mm:hh/dd:MM:YYYY
+    end_time: new Date('2025-04-20T17:45:30'), // mm:hh/dd:MM:YYYY
     viewer: 20,
     likes: 1,
     dislikes: 2,
@@ -125,8 +125,8 @@ export const streamPreviews: StreamPreview[] = [
     description: 'Stream 2 description',
     support: 'Stream 2 support',
     date: new Date('2025-05-20T16:45:30'), // mm:hh/dd:MM:YYYY
-    start: new Date('2025-04-20T16:46:00'), // mm:hh/dd:MM:YYYY
-    end: new Date('2025-04-20T17:45:30'), // mm:hh/dd:MM:YYYY
+    start_time: new Date('2025-04-20T16:46:00'), // mm:hh/dd:MM:YYYY
+    end_time: new Date('2025-04-20T17:45:30'), // mm:hh/dd:MM:YYYY
     viewer: 20,
     likes: 1,
     dislikes: 2,
@@ -144,8 +144,8 @@ export const streamPreviews: StreamPreview[] = [
     description: 'Stream 3 description',
     support: 'Stream 3 support',
     date: new Date('2025-04-21T11:45:30'), // mm:hhTdd:MM:YYYY
-    start: new Date('2025-04-20T16:46:00'), // mm:hh/dd:MM:YYYY
-    end: new Date('2025-04-20T17:45:30'), // mm:hh/dd:MM:YYYY
+    start_time: new Date('2025-04-20T16:46:00'), // mm:hh/dd:MM:YYYY
+    end_time: new Date('2025-04-20T17:45:30'), // mm:hh/dd:MM:YYYY
     viewer: 50000,
     likes: 244,
     dislikes: 100,
