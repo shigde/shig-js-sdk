@@ -1,98 +1,89 @@
 import {Injectable} from '@angular/core';
-import {BehaviorSubject, Observable, of, Subject} from 'rxjs';
-import {Role, Token, User} from '../entities';
+import {BehaviorSubject, catchError, map, mergeMap, Observable, of, Subject, tap} from 'rxjs';
+import {ApiResponse, Role, Token, User} from '../entities';
+import {HttpClient, HttpHeaders} from '@angular/common/http';
+import {ParameterService} from './parameter.service';
 
-const USER_KEY = 'user';
+const ANONYMOUS = 'anonymous';
 const SESSION_TOKEN_KEY = 'jwt';
 const REFRESH_TOKEN_KEY = 'refresh';
 
 @Injectable({
-    providedIn: 'root'
+  providedIn: 'root'
 })
 export class SessionService {
-    private readonly userName$: Subject<string>;
-    private readonly anonymous = 'anonymous';
+  public readonly principalSubject = new BehaviorSubject<User | null>(null);
 
-    constructor() {
-        const user = this.loadUser();
-        this.userName$ = new BehaviorSubject<string>(user === null ? this.anonymous : user.name);
-    }
+  constructor(private http: HttpClient, private params: ParameterService) {
+  }
 
-    public setAuthenticationToken(token: string) {
-        window.localStorage.setItem(SESSION_TOKEN_KEY, token);
-    }
+  public isAuthenticated(): boolean {
+    return !!this.getAuthenticationToken();
+  }
 
-    public getAuthenticationToken(): string | null {
-        return window.localStorage.getItem(SESSION_TOKEN_KEY);
-    }
+  public setAuthenticationToken(token: string) {
+    window.localStorage.setItem(SESSION_TOKEN_KEY, token);
+  }
 
-    public setRefreshToken(token: string) {
-        window.localStorage.setItem(REFRESH_TOKEN_KEY, token);
-    }
+  public getAuthenticationToken(): string | null {
+    return window.localStorage.getItem(SESSION_TOKEN_KEY);
+  }
 
-    public getRefreshToken(): string | null {
-        return window.localStorage.getItem(REFRESH_TOKEN_KEY);
-    }
+  public setRefreshToken(token: string) {
+    window.localStorage.setItem(REFRESH_TOKEN_KEY, token);
+  }
 
-    isActive(): Observable<boolean> {
-        if (this.getAuthenticationToken() !== null) {
-            return of(true);
-        }
-        return of(false);
-    }
+  public getRefreshToken(): string | null {
+    return window.localStorage.getItem(REFRESH_TOKEN_KEY);
+  }
 
-    getUserName(): Observable<string> {
-        return this.userName$;
-    }
+  public initPrincipal(): Observable<void> {
+    const userUrl = `${this.params.API_PREFIX}/auth/user`;
+    const httpOptions = {
+      headers: new HttpHeaders({'Content-Type': 'application/json', 'Accept': 'application/json'}),
+    };
+    // returns 200 || 403
 
-    getUser(): Observable<User | null> {
-        if (!this.isActive()) {
-            return of(null);
-        }
-        return of(this.loadUser());
-    }
+    const tt = this.principalSubject;
+    return this.http.get<ApiResponse<User>>(userUrl, httpOptions).pipe(
+      map((res) => res.data),
+      tap((u) => {
+        tt.next(u);
+        console.log('############## set user', u);
+      }),
+      map((u) => {}),
+      catchError((err) => {
+        console.log('############## cleare data', err);
+        //this.clearData();
+        return of();
+      })
+    );
+  }
 
-    public clearData() {
-        window.localStorage.clear();
-        this.userName$.next(this.anonymous);
-    }
+  public getUser(): Observable<User | null> {
+    return this.principalSubject.asObservable();
+  }
 
-    getUserRole(): Role {
-        if (!this.isActive()) {
-            return Role.ANONYMOUS;
-        }
+  public getUserRole(): Observable<Role> {
+    return this.getUser().pipe(map((user) => user !== null ? user.role : Role.ANONYMOUS));
+  }
 
-        const user = this.loadUser();
-        if (user === null) {
-            return Role.ANONYMOUS;
-        }
-        return user.role;
-    }
+  public isActive(): Observable<boolean> {
+    return of(this.isAuthenticated());
+  }
 
-    public setUser(user: User) {
-        this.saveUser(user);
-        this.userName$.next(user.name);
-    }
+  public getUserName(): Observable<string> {
+    return this.getUser().pipe(map((user) => user !== null ? user.name : ANONYMOUS));
+  }
 
-    public removeUser() {
-        window.localStorage.removeItem(USER_KEY);
-        this.userName$.next(this.anonymous);
-    }
+  public setToken(token: Token) {
+    this.setAuthenticationToken(token.jwt);
+    this.setRefreshToken(token.refresh);
+  }
 
-    private loadUser(): User | null {
-        const user = window.localStorage.getItem(USER_KEY);
-        if (user !== null) {
-            return JSON.parse(user) as User;
-        }
-        return null;
-    }
-
-    private saveUser(user: User): void {
-        window.localStorage.setItem(USER_KEY, JSON.stringify(user));
-    }
-
-    public setToken(token: Token) {
-        this.setAuthenticationToken(token.jwt);
-        this.setRefreshToken(token.refresh);
-    }
+  public clearData() {
+    console.log('############## cleare data');
+    window.localStorage.clear();
+    this.principalSubject.next(null);
+  }
 }

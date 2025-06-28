@@ -23,8 +23,8 @@ export class AuthService {
         // returns 200 || 403
         return this.http.post<ApiResponse<Token>>(loginUrl, body, this.httpOptions).pipe(
             tap((resp: ApiResponse<Token>) => this.session.setToken(resp.data)),
-            mergeMap(() => this.getUser()),
-            map((user) => this.session.setUser(user))
+            map((_) => this.session.initPrincipal()),
+            map((_) => {})
         );
     }
 
@@ -73,11 +73,5 @@ export class AuthService {
         const url = `${this.params.API_PREFIX}/auth/user`;
         // returns 403
         return this.http.delete<void>(url, this.httpOptions);
-    }
-
-    getUser(): Observable<User> {
-        const userUrl = `${this.params.API_PREFIX}/auth/user`;
-        // returns 200 || 403
-        return this.http.get<ApiResponse<User>>(userUrl, this.httpOptions).pipe(map((res) => res.data));
     }
 }

@@ -14,7 +14,7 @@ export class UserService {
     headers: new HttpHeaders({'Content-Type': 'application/json', 'Accept': 'application/json'}),
   };
 
-  constructor(private http: HttpClient, private params: ParameterService, private session: SessionService) {
+  constructor(private http: HttpClient, private params: ParameterService) {
   }
 
   getUser(): Observable<User> {
