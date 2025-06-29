@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {BehaviorSubject, catchError, map, mergeMap, Observable, of, Subject, tap} from 'rxjs';
+import {BehaviorSubject, catchError, map, Observable, of, tap} from 'rxjs';
 import {ApiResponse, Role, Token, User} from '../entities';
 import {HttpClient, HttpHeaders} from '@angular/common/http';
 import {ParameterService} from './parameter.service';
@@ -43,18 +43,16 @@ export class SessionService {
       headers: new HttpHeaders({'Content-Type': 'application/json', 'Accept': 'application/json'}),
     };
     // returns 200 || 403
-
-    const tt = this.principalSubject;
     return this.http.get<ApiResponse<User>>(userUrl, httpOptions).pipe(
       map((res) => res.data),
       tap((u) => {
-        tt.next(u);
-        console.log('############## set user', u);
+        this.principalSubject.next(u);
       }),
-      map((u) => {}),
-      catchError((err) => {
-        console.log('############## cleare data', err);
-        //this.clearData();
+      map((_) => {
+        // map to void
+      }),
+      catchError((_) => {
+        this.clearData();
         return of();
       })
     );

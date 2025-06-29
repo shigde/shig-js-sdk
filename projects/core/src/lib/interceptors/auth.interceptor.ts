@@ -1,11 +1,17 @@
 import {Injectable} from '@angular/core';
 import {HttpRequest, HttpHandler, HttpEvent, HttpInterceptor} from '@angular/common/http';
-import {catchError, map, mergeMap, Observable, switchMap, throwError} from 'rxjs';
-import {AuthService, SessionService} from '../provider';
+import {catchError, Observable, switchMap, throwError} from 'rxjs';
+import {AuthService, ParameterService, SessionService} from '../provider';
+import {Router} from '@angular/router';
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
-  constructor(private session: SessionService, private autService: AuthService) {
+  constructor(
+    private session: SessionService,
+    private autService: AuthService,
+    private params: ParameterService,
+    private router: Router,
+  ) {
   }
 
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
@@ -16,6 +22,11 @@ export class AuthInterceptor implements HttpInterceptor {
         catchError((error) => {
           // Check if the error is due to an expired access token
           if (error.status === 401) {
+            if (request.url.includes(`${this.params.API_PREFIX}/auth/refresh`)) {
+              this.session.clearData();
+              this.router.navigateByUrl('/', {replaceUrl: true});
+              return throwError(() => error);
+            }
             return this.handleTokenExpired(request, next);
           }
           return throwError(error);
@@ -35,7 +46,8 @@ export class AuthInterceptor implements HttpInterceptor {
       }),
       catchError((error) => {
         // Handle refresh token error (e.g., redirect to login page)
-        console.error('Error handling expired access token:', error);
+        this.session.clearData();
+        this.router.navigateByUrl('/', {replaceUrl: true});
         return throwError(error);
       })
     );
