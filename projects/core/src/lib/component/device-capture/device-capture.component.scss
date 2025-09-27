@@ -1,0 +1,96 @@
+.video-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+//.selectors {
+//  display: flex;
+//  flex-wrap: wrap;
+//  gap: 1rem;
+//  justify-content: center;
+//}
+//
+//select {
+//  padding: 0.4rem 0.8rem;
+//  border-radius: 6px;
+//  border: 1px solid #ccc;
+//}
+
+video {
+  width: 100%;
+  max-width: 600px;
+  border-radius: 4px;
+  background: black;
+}
+
+.meter,
+.spectrum,
+.oscilloscope {
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #111;
+}
+
+.meter {
+  background: #222;
+}
+
+.error {
+  margin-top: 1rem;
+  color: red;
+  font-weight: bold;
+}
+
+.custom-static-modal {
+  background: rgba(0,0,0,0.5);   /* halbtransparenter Hintergrund */
+  z-index: 20000;                /* ganz oben */
+  animation: fadeInBg 0.5s ease forwards;
+
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.custom-static-modal.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.custom-static-modal.hide {
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* Inhalt (modal-content) einblenden */
+.custom-static-modal .modal-content {
+  opacity: 0;
+  transform: translateY(-20px);
+  animation: fadeInDialog 0.5s ease forwards;
+  animation-delay: 0.1s;
+}
+
+.custom-static-modal.show .modal-content {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.custom-static-modal.hide .modal-content {
+  transform: translateY(-20px);
+  opacity: 0;
+}
+
+/* Hintergrund-Fade */
+@keyframes fadeInBg {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Dialog-Slide/Fade */
+@keyframes fadeInDialog {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

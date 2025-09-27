@@ -82,17 +82,19 @@ export class DeviceSettingsOptions {
 }
 
 export class DeviceSettings {
-  public readonly id = 1;
+  public static readonly DEVICE_SETTING_ID = 1;
+  public readonly id = DeviceSettings.DEVICE_SETTING_ID;
 
   constructor(
     public camera: string | null | undefined,
     public microphone: string | null | undefined,
-    public audioDevice: string | null | undefined,
+    public speaker: string | null | undefined,
     public quality: ResolutionValue,
     public videoCodec: VideoCodecValue,
     public bandwidth: BandwidthValue,
     public simulcast: boolean,
-    public audio: boolean,
+    public hasVideo: boolean,
+    public hasAudio: boolean,
   ) {
   }
 
@@ -105,12 +107,13 @@ export class DeviceSettings {
       DeviceSettingsOptions.defaultVideoCodec,
       DeviceSettingsOptions.defaultBandwidth,
       false,
+      true,
       true
     );
   }
 
   static dbProps(): string {
-    return 'id,camera,microphone,audioDevice,quality,videoCodec,bandwidth,simulcast,audio';
+    return 'id,camera,microphone,speaker,quality,videoCodec,bandwidth,simulcast,hasAudio';
   }
 }
 

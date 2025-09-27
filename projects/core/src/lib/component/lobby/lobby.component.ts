@@ -3,7 +3,6 @@ import {Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild, V
 import {Location} from '@angular/common';
 import {BehaviorSubject, tap} from 'rxjs';
 import {environment} from '../../../environments/environment';
-import {DeviceSettingsCbk} from '../';
 
 import {
   CanvasStreamMixer,
@@ -38,8 +37,6 @@ export class LobbyComponent implements OnInit {
 
   @ViewChild('videoStreamElement') videoStreamRef!: ElementRef<HTMLVideoElement>;
 
-  cbk: DeviceSettingsCbk;
-  displaySettings = false;
   isInLobby = false;
   state: 'offline' | 'online' = 'offline';
 
@@ -47,6 +44,7 @@ export class LobbyComponent implements OnInit {
   localGuest: LobbyMediaStream | undefined;
   localGuest$ = new BehaviorSubject<LobbyMediaStream | undefined>(undefined);
   hasMediaStreamSet = false;
+  displaySettings = true;
   isHost = false;
 
   private streamLiveData: StreamLiveData | undefined;
@@ -63,7 +61,6 @@ export class LobbyComponent implements OnInit {
   @Input('userUuid') userUuid: string | undefined;
   @Input('basePath') basePath: string | undefined;
 
-
   @Input() role: string | null = 'guest';
 
   @Output() loadComp = new EventEmitter();
@@ -79,9 +76,7 @@ export class LobbyComponent implements OnInit {
     private params: ParameterService,
     private location: Location
   ) {
-    this.cbk = (settings) => {
-      this.startCamera(settings);
-    };
+
   }
 
   ngOnInit(): void {
@@ -108,7 +103,7 @@ export class LobbyComponent implements OnInit {
   }
 
   getStream(): void {
-    if (this.streamUuid !== undefined ) {
+    if (this.streamUuid !== undefined) {
       this.streamService.getStream(this.streamUuid)
         .pipe(tap((resp) => this.stream = resp.data))
         .subscribe(() => {
@@ -203,6 +198,11 @@ export class LobbyComponent implements OnInit {
 
   toggleSettings() {
     this.displaySettings = !this.displaySettings;
+  }
+
+  onDeviceSelect(settings: DeviceSettings) {
+    console.log('Device settings', settings);
+    this.startCamera(settings);
   }
 
   toggleActive(videoId: string, checkboxId: string) {

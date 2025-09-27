@@ -21,7 +21,7 @@ export class IndexStoreService extends Dexie {
   save(settings: DeviceSettings): void {
     this.transaction('rw', this.settings, async () => {
       // Make sure we have something in DB:
-      if ((await this.settings.where({id: settings.id}).count()) === 0) {
+      if ((await this.settings.where({id: DeviceSettings.DEVICE_SETTING_ID}).count()) === 0) {
         const id = await this.settings.add({...settings});
       }
     }).catch(e => {
@@ -33,12 +33,11 @@ export class IndexStoreService extends Dexie {
 
     this.transaction('rw', this.settings, async () => {
       // Make sure we have something in DB:
-      if ((await this.settings.where({id: settings.id}).count()) !== 0) {
-        const id = await this.settings.put({...settings}, settings.id);
-        // this.dialog.open(NoticeDialogComponent, {data: {type: 'success', msg: 'Updated profile!'}});
+      if ((await this.settings.where({id: DeviceSettings.DEVICE_SETTING_ID}).count()) !== 0) {
+        const id = await this.settings.put({...settings}, DeviceSettings.DEVICE_SETTING_ID);
       }
     }).catch(e => {
-      console.log("??????, e")
+      console.log('??????, e');
       // this.dialog.open(NoticeDialogComponent, {data: {type: 'fail', msg: 'Can not update profile!'}});
     });
   }
@@ -49,7 +48,7 @@ export class IndexStoreService extends Dexie {
 
   hasSettings(): Observable<boolean> {
     const transaction = this.transaction('r', this.settings, async () => {
-      return await this.settings.where({id: 1}).count() !== 0;
+      return await this.settings.where({id: DeviceSettings.DEVICE_SETTING_ID}).count() !== 0;
     });
     return from(transaction);
   }
@@ -59,10 +58,25 @@ export class IndexStoreService extends Dexie {
     return from(settingsPromise);
   }
 
+  public fetchAsync(): Promise<DeviceSettings> {
+
+    const settingsPromise = this.settings.toArray().then((settings) => {
+
+      console.log('sdk: fetchAsync', settings);
+
+      return settings[0]
+    });
+    return settingsPromise;
+  }
+
   public get(): Observable<DeviceSettings | undefined> {
     const transaction = this.transaction('r', this.settings, async () => {
-      return await this.settings.where({id: 1}).first();
+      return await this.settings.where({id: DeviceSettings.DEVICE_SETTING_ID}).first();
     });
     return from(transaction);
+  }
+
+  public getAsync(): Promise<DeviceSettings | undefined> {
+    return this.settings.get(DeviceSettings.DEVICE_SETTING_ID);
   }
 }

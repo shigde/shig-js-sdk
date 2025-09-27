@@ -78,17 +78,9 @@ export class DeviceSettingsService {
       video: false,
     };
 
-    if (!!settings.audioDevice) {
-      constraints.audio = {deviceId: settings.microphone ? {exact: settings.microphone} : undefined};
-    } else {
-      constraints.audio = settings.audio;
-    }
+    constraints.audio = !!settings.microphone ? {deviceId: {exact: settings.microphone}} : settings.hasAudio;
+    constraints.video = !!settings.camera ? {deviceId: {exact: settings.camera}} : settings.hasVideo;
 
-    if (!!settings.camera) {
-      constraints.video = {deviceId: settings.camera ? {exact: settings.camera} : undefined};
-    } else {
-      constraints.video = true;
-    }
     return constraints;
   }
 }

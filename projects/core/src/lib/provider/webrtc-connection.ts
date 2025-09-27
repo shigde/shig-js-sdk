@@ -35,8 +35,8 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
         };
     }
 
-    public createDataChannel(): RTCDataChannel {
-        this.dataChannel = this.pc.createDataChannel('whep');
+    public createDataChannel(label: 'whip' | 'whep'): RTCDataChannel {
+        this.dataChannel = this.pc.createDataChannel(label);
         this.dataChannel.onmessage = this.onReceiveChannelMessageCallback;
         this.dataChannel.onopen = this.onReceiveChannelStateChange;
         this.dataChannel.onclose = this.onReceiveChannelStateChange;

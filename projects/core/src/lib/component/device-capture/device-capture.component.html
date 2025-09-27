@@ -1,0 +1,77 @@
+<div class="modal d-block custom-static-modal show" tabindex="-1" id="modalDeviceCapture">
+  <div class="modal-dialog modal-dialog-centered modal-lg" (click)="$event.stopPropagation()">
+    <div class="modal-content rounded-3 shadow">
+
+      <!-- Header -->
+      <div class="modal-header">
+        <h1 class="modal-title fs-2" id="modalDeviceCaptureLabel">Device Settings</h1>
+        @if (doStreamUpdate) {
+          <button type="button" class="btn-close" data-bs-dismiss="modal" (click)="closeModal()"
+                  aria-label="Close"></button>
+        }
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body row g-4 p-4">
+
+        <!-- Device Selectors -->
+        <div class="selectors col-12 col-md-6">
+          <div class="w-100">
+            <label for="formGroupCamera" class="form-label">Camera:</label>
+            <select class="form-select" id="formGroupCamera"
+                    [ngModel]="storedDeviceSettings.camera"
+                    (ngModelChange)="onCameraChange($event)">
+              @for (device of cameras; track device.deviceId) {
+                <option [value]="device.deviceId">{{ device.label || 'Unknown Camera' }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="w-100 mt-2">
+            <label for="formGroupMicrophone" class="form-label">Microphone:</label>
+            <select class="form-select" id="formGroupMicrophone"
+                    [ngModel]="storedDeviceSettings.microphone"
+                    (ngModelChange)="onMicrophoneChange($event)">
+              @for (device of microphones; track device.deviceId) {
+                <option [value]="device.deviceId">{{ device.label || 'Unknown Microphone' }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="w-100 mt-2">
+            <label for="formGroupSpeaker" class="form-label">Speaker:</label>
+            <select class="form-select" id="formGroupSpeaker"
+                    [ngModel]="storedDeviceSettings.speaker"
+                    (ngModelChange)="onSpeakerChange($event)">
+              @for (device of speakers; track device.deviceId) {
+                <option [value]="device.deviceId">{{ device.label || 'Unknown Speaker' }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <!-- Video Preview -->
+        <div class="col-12 col-md-6 mt-2 text-center">
+          <video #videoElement autoplay playsinline muted class="w-100 rounded border"></video>
+          <app-audio-meter [stream]="stream" [segments]="20" orientation="horizontal" class="mt-3"></app-audio-meter>
+        </div>
+
+        <!-- Error -->
+        <div *ngIf="errorMessage" class="col-12 text-danger fw-bold">
+          {{ errorMessage }}
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-footer">
+        @if (doStreamUpdate) {
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" (click)="closeModal()">Close</button>
+          <button type="button" class="btn btn-primary" (click)="select()">Update</button>
+        }
+        @if (!doStreamUpdate) {
+          <button type="button" class="btn btn-primary" (click)="select()">Select</button>
+        }
+      </div>
+    </div>
+  </div>
+</div>
