@@ -5,5 +5,5 @@
                (click)="toggleActive()"></md-switch>
 </div>
 <a href="#" class="name-tag">{{ media?.name }}</a>
-<div class="guest-camera-off" [ngClass]="{'display-none': !cameraMuted}"></div>
-<video id="video-{{ media?.streamId }}" #videoElement muted autoplay [ngClass]="{'camera-off': cameraMuted}"></video>
+<div class="guest-camera-off rounded-1 mb-1 border bg-body" [ngClass]="{'display-none': !cameraMuted}"></div>
+<video id="video-{{ media?.streamId }}" #videoElement muted autoplay [ngClass]="{'camera-off': cameraMuted}" class="rounded-1 mb-2 border"></video>

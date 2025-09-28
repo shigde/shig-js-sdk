@@ -2,7 +2,7 @@
 
   <div class="app-main" *ngIf="stream">
     <!--// Navigation line -->
-    <div class="navigation">
+    <div class="navigation shadow bg-body rounded-1 border text-body">
       <div class="nav-group" role="group" aria-label="actions">
         <div class="nav-group-area ">
           <button class="nav-icon-button secondary icon" (click)="goBack()">
@@ -77,7 +77,7 @@
     }
 
     <!--// Video Stream -->
-    <div class="video-call-wrapper">
+    <div class="video-call-wrapper shadow border rounded-1">
       <div id="lobby-stream-video" class="stream-video canvas-logo">
         <canvas id="canvasOne" *ngIf="isHost">
           Your browser does not support HTML5 Canvas.
@@ -89,8 +89,8 @@
 
   <!-- Right Side -->
   <div class="right-side">
-    <div class="guest-container">
-      <div class="guest-header">
+    <div class="guest-container shadow rounded-1 border text-body">
+      <div class="guest-header border-bottom rounded-top-1 bg-body">
         <span>Guests</span>
       </div>
       <shig-guest-list

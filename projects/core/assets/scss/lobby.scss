@@ -114,10 +114,7 @@ button:disabled {
     display: flex;
     flex-direction: row;
     width: 100%;
-    background-color: var(--navigation-bg);
     padding: var(--common-padding);
-    border-radius: var(--border-radius);
-    box-shadow: 0px 0px 8px 0px #1f1f2a;
     margin-bottom: 15px;
 }
 
@@ -132,26 +129,21 @@ button:disabled {
     display: flex;
     border-radius: var(--border-radius);
     padding: 0;
-    background-color: var(--navigation-bg);
     align-items: center;
     vertical-align: center;
 }
 
 .nav-group-area span {
     padding: 0 var(--common-padding);
-    color: #fff;
-    background-color: var(--navigation-bg);
 }
 
 .nav-icon-button {
     display: flex;
     align-items: center;
     vertical-align: center;
-    background-color: var(--main-color);
     padding: 7px 14px;
     border: none;
     border-radius: var(--asset-border-radius);
-    color: #fff;
     background-repeat: no-repeat;
     background-position: center left 12px;
     background-size: 16px;
@@ -168,7 +160,7 @@ button:disabled {
 }
 
 .nav-icon-button.secondary {
-    background-color: var(--secondary-color) !important;
+
 }
 
 .nav-icon-button.warning {
@@ -185,7 +177,6 @@ button:disabled {
 .icon svg {
     width: 25px;
     height: 25px;
-    color: #fff;
     transition: 0.2s ease-in;
 }
 
@@ -210,12 +201,9 @@ button:disabled {
 }
 /*==================== Guest Container ====================*/
 .guest-container {
-    background-color: var(--chat-background);
-    border-radius: var(--border-radius);
     display: flex;
     flex-direction: column;
     height: calc(100%);
-    box-shadow: 0px 0px 8px 0px #1f1f2a;
 }
 
 .guest-header {
@@ -225,7 +213,6 @@ button:disabled {
 }
 
 .guest-header span {
-    color: #fff;
     font-size: 20px;
 }
 
@@ -250,9 +237,6 @@ button:disabled {
     height: 25%;
     position: relative;
     overflow: hidden;
-    background-color: var(--app-background);
-    border: 1px var(--chat-background) solid;
-    border-radius: var(--asset-border-radius);
 }
 .canvas-logo,
 .guest-video .guest-icon,
@@ -265,22 +249,22 @@ button:disabled {
     background-repeat: no-repeat;
     background-position: center;
     background-size: 48px;
-    background-color: var(--app-background);
-    border-radius: var(--asset-border-radius);
+    // border-radius: var(--asset-border-radius);
     //border-bottom: 1px solid var(--chat-background);
     //border-top: 1px solid var(--chat-background);
 }
 
+
 .guest-video .guest-icon {
-    background-image: url('data:image/svg+xml, <svg xmlns="http://www.w3.org/2000/svg" height="48px" viewBox="0 0 24 24" width="48px" fill="%233c3f56"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>');
+    background-image: url('data:image/svg+xml, <svg xmlns="http://www.w3.org/2000/svg" height="48px" viewBox="0 0 24 24" width="48px" fill="%23343a40"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>');
 }
 
 .guest-video .guest-camera-off {
-    background-image: url('data:image/svg+xml, <svg xmlns="http://www.w3.org/2000/svg" height="48" viewBox="0 -960 960 960" width="48" fill="%233c3f56" ><path d="M880-275 720-435v111l-60-60v-356H304l-60-60h416q24 0 42 18t18 42v215l160-160v410ZM848-27 39-836l42-42L890-69l-42 42ZM484-560Zm-87 82ZM159-800l60 60h-79v520h520v-79l60 60v19q0 24-18 42t-42 18H140q-24 0-42-18t-18-42v-520q0-24 18-42t42-18h19Z"/></svg>');
+    background-image: url('data:image/svg+xml, <svg xmlns="http://www.w3.org/2000/svg" height="48" viewBox="0 -960 960 960" width="48" fill="%23343a40" ><path d="M880-275 720-435v111l-60-60v-356H304l-60-60h416q24 0 42 18t18 42v215l160-160v410ZM848-27 39-836l42-42L890-69l-42 42ZM484-560Zm-87 82ZM159-800l60 60h-79v520h520v-79l60 60v19q0 24-18 42t-42 18H140q-24 0-42-18t-18-42v-520q0-24 18-42t42-18h19Z"/></svg>');
 }
 
 .guest-video video {
-    background-image: url('data:image/svg+xml, <svg xmlns="http://www.w3.org/2000/svg" height="48px" viewBox="0 0 24 24" width="48px" fill="%233c3f56"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>');
+    background-image: url('data:image/svg+xml, <svg xmlns="http://www.w3.org/2000/svg" height="48px" viewBox="0 0 24 24" width="48px" fill="%23343a40"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>');
 }
 
 .canvas-logo {
@@ -311,9 +295,6 @@ canvasOne {
 .video-call-wrapper {
     width: 100%;
     height: 100%;
-    border-radius: var(--border-radius);
-    background-color: var(--navigation-bg);
-    box-shadow: 0px 0px 8px 0px #1f1f2a;
     overflow: hidden;
     display: flex;
     flex-wrap: wrap;
