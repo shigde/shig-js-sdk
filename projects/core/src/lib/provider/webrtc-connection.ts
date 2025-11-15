@@ -100,10 +100,8 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
         });
     }
 
-    private onReceiveChannelMessageCallback(me: MessageEvent<any>): void {
-        const msg = JSON.parse(new TextDecoder().decode(me.data as ArrayBuffer)) as ChannelMsg;
-        if (msg?.type === ChannelMsgType.OfferMsg) {
-        }
+    private onReceiveChannelMessageCallback(ev: MessageEvent<any>): void {
+      console.log('onReceiveChannelMessageCallback', ev);
     }
 
     private onReceiveChannelStateChange(ev: Event): void {
@@ -161,6 +159,8 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
     }
 
     private onRemoteOffer(sdp: RTCSessionDescription | null): void {
+
+
         const mediaLines = SdpParser.getSdpMediaLine(sdp);
         mediaLines.forEach((line) => {
             const media = this.remoteMedia.get(line.mid);

@@ -88,10 +88,10 @@ export class DeviceCaptureComponent implements OnInit, OnDestroy {
 
     try {
       this.stream = await navigator.mediaDevices.getUserMedia({
-        video: this.storedDeviceSettings.camera !== null && this.storedDeviceSettings.camera !== undefined
+        video: this.storedDeviceSettings.camera !== null && this.storedDeviceSettings.camera !== undefined && this.storedDeviceSettings.camera !== ''
           ? {deviceId: {exact: this.storedDeviceSettings.camera}}
           : true,
-        audio: this.storedDeviceSettings.microphone !== null && this.storedDeviceSettings.microphone !== undefined
+        audio: this.storedDeviceSettings.microphone !== null && this.storedDeviceSettings.microphone !== undefined && this.storedDeviceSettings.microphone !== ''
           ? {deviceId: {exact: this.storedDeviceSettings.microphone}}
           : true,
       });

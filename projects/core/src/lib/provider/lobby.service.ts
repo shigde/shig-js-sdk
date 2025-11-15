@@ -25,7 +25,9 @@ export class LobbyService {
   public mute$ = new BehaviorSubject<LobbyMedia | null>(null);
   public remove$ = new BehaviorSubject<LobbyMedia | null>(null);
   private messenger: ChannelMessenger | undefined;
+  // sending media stream
   private ingress: WebrtcConnection | undefined;
+  // receiving media stream
   private egress: WebrtcConnection | undefined;
 
   httpOptions = {
@@ -90,11 +92,10 @@ export class LobbyService {
       }
     });
 
-    return this.egress.createOffer(new Map<LobbyMediaPurpose, MediaStream>(), '')
-      .then((offer) => this.sendWhep(offer, spaceId, streamId))
-      .then((answer) => this.egress?.setAnswer(answer));
+    return this.sendWhepOfferReq(spaceId, streamId)
+      .then((offer) => wc.setRemoteOffer(offer))
+      .then((answer) => this.sendWhepAnswer(answer, spaceId, streamId));
   }
-
 
   sendWhip(offer: RTCSessionDescriptionInit, spaceId: string, streamId: string): Promise<RTCSessionDescription> {
     const whipUrl = `${this.params.API_PREFIX}/channel/${spaceId}/stream/${streamId}/whip`;
@@ -108,16 +109,16 @@ export class LobbyService {
     ).then(answer => ({type: 'answer', sdp: answer} as RTCSessionDescription));
   }
 
-  sendWhep(offer: RTCSessionDescriptionInit, spaceId: string, streamId: string) {
+  sendWhepOfferReq(spaceId: string, streamId: string): Promise<RTCSessionDescription> {
     const whepUrl = `${this.params.API_PREFIX}/channel/${spaceId}/stream/${streamId}/whep`;
 
-    const body = offer.sdp;
+    const body = {};
     // @ts-ignore
     return lastValueFrom(this.http.post(whepUrl, body, this.httpOptions).pipe(
         tap(a => console.log('---', a)),
         catchError(this.handleError<string>('sendWhep', ''))
       )
-    ).then(answer => ({type: 'answer', sdp: answer} as RTCSessionDescription));
+    ).then(offer => ({type: 'offer', sdp: offer} as RTCSessionDescription));
   }
 
   sendWhepAnswer(answer: RTCSessionDescriptionInit, spaceId: string, streamId: string) {

@@ -69,6 +69,7 @@
           <button type="button" class="btn btn-primary" (click)="select()">Update</button>
         }
         @if (!doStreamUpdate) {
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" (click)="closeModal()">Cancel</button>
           <button type="button" class="btn btn-primary" (click)="select()">Select</button>
         }
       </div>

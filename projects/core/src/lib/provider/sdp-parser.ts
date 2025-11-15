@@ -22,6 +22,19 @@ export class SdpParser {
         } as RTCSessionDescription;
     }
 
+  // zone.js:165 Uncaught TypeError: Cannot read properties of undefined (reading 'split')
+  // at exports.parse (parser.js:46:7)
+  // at _SdpParser.getSdpMediaLine (shigde-core.mjs:891:30)
+  // at WebrtcConnection.beforeRemoteOffer (shigde-core.mjs:1059:34)
+  // at WebrtcConnection.setRemoteOffer (shigde-core.mjs:1010:10)
+  // at Object.next (shigde-core.mjs:1193:12)
+  // at ConsumerObserver2.next (Subscriber.js:96:33)
+  // at Subscriber2._next (Subscriber.js:63:26)
+  // at Subscriber2.next (Subscriber.js:34:18)
+  // at Subject.js:41:34
+  // at errorContext (errorContext.js:19:9)
+
+
     public static getSdpMediaLine(sdp: RTCSessionDescription | null): SdpMediaLine[] {
         const mediaLines: SdpMediaLine[] = [];
         if (sdp === null) {

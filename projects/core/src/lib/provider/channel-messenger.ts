@@ -6,24 +6,49 @@ export class ChannelMessenger extends EventEmitter<ChannelMsg> {
 
   constructor(private dc: RTCDataChannel) {
     super();
-    dc.onmessage = this.onReceiveChannelMessageCallback.bind(this)
+    dc.onmessage = this.onReceiveChannelMessageCallback.bind(this);
   }
 
   private onReceiveChannelMessageCallback(me: MessageEvent<any>): void {
-    const msg = JSON.parse(new TextDecoder().decode(me.data as ArrayBuffer)) as ChannelMsg
-    if (msg?.type === ChannelMsgType.OfferMsg) {
-      msg.data = msg.data as SdpMsgData
+    const msg = JSON.parse(new TextDecoder().decode(me.data as ArrayBuffer)) as ChannelMsg;
+
+    if (msg?.type != null && Number(msg.type) === ChannelMsgType.OfferMsg) {
+      const sdp: RTCSessionDescription = {
+        type: 'offer', sdp: msg?.data.sdp
+      } as RTCSessionDescription;
+      const number = Number(msg.data.number);
+
+      msg.data = {number, sdp} as SdpMsgData;
+      msg.type = ChannelMsgType.OfferMsg;
       this.emit(msg);
     }
-      if (msg?.type === ChannelMsgType.MuteMsg) {
-          msg.data = msg.data as MuteMsgData
-          console.log("##############-mid", msg.data)
-          this.emit(msg);
-      }
+
+    if (msg?.type != null && Number(msg.type) === ChannelMsgType.AnswerMsg) {
+      const sdp: RTCSessionDescription = {
+        type: 'answer', sdp: msg?.data.sdp
+      } as RTCSessionDescription;
+      const number = Number(msg.data.number);
+
+      msg.data = {number, sdp} as SdpMsgData;
+      msg.type = ChannelMsgType.OfferMsg;
+      this.emit(msg);
+    }
+
+    if (msg?.type != null && Number(msg.type) === ChannelMsgType.MuteMsg) {
+      msg.data = msg.data as MuteMsgData;
+      msg.type = ChannelMsgType.MuteMsg;
+
+      this.emit(msg);
+    }
   }
 
   public send(msg: ChannelMsg): void {
-    const data = new TextEncoder().encode(JSON.stringify(msg)) as ArrayBuffer
-    this.dc.send(data)
+    if (Number(msg.type) === ChannelMsgType.OfferMsg || Number(msg.type) === ChannelMsgType.AnswerMsg) {
+      msg.data.sdp = msg.data.sdp.sdp;
+    }
+
+    const json = JSON.stringify({...msg, type: msg.type.toString()});
+    const bytes = new TextEncoder().encode(json);
+    this.dc.send(bytes);
   }
 }

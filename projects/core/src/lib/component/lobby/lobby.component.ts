@@ -51,6 +51,7 @@ export class LobbyComponent implements OnInit {
   private mixer?: CanvasStreamMixer;
 
   private readonly config: RTCConfiguration = {
+    bundlePolicy: "max-bundle",
     iceServers: environment.iceServers
   };
 
