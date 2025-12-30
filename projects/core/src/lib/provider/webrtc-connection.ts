@@ -12,7 +12,7 @@ import {createLogger} from './logger';
 
 
 export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
-  private readonly log = createLogger('ChannelMessenger');
+  private readonly log = createLogger('WebrtcConnection');
   private readonly pc: RTCPeerConnection;
   private readonly remoteMedia: Map<LobbyMediaIndex, LobbyMedia> = new Map<LobbyMediaIndex, LobbyMedia>();
   private dataChannel: RTCDataChannel | undefined;
@@ -31,17 +31,17 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
     this.pc.ondatachannel = (event) => {
       this.log.info('receive on channel event', event);
       this.dataChannel = event.channel;
-      this.dataChannel.onmessage = this.onReceiveChannelMessageCallback;
-      this.dataChannel.onopen = this.onReceiveChannelStateChange;
-      this.dataChannel.onclose = this.onReceiveChannelStateChange;
+      this.dataChannel.onmessage = () => this.onReceiveChannelMessageCallback;
+      this.dataChannel.onopen = () => this.onReceiveChannelStateChange;
+      this.dataChannel.onclose = () => this.onReceiveChannelStateChange;
     };
   }
 
   public createDataChannel(label: 'whip' | 'whep'): RTCDataChannel {
     this.dataChannel = this.pc.createDataChannel(label);
     this.dataChannel.onmessage = this.onReceiveChannelMessageCallback;
-    this.dataChannel.onopen = this.onReceiveChannelStateChange;
-    this.dataChannel.onclose = this.onReceiveChannelStateChange;
+    this.dataChannel.onopen = () => this.onReceiveChannelStateChange;
+    this.dataChannel.onclose = () => this.onReceiveChannelStateChange;
     return this.dataChannel;
   }
 
@@ -75,7 +75,7 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
   }
 
   public setAnswer(answer: RTCSessionDescription): Promise<void> {
-    this.log.info('setAnswer: ', answer, 'type: ', answer.type, 'sdp: ', answer.sdp.split('\n').join(''));
+    this.log.info('setAnswer: ', answer);
     return this.pc.setRemoteDescription(answer);
   }
 

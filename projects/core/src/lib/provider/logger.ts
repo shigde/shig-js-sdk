@@ -71,10 +71,55 @@ function createLoggerFactory(libName: string, scope: string): Logger {
   };
 }
 
+const LIB_NAME = 'shig-core';
+const APP_NAME = 'shig-app';
+
+
 export function createLogger(scope: string): Logger {
-  return createLoggerFactory('shig-core', scope);
+  return createLoggerFactory(LIB_NAME, scope);
 }
 
 export function createAppLogger(scope: string): Logger {
-  return createLoggerFactory('shig-app', scope);
+  return createLoggerFactory(APP_NAME, scope);
+}
+
+
+export enum LEVEL {
+  ERROR = 'error',
+  WARN = 'warn',
+  INFO = 'info',
+  DEBUG = 'debug',
+  TRACE = 'trace',
+  ALL = 'all'
+}
+
+export function enableLogger(level: LEVEL) {
+  if (level === LEVEL.ALL) {
+    debug.enable(`${LIB_NAME}:*,${APP_NAME}:*`);
+    return;
+  }
+  let enableLibStr = enableLoggerLevel(LIB_NAME, level);
+  let enableAppStr = enableLoggerLevel(APP_NAME, level);
+  debug.enable(`${enableLibStr},${enableAppStr}`);
+}
+
+function enableLoggerLevel(libName: string, level: LEVEL): string {
+  switch (level) {
+    case LEVEL.ERROR: {
+      return `${libName}:*,-${libName}:*:warn,-${libName}:*:info,-${libName}:*:debug,-${libName}:*:trace`;
+    }
+    case LEVEL.WARN: {
+      return `${libName}:*,-${libName}:*:info,-${libName}:*:debug,-${libName}:*:trace`;
+    }
+    case LEVEL.INFO: {
+      return `${libName}:*,-${libName}:*:debug,-${libName}:*:trace`;
+    }
+    case LEVEL.DEBUG: {
+      return `${libName}:*,-${libName}:*:trace`;
+    }
+    case LEVEL.TRACE: {
+      return `${libName}:*,-${libName}:*:debug`;
+    }
+  }
+  return '*:*';
 }
