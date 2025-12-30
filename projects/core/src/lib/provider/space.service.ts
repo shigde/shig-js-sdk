@@ -4,12 +4,15 @@ import {MessageService} from './message.service';
 import {catchError, map, Observable, of, tap} from 'rxjs';
 import {Space} from '../entities/space';
 import {ParameterService} from './parameter.service';
+import {createLogger} from './logger';
 
 /**
  * @deprecate
  */
 @Injectable({providedIn: 'root'})
 export class SpaceService {
+  private readonly log= createLogger('SpaceService');
+
   httpOptions = {
     headers: new HttpHeaders({'Content-Type': 'application/json'})
   };
@@ -31,7 +34,7 @@ export class SpaceService {
   getSpaces(): Observable<Space[]> {
     return this.http.get<Space[]>(`${this.params.API_PREFIX}/spaces`)
       .pipe(
-        tap(_ => this.log('fetched spaces')),
+        tap(_ => this.log.info('fetched spaces')),
         catchError(this.handleError<Space[]>('getSpaces', []))
       );
   }
@@ -44,7 +47,7 @@ export class SpaceService {
         map(spaces => spaces[0]), // returns a {0|1} element array
         tap(h => {
           const outcome = h ? 'fetched' : 'did not find';
-          this.log(`${outcome} space id=${id}`);
+          this.log.info(`${outcome} space id=${id}`);
         }),
         catchError(this.handleError<Space>(`getSpace id=${id}`))
       );
@@ -54,7 +57,7 @@ export class SpaceService {
   getSpace(id: string): Observable<Space> {
     const url = `${this.params.API_PREFIX}/space/${id}`;
     return this.http.get<Space>(url).pipe(
-      tap(_ => this.log(`fetched space id=${id}`)),
+      tap(_ => this.log.info(`fetched space id=${id}`)),
       catchError(this.handleError<Space>(`getSpace id=${id}`))
     );
   }
@@ -67,8 +70,8 @@ export class SpaceService {
     }
     return this.http.get<Space[]>(`${this.params.API_PREFIX}/space/?name=${term}`).pipe(
       tap(x => x.length ?
-        this.log(`found spaces matching "${term}"`) :
-        this.log(`no spaces matching "${term}"`)),
+        this.log.info(`found spaces matching "${term}"`) :
+        this.log.info(`no spaces matching "${term}"`)),
       catchError(this.handleError<Space[]>('searchSpaces', []))
     );
   }
@@ -78,7 +81,7 @@ export class SpaceService {
   /** POST: add a new space to the server */
   addSpace(space: Space): Observable<Space> {
     return this.http.post<Space>(`${this.params.API_PREFIX}/space`, space, this.httpOptions).pipe(
-      tap((newSpace: Space) => this.log(`added space w/ id=${newSpace.id}`)),
+      tap((newSpace: Space) => this.log.info(`added space w/ id=${newSpace.id}`)),
       catchError(this.handleError<Space>('addSpace'))
     );
   }
@@ -88,7 +91,7 @@ export class SpaceService {
     const url = `${this.params.API_PREFIX}/space/${id}`;
 
     return this.http.delete<Space>(url, this.httpOptions).pipe(
-      tap(_ => this.log(`deleted space id=${id}`)),
+      tap(_ => this.log.info(`deleted space id=${id}`)),
       catchError(this.handleError<Space>('deleteSpace'))
     );
   }
@@ -96,7 +99,7 @@ export class SpaceService {
   /** PUT: update the space on the server */
   updateSpace(space: Space): Observable<any> {
     return this.http.put(`${this.params.API_PREFIX}/space`, space, this.httpOptions).pipe(
-      tap(_ => this.log(`updated space id=${space.id}`)),
+      tap(_ => this.log.info(`updated space id=${space.id}`)),
       catchError(this.handleError<any>('updateSpace'))
     );
   }
@@ -112,10 +115,10 @@ export class SpaceService {
     return (error: any): Observable<T> => {
 
       // TODO: send the error to remote logging infrastructure
-      console.error(error); // log to console instead
+      this.log.error(error);
 
       // TODO: better job of transforming error for user consumption
-      this.log(`${operation} failed: ${error.message}`);
+      this.logMessage(`${operation} failed: ${error.message}`);
 
       // Let the app keep running by returning an empty result.
       return of(result as T);
@@ -123,7 +126,7 @@ export class SpaceService {
   }
 
   /** Log a SpaceService message with the MessageService */
-  private log(message: string) {
+  private logMessage(message: string) {
     this.messageService.add(`SpaceService: ${message}`);
   }
 }

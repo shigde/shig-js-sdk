@@ -3,6 +3,7 @@ import {BehaviorSubject, catchError, map, Observable, of, tap} from 'rxjs';
 import {ApiResponse, Role, Token, User} from '../entities';
 import {HttpClient, HttpHeaders} from '@angular/common/http';
 import {ParameterService} from './parameter.service';
+import {createLogger} from './logger';
 
 const ANONYMOUS = 'anonymous';
 const SESSION_TOKEN_KEY = 'jwt';
@@ -12,6 +13,7 @@ const REFRESH_TOKEN_KEY = 'refresh';
   providedIn: 'root'
 })
 export class SessionService {
+  private readonly log = createLogger('SessionService');
   public readonly principalSubject = new BehaviorSubject<User | null>(null);
 
   constructor(private http: HttpClient, private params: ParameterService) {
@@ -80,7 +82,7 @@ export class SessionService {
   }
 
   public clearData() {
-    console.log('############## cleare data');
+    this.log.info('clear data');
     window.localStorage.clear();
     this.principalSubject.next(null);
   }

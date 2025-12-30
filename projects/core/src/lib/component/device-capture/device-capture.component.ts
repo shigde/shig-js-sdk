@@ -5,7 +5,7 @@ import {
   OnInit,
   ViewChild,
 } from '@angular/core';
-import {DeviceSettingsService, LocalStoreService} from '../../provider';
+import {createLogger, DeviceSettingsService, LocalStoreService} from '../../provider';
 import {DeviceSettings} from '../../entities';
 
 export type DeviceSettingsCbk = (s: DeviceSettings) => void;
@@ -17,6 +17,7 @@ export type DeviceSettingsCbk = (s: DeviceSettings) => void;
   standalone: false,
 })
 export class DeviceCaptureComponent implements OnInit, OnDestroy {
+  private readonly log = createLogger('DeviceCaptureComponent');
   @ViewChild('videoElement') videoElement!: ElementRef<HTMLVideoElement>;
 
   @Input() onSelect: undefined | DeviceSettingsCbk;
@@ -48,7 +49,7 @@ export class DeviceCaptureComponent implements OnInit, OnDestroy {
       this.loadDevices()
     );
 
-    console.log('sdk: device capture - init', this.storedDeviceSettings);
+    this.log.info('sdk: device capture - init', this.storedDeviceSettings);
 
     await this.loadDevices();
     await this.startStream();
@@ -162,14 +163,14 @@ export class DeviceCaptureComponent implements OnInit, OnDestroy {
 
   closeModal() {
     if (this.onClose !== undefined) {
-      console.log('sdk: device capture - close');
+      this.log.info('sdk: device capture - close');
       this.onClose();
     }
   }
 
   select() {
     if (this.onSelect !== undefined) {
-      console.log('sdk: device capture - select');
+      this.log.info('sdk: device capture - select');
       this.store.save(this.storedDeviceSettings);
       this.onSelect(this.storedDeviceSettings);
       this.closeModal();
@@ -177,12 +178,13 @@ export class DeviceCaptureComponent implements OnInit, OnDestroy {
   }
 }
 
+let logger = createLogger('DeviceCaptureComponent.f');
 function filterSelectedDevices(devices: MediaDeviceInfo[], search: string | null | undefined): string {
   if (!search) {
-    console.log('sdk: device capture - filterSelectedDevices - no search', devices);
+    logger.debug('sdk: device capture - filterSelectedDevices - no search', devices);
     return devices[0].deviceId;
   }
   let filtered = devices.filter((d) => d.deviceId.includes(search));
-  console.log('sdk: device capture - filterSelectedDevices - filtered', filtered);
+  logger.debug('sdk: device capture - filterSelectedDevices - filtered', filtered);
   return filtered.length > 0 ? filtered[0].deviceId : devices[0].deviceId;
 }

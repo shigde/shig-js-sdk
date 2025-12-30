@@ -1,8 +1,11 @@
 import {EventEmitter} from '@angular/core';
 
-import {ChannelMsg, ChannelMsgType, MuteMsgData, SdpMsgData} from '../entities/channel.msg';
+import {ChannelMsg, ChannelMsgType, MuteMsgData, SdpMsgData} from '../entities';
+import {createLogger} from './logger';
+
 
 export class ChannelMessenger extends EventEmitter<ChannelMsg> {
+  private readonly log = createLogger('ChannelMessenger');
 
   constructor(private dc: RTCDataChannel) {
     super();
@@ -11,6 +14,7 @@ export class ChannelMessenger extends EventEmitter<ChannelMsg> {
 
   private onReceiveChannelMessageCallback(me: MessageEvent<any>): void {
     const msg = JSON.parse(new TextDecoder().decode(me.data as ArrayBuffer)) as ChannelMsg;
+    this.log.info("Received message:", msg);
 
     if (msg?.type != null && Number(msg.type) === ChannelMsgType.OfferMsg) {
       const sdp: RTCSessionDescription = {

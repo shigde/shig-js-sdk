@@ -9,6 +9,7 @@ import {
   OnChanges,
   SimpleChanges,
 } from '@angular/core';
+import {createLogger} from '../../provider';
 
 @Component({
   selector: 'app-audio-meter',
@@ -21,8 +22,9 @@ export class AudioMeterComponent implements OnInit, OnDestroy, OnChanges {
 
   @Input() orientation: 'vertical' | 'horizontal' = 'vertical';
   @Input() segments: number = 10;
-  @Input() stream: MediaStream | null = null; // extern übergeben
+  @Input() stream: MediaStream | null = null; // extern pass
 
+  private readonly log = createLogger('AudioMeterComponent');
   private audioContext: AudioContext | null = null;
   private analyser: AnalyserNode | null = null;
   private sourceNode: MediaStreamAudioSourceNode | null = null;
@@ -61,7 +63,7 @@ export class AudioMeterComponent implements OnInit, OnDestroy, OnChanges {
 
       this.updateMeter();
     } catch (err) {
-      console.error('AudioMeter konnte nicht initialisiert werden:', err);
+      this.log.error('AudioMeter could not be initialized:', err);
     }
   }
 

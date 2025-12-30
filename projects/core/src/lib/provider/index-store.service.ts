@@ -2,6 +2,7 @@ import Dexie from 'dexie';
 import {from, Observable} from 'rxjs';
 import {Injectable} from '@angular/core';
 import {DeviceSettings} from '../entities';
+import {createLogger} from './logger';
 
 const INDEX_DB = 'shig_db';
 const DB_VERSION = 1;
@@ -10,6 +11,7 @@ const DB_VERSION = 1;
   providedIn: 'root'
 })
 export class IndexStoreService extends Dexie {
+  private readonly log = createLogger('IndexStoreService');
   public settings: Dexie.Table<DeviceSettings, number>; // id is number in this case
 
   public constructor() {
@@ -25,7 +27,7 @@ export class IndexStoreService extends Dexie {
         const id = await this.settings.add({...settings});
       }
     }).catch(e => {
-      console.log(e.stack || e);
+      this.log.info(e.stack || e);
     });
   }
 
@@ -37,7 +39,7 @@ export class IndexStoreService extends Dexie {
         const id = await this.settings.put({...settings}, DeviceSettings.DEVICE_SETTING_ID);
       }
     }).catch(e => {
-      console.log('??????, e');
+      this.log.info('??????, e');
       // this.dialog.open(NoticeDialogComponent, {data: {type: 'fail', msg: 'Can not update profile!'}});
     });
   }
@@ -62,7 +64,7 @@ export class IndexStoreService extends Dexie {
 
     const settingsPromise = this.settings.toArray().then((settings) => {
 
-      console.log('sdk: fetchAsync', settings);
+      this.log.info('sdk: fetchAsync', settings);
 
       return settings[0]
     });

@@ -2,12 +2,14 @@ import Dexie from 'dexie';
 import {from, Observable} from 'rxjs';
 import {Injectable} from '@angular/core';
 import {DeviceSettings} from '../entities';
+import {createLogger} from './logger';
 
 
 @Injectable({
   providedIn: 'root'
 })
 export class LocalStoreService {
+  private readonly log = createLogger('LocalStoreService');
   private readonly STORAGE_KEY = 'devices';
   private data: null | DeviceSettings = null;
 
@@ -17,7 +19,7 @@ export class LocalStoreService {
       try {
         return JSON.parse(raw) as DeviceSettings;
       } catch (e) {
-        console.error('Error parsing localStorage device data:', e);
+        this.log.error('parsing localStorage device data:', e);
         return null;
       }
     }
@@ -28,7 +30,7 @@ export class LocalStoreService {
     try {
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(settings));
     } catch (e) {
-      console.error('save localStorage device data:', e);
+      this.log.error('save localStorage device data:', e);
     }
   }
 

@@ -8,8 +8,11 @@ import {
 } from '../entities';
 import {SdpParser} from './sdp-parser';
 import {extractPeerId} from './id-parser';
+import {createLogger} from './logger';
+
 
 export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
+  private readonly log = createLogger('ChannelMessenger');
   private readonly pc: RTCPeerConnection;
   private readonly remoteMedia: Map<LobbyMediaIndex, LobbyMedia> = new Map<LobbyMediaIndex, LobbyMedia>();
   private dataChannel: RTCDataChannel | undefined;
@@ -22,11 +25,11 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
     this.pc = new RTCPeerConnection(this.config);
     this.pc.ontrack = (ev: RTCTrackEvent) => this.onTrack(ev);
     this.pc.onsignalingstatechange = _ => this.onSignalStateChange();
-    this.pc.oniceconnectionstatechange = _ => console.log('oniceconnectionstatechange');
+    this.pc.oniceconnectionstatechange = _ => this.log.info('oniceconnectionstatechange');
     this.pc.onicecandidate = event => this.onicecandidate(event);
-    this.pc.onnegotiationneeded = _ => console.log('onnegotiationneeded');
+    this.pc.onnegotiationneeded = _ => this.log.info('onnegotiationneeded');
     this.pc.ondatachannel = (event) => {
-      console.log('Receive Channel Callback');
+      this.log.info('receive on channel event', event);
       this.dataChannel = event.channel;
       this.dataChannel.onmessage = this.onReceiveChannelMessageCallback;
       this.dataChannel.onopen = this.onReceiveChannelStateChange;
@@ -72,7 +75,7 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
   }
 
   public setAnswer(answer: RTCSessionDescription): Promise<void> {
-    console.log('Answer:', answer);
+    this.log.info('setAnswer: ', answer, 'type: ', answer.type, 'sdp: ', answer.sdp.split('\n').join(''));
     return this.pc.setRemoteDescription(answer);
   }
 
@@ -100,11 +103,11 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
   }
 
   private onReceiveChannelMessageCallback(ev: MessageEvent<any>): void {
-    console.log('onReceiveChannelMessageCallback', ev);
+    this.log.warn('onReceiveChannelMessageCallback not set', ev);
   }
 
   private onReceiveChannelStateChange(ev: Event): void {
-    console.log('onReceiveChannelStateChange', ev);
+    this.log.warn('onReceiveChannelStateChange not set', ev);
   }
 
   private onTrack(ev: RTCTrackEvent): void {
@@ -119,12 +122,12 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
       this.emit({type: 'add', media, track, stream});
     }
     if (media === undefined) {
-      console.log('error! an transceiver without a media should not exits', ev.transceiver.mid, this.remoteMedia);
+      this.log.error('an transceiver without a media should not exits', ev.transceiver.mid, this.remoteMedia);
     }
   }
 
   private onSignalStateChange() {
-    console.log(`signal state: ${this.pc.signalingState}`);
+    this.log.info(`signal state: ${this.pc.signalingState}`);
     this.logTransceiversState(this.pc.signalingState);
     if (this.pc.signalingState === 'have-remote-offer') {
       this.onRemoteOffer(this.pc.remoteDescription);
@@ -173,7 +176,7 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
 
   public muteRemoteMedia(mid: string, mute: boolean) {
     const media = this.remoteMedia.get(Number(mid));
-    console.log('mute remote', this.type);
+    this.log.info('muteRemoteMedia', this.type);
     if (!!media) {
       media.muted = mute;
       this.remoteMedia.set(Number(mid), media);
@@ -194,7 +197,7 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
 
     private logTransceiversState(sdpState: string): void {
         this.pc.getTransceivers().forEach((t) => {
-            console.log(`### TS:
+          this.log.debug(`transceiver:
             state: ${sdpState}
             mid: ${t.mid}
             direction: ${t.direction}

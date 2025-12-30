@@ -5,7 +5,7 @@ import {BehaviorSubject, tap} from 'rxjs';
 import {environment} from '../../../environments/environment';
 
 import {
-  CanvasStreamMixer,
+  CanvasStreamMixer, createLogger,
   DeviceSettingsService,
   LobbyService,
   ParameterService,
@@ -34,6 +34,7 @@ import {
   standalone: false
 })
 export class LobbyComponent implements OnInit {
+  private readonly log = createLogger('LobbyComponent');
 
   @ViewChild('videoStreamElement') videoStreamRef!: ElementRef<HTMLVideoElement>;
 
@@ -90,8 +91,8 @@ export class LobbyComponent implements OnInit {
 
 
     this.image.src = this.basePath + '/images/face.svg';
-    this.image.onload = function () {
-      console.log('Image loaded');
+    this.image.onload =  () => {
+      this.log.info('image loaded');
     };
 
     this.session.setAuthenticationToken(this.getToken());
@@ -192,7 +193,7 @@ export class LobbyComponent implements OnInit {
 
   private getToken(): string {
     if (typeof this.token !== 'string') {
-      console.error('Invalid token: ', this.token);
+      this.log.warn('Invalid token: ', this.token);
     }
     return (this.token === undefined) ? 'unauthorized' : this.token;
   }
@@ -202,7 +203,7 @@ export class LobbyComponent implements OnInit {
   }
 
   onDeviceSelect(settings: DeviceSettings) {
-    console.log('Device settings', settings);
+    this.log.info('device settings', settings);
     this.startCamera(settings);
   }
 
@@ -218,7 +219,7 @@ export class LobbyComponent implements OnInit {
   }
 
   start(): void {
-    console.log('Start ####################', this.streamLiveData, this.streamUuid, this.channelUuid);
+    this.log.info('start', this.streamLiveData, this.streamUuid, this.channelUuid);
     if (this.streamLiveData != undefined && this.streamUuid != undefined && this.channelUuid != undefined) {
       this.lobbyService.startLiveStream(this.streamLiveData, this.channelUuid, this.streamUuid)
         .subscribe(() => {

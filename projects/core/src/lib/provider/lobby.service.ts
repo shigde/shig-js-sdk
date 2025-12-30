@@ -15,12 +15,14 @@ import {
   StreamLiveStatus
 } from '../entities';
 import {ParameterService} from './parameter.service';
+import {createLogger} from './logger';
 
 
 @Injectable({
   providedIn: 'root'
 })
 export class LobbyService {
+  private readonly log = createLogger('LobbyService');
   public add$ = new BehaviorSubject<{ media: LobbyMedia, stream: MediaStream } | null>(null);
   public mute$ = new BehaviorSubject<LobbyMedia | null>(null);
   public remove$ = new BehaviorSubject<LobbyMedia | null>(null);
@@ -77,17 +79,17 @@ export class LobbyService {
       if (event.type === 'add') {
         let stream = event.stream;
         if (stream !== undefined) {
-          console.log('###### Add track:stream', event.media.kind, event.media.trackId, event.media.streamId);
+          this.log.info('add track:stream', event.media.kind, event.media.trackId, event.media.streamId);
           this.add$.next({media: event.media, stream});
         }
       }
       if (event.type === 'remove') {
-        console.log('###### Remove track:stream', event.media.kind, event.media.trackId, event.media.streamId,);
+        this.log.info('remove track:stream', event.media.kind, event.media.trackId, event.media.streamId,);
         this.remove$.next(event.media);
       }
 
       if (event.type === 'mute') {
-        console.log('###### Mute track:stream', event.media.kind, event.media.trackId, event.media.streamId,);
+        this.log.info('mute track:stream', event.media.kind, event.media.trackId, event.media.streamId,);
         this.mute$.next(event.media);
       }
     });
@@ -103,7 +105,7 @@ export class LobbyService {
     const body = offer.sdp;
     // @ts-ignore
     return lastValueFrom(this.http.post(whipUrl, body, this.httpOptions).pipe(
-        tap(a => console.log('---', a)),
+        tap(a => this.log.debug('sendWhip', a)),
         catchError(this.handleError<string>('sendWhip', ''))
       )
     ).then(answer => ({type: 'answer', sdp: answer} as RTCSessionDescription));
@@ -115,7 +117,7 @@ export class LobbyService {
     const body = {};
     // @ts-ignore
     return lastValueFrom(this.http.post(whepUrl, body, this.httpOptions).pipe(
-        tap(a => console.log('---', a)),
+        tap(a => this.log.debug('sendWhepOfferReq', a)),
         catchError(this.handleError<string>('sendWhep', ''))
       )
     ).then(offer => ({type: 'offer', sdp: offer} as RTCSessionDescription));
@@ -127,7 +129,7 @@ export class LobbyService {
 
     // @ts-ignore
     return lastValueFrom(this.http.patch(whepUrl, body, this.httpOptions).pipe(
-        tap(a => console.log('---', a)),
+        tap(a => this.log.debug('sendWhepAnswer', a)),
         catchError(this.handleError<string>('sendWhepAnswer', ''))
       )
     );
@@ -175,11 +177,9 @@ export class LobbyService {
   private handleError<T>(operation = 'operation', result?: T) {
     return (error: any): Observable<T> => {
 
-      // TODO: send the error to remote logging infrastructure
-      console.error(error); // log to console instead
+      this.log.error(`${operation} failed: ${error.message}`, error);
 
-      // TODO: better job of transforming error for user consumption
-      this.log(`${operation} failed: ${error.message}`);
+      this.logMessage(`${operation} failed: ${error.message}`);
 
       // Let the app keep running by returning an empty result.
       return of(result as T);
@@ -191,8 +191,8 @@ export class LobbyService {
       return;
     }
     const mid = this.ingress?.getMid(trackId);
+    this.log.info('broadcastMute MID:', mid);
     if (mid !== null) {
-      console.log('##############-mid', mid);
       this.messenger?.send(({
         type: ChannelMsgType.MuteMsg,
         id: 0,
@@ -202,7 +202,7 @@ export class LobbyService {
   }
 
   /** Log a LobbyService message with the MessageService */
-  private log(message: string) {
+  private logMessage(message: string) {
     this.messageService.add(`LobbyService: ${message}`);
   }
 }
