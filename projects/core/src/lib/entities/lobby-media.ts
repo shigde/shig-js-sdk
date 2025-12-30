@@ -3,6 +3,7 @@ import {LobbyMediaPurpose} from './lobby-media-purpose';
 export type LobbyMediaIndex = number
 
 export interface LobbyMedia {
+    peerId: string;
     mediaIndex: LobbyMediaIndex;
     purpose: LobbyMediaPurpose;
     info: string;

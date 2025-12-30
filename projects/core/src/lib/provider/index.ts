@@ -16,3 +16,4 @@ export * from './index-store.service';
 export * from './peertube.service';
 export * from './canvas_stream_mixer';
 export * from './sdp-parser';
+export * from './id-parser';

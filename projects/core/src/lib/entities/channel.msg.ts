@@ -19,3 +19,9 @@ export interface MuteMsgData {
     mid: string;
     mute: boolean;
 }
+
+type NegotiationMsg =
+  | { type: "offer"; seq: number; sdp: string }
+  | { type: "answer"; seq: number; sdp: string }
+  | { type: "abort"; seq: number }
+  | { type: "commit"; seq: number };

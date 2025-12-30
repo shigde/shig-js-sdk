@@ -9,4 +9,5 @@ export interface SdpMediaLine {
     muted: boolean;
     purpose: LobbyMediaPurpose;
     info: string;
+    ssrcs: number[];
 }
