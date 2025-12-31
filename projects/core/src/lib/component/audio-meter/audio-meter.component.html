@@ -1,3 +1,5 @@
 <div class="meter" [ngClass]="orientation">
-  <div #bar class="bar" *ngFor="let i of [].constructor(segments); let idx = index"></div>
+  @for (i of [].constructor(segments); track i; let idx = $index) {
+    <div #bar class="bar"></div>
+  }
 </div>

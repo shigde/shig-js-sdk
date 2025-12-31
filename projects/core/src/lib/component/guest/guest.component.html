@@ -1,8 +1,14 @@
 <div class="participant-action">
-    <button id="audio-{{  media?.streamId}}"  [ngClass]="{'btn-mic': !audioMuted, 'btn-mic-off': audioMuted}" *ngIf="onHost || isLocal" (click)="toggleMuteAudio()"></button>
-    <button id="camera-{{  media?.streamId}}" [ngClass]="{'btn-camera': !cameraMuted, 'btn-camera-off': cameraMuted}" *ngIf="onHost || isLocal" (click)="toggleMuteVideo()"></button>
-    <md-switch id="switch-{{  media?.streamId}}" icons class="active-video" *ngIf="onHost"
-               (click)="toggleActive()"></md-switch>
+  @if (onHost || isLocal) {
+    <button id="audio-{{  media?.streamId}}"  [ngClass]="{'btn-mic': !audioMuted, 'btn-mic-off': audioMuted}" (click)="toggleMuteAudio()"></button>
+  }
+  @if (onHost || isLocal) {
+    <button id="camera-{{  media?.streamId}}" [ngClass]="{'btn-camera': !cameraMuted, 'btn-camera-off': cameraMuted}" (click)="toggleMuteVideo()"></button>
+  }
+  @if (onHost) {
+    <md-switch id="switch-{{  media?.streamId}}" icons class="active-video"
+    (click)="toggleActive()"></md-switch>
+  }
 </div>
 <a href="#" class="name-tag">{{ media?.name }}</a>
 <div class="guest-camera-off rounded-1 mb-1 border bg-body" [ngClass]="{'display-none': !cameraMuted}"></div>

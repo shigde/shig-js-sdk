@@ -7,7 +7,7 @@
         <h1 class="modal-title fs-2" id="modalDeviceCaptureLabel">Device Settings</h1>
         @if (doStreamUpdate) {
           <button type="button" class="btn-close" data-bs-dismiss="modal" (click)="closeModal()"
-                  aria-label="Close"></button>
+          aria-label="Close"></button>
         }
       </div>
 
@@ -19,8 +19,8 @@
           <div class="w-100">
             <label for="formGroupCamera" class="form-label">Camera:</label>
             <select class="form-select" id="formGroupCamera"
-                    [ngModel]="storedDeviceSettings.camera"
-                    (ngModelChange)="onCameraChange($event)">
+              [ngModel]="storedDeviceSettings.camera"
+              (ngModelChange)="onCameraChange($event)">
               @for (device of cameras; track device.deviceId) {
                 <option [value]="device.deviceId">{{ device.label || 'Unknown Camera' }}</option>
               }
@@ -30,8 +30,8 @@
           <div class="w-100 mt-2">
             <label for="formGroupMicrophone" class="form-label">Microphone:</label>
             <select class="form-select" id="formGroupMicrophone"
-                    [ngModel]="storedDeviceSettings.microphone"
-                    (ngModelChange)="onMicrophoneChange($event)">
+              [ngModel]="storedDeviceSettings.microphone"
+              (ngModelChange)="onMicrophoneChange($event)">
               @for (device of microphones; track device.deviceId) {
                 <option [value]="device.deviceId">{{ device.label || 'Unknown Microphone' }}</option>
               }
@@ -41,8 +41,8 @@
           <div class="w-100 mt-2">
             <label for="formGroupSpeaker" class="form-label">Speaker:</label>
             <select class="form-select" id="formGroupSpeaker"
-                    [ngModel]="storedDeviceSettings.speaker"
-                    (ngModelChange)="onSpeakerChange($event)">
+              [ngModel]="storedDeviceSettings.speaker"
+              (ngModelChange)="onSpeakerChange($event)">
               @for (device of speakers; track device.deviceId) {
                 <option [value]="device.deviceId">{{ device.label || 'Unknown Speaker' }}</option>
               }
@@ -57,9 +57,11 @@
         </div>
 
         <!-- Error -->
-        <div *ngIf="errorMessage" class="col-12 text-danger fw-bold">
-          {{ errorMessage }}
-        </div>
+        @if (errorMessage) {
+          <div class="col-12 text-danger fw-bold">
+            {{ errorMessage }}
+          </div>
+        }
       </div>
 
       <!-- Footer -->
