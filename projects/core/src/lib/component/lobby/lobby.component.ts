@@ -6,8 +6,7 @@ import {environment} from '../../../environments/environment';
 
 import {
   CanvasStreamMixer, createLogger,
-  DeviceSettingsService,
-  LobbyService,
+  LobbyService, MediaDeviceManager,
   ParameterService,
   PeerTubeService,
   SessionService,
@@ -17,7 +16,7 @@ import {
 import {
   DeviceSettings,
   LobbyMediaPurpose,
-  LobbyMediaStream,
+  LobbyMediaStream, SelectedDevice,
   Stream,
   StreamLiveData
 } from '../../entities';
@@ -45,7 +44,7 @@ export class LobbyComponent implements OnInit {
   localGuest: LobbyMediaStream | undefined;
   localGuest$ = new BehaviorSubject<LobbyMediaStream | undefined>(undefined);
   hasMediaStreamSet = false;
-  displaySettings = true;
+  displaySettings = false;
   isHost = false;
 
   private streamLiveData: StreamLiveData | undefined;
@@ -71,7 +70,7 @@ export class LobbyComponent implements OnInit {
 
   constructor(
     private session: SessionService,
-    private devices: DeviceSettingsService,
+    private devices: MediaDeviceManager,
     private streamService: StreamService,
     private lobbyService: LobbyService,
     private peerTubeService: PeerTubeService,
@@ -81,7 +80,11 @@ export class LobbyComponent implements OnInit {
 
   }
 
-  ngOnInit(): void {
+  async ngOnInit() {
+    this.startCamera().finally(() => {
+
+    });
+
     if (this.apiPrefix !== undefined) {
       this.params.API_PREFIX = this.apiPrefix;
     }
@@ -129,26 +132,25 @@ export class LobbyComponent implements OnInit {
     }
   }
 
-  startCamera(settings: DeviceSettings) {
-    this.devices.getUserMedia(settings)
-      .then((stream: any) => {
-        if (this.localGuest?.stream) {
-          this.localGuest?.stream.getTracks().forEach(t => {
-            t.stop();
-          });
+  async startCamera() {
+    try {
+      let stream = await this.devices.sartDevice();
+      if (this.localGuest?.stream) {
+        this.localGuest?.stream.getTracks().forEach(t => {
+          t.stop();
+        });
+      }
+      this.localGuest = LobbyMediaStream.buildLocal('me', stream);
+      this.localGuest$.next(this.localGuest);
+      if (this.localGuest?.stream) {
+        this.hasMediaStreamSet = true;
+        if (!!this.mixer) {
+          this.mixer.appendStream(this.localGuest.stream);
         }
-        this.localGuest = LobbyMediaStream.buildLocal('me', stream);
-        this.localGuest$.next(this.localGuest);
-      })
-      .then(() => {
-          if (this.localGuest?.stream) {
-            this.hasMediaStreamSet = true;
-            if (!!this.mixer) {
-              this.mixer.appendStream(this.localGuest.stream);
-            }
-          }
-        }
-      );
+      }
+    } catch (e) {
+      this.displaySettings = true;
+    }
   }
 
   goBack(): void {
@@ -202,9 +204,13 @@ export class LobbyComponent implements OnInit {
     this.displaySettings = !this.displaySettings;
   }
 
-  onDeviceSelect(settings: DeviceSettings) {
-    this.log.info('device settings', settings);
-    this.startCamera(settings);
+  closeSettings() {
+    this.displaySettings = false;
+  }
+
+  async onDeviceSelect() {
+    this.log.info('device settings');
+    await this.startCamera();
   }
 
   toggleActive(videoId: string, checkboxId: string) {

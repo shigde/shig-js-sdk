@@ -5,7 +5,7 @@ export interface SelectValue {
   viewValue: string;
 }
 
-export type VideoCodecValue = 'H264' | 'v8' | 'v9';
+export type VideoCodecValue = 'H264' | 'vp8' | 'vp9';
 
 export interface SelectVideoCodecValue extends SelectValue {
   value: VideoCodecValue;
@@ -28,7 +28,7 @@ export interface SelectBandwidthValue extends SelectValue {
 
 export class DeviceSettingsOptions {
   public static readonly defaultQuality = 'vga';
-  public static readonly defaultVideoCodec = 'v8';
+  public static readonly defaultVideoCodec = 'vp8';
   public static readonly defaultBandwidth = '512';
 
   public readonly camera: SelectValue[] = [];
@@ -45,8 +45,8 @@ export class DeviceSettingsOptions {
   ];
   public readonly videoCodec: SelectVideoCodecValue[] = [
     {value: 'H264', viewValue: 'H264'},
-    {value: 'v8', viewValue: 'v8'},
-    {value: 'v9', viewValue: 'v9'},
+    {value: 'vp8', viewValue: 'vp8'},
+    {value: 'vp9', viewValue: 'vp9'},
   ];
   public readonly bandwidth: SelectBandwidthValue[] = [
     {value: '256', viewValue: '256kbps'},
@@ -112,8 +112,62 @@ export class DeviceSettings {
     );
   }
 
+  static fromJSON(obj: any): DeviceSettings {
+    return new DeviceSettings(
+      obj.camera ?? null,
+      obj.microphone ?? null,
+      obj.speaker ?? null,
+      obj.quality ?? DeviceSettingsOptions.defaultQuality,
+      obj.videoCodec ?? DeviceSettingsOptions.defaultVideoCodec,
+      obj.bandwidth ?? DeviceSettingsOptions.defaultBandwidth,
+      obj.simulcast ?? false,
+      obj.hasVideo ?? true,
+      obj.hasAudio ?? true,
+    );
+  }
+
   static dbProps(): string {
     return 'id,camera,microphone,speaker,quality,videoCodec,bandwidth,simulcast,hasAudio';
   }
+
+  public hasSelectedDevice() {
+    return this.camera != null
+      && this.camera != undefined
+      && this.camera != ''
+      && this.microphone != null
+      && this.microphone != undefined
+      && this.microphone != ''
+      && this.speaker != null
+      && this.speaker != undefined
+      && this.speaker != '';
+  }
+
+  public getSelectedDevice(): SelectedDevice {
+    return {camera: this.camera, microphone: this.microphone, speaker: this.speaker};
+  }
+
+  public clearSelectedDevice() {
+    this.camera = null;
+    this.microphone = null;
+    this.speaker = null;
+  }
+
+  public setSelectedDevice(device: SelectedDevice) {
+    this.camera = device.camera;
+    this.microphone = device.microphone;
+    this.speaker = device.speaker;
+  }
 }
 
+export interface SelectedDevice {
+  camera: string | null | undefined;
+  microphone: string | null | undefined;
+  speaker: string | null | undefined;
+}
+
+export interface MediaDeviceList {
+  selectedDevice: SelectedDevice;
+  cameras: Map<string, MediaDeviceInfo>;
+  microphones: Map<string, MediaDeviceInfo>;
+  speakers: Map<string, MediaDeviceInfo>;
+}

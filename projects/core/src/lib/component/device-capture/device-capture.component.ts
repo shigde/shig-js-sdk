@@ -1,29 +1,33 @@
 import {
+  AfterViewInit, ChangeDetectorRef,
   Component,
-  ElementRef, Input,
+  ElementRef, EventEmitter, Input,
   OnDestroy,
-  OnInit,
+  OnInit, Output,
   ViewChild,
 } from '@angular/core';
-import {createLogger, DeviceSettingsService, LocalStoreService} from '../../provider';
-import {DeviceSettings} from '../../entities';
+import {createLogger, MediaDeviceError} from '../../provider';
+import {MediaDeviceList, SelectedDevice} from '../../entities';
+import {MediaDeviceManager} from '../../provider';
 
-export type DeviceSettingsCbk = (s: DeviceSettings) => void;
+export type DeviceSettingsCbk = (s: SelectedDevice) => void;
 
 @Component({
   selector: 'shig-device-capture',
   templateUrl: './device-capture.component.html',
-  styleUrl: './device-capture.component.scss',
+  styleUrls: ['./device-capture.component.scss'],
   standalone: false,
 })
-export class DeviceCaptureComponent implements OnInit, OnDestroy {
+export class DeviceCaptureComponent implements OnInit, OnDestroy, AfterViewInit {
   private readonly log = createLogger('DeviceCaptureComponent');
   @ViewChild('videoElement') videoElement!: ElementRef<HTMLVideoElement>;
 
-  @Input() onSelect: undefined | DeviceSettingsCbk;
-  @Input() onClose: undefined | (() => void);
+  @Output() onSelect = new EventEmitter<void>();
+  @Output() onClose = new EventEmitter<void>();
+
   @Input() doStreamUpdate: boolean = false;
 
+  private viewReady = false;
   protected stream: MediaStream | null = null;
 
   errorMessage: string | null = null;
@@ -32,70 +36,58 @@ export class DeviceCaptureComponent implements OnInit, OnDestroy {
   microphones: MediaDeviceInfo[] = [];
   speakers: MediaDeviceInfo[] = [];
 
-  storedDeviceSettings: DeviceSettings = DeviceSettings.buildDefault();
+  selectedDevice: SelectedDevice = {camera: null, microphone: null, speaker: null};
+
 
   constructor(
-    protected media: DeviceSettingsService,
-    private store: LocalStoreService,
+    protected deviceManager: MediaDeviceManager,
+    private cdr: ChangeDetectorRef,
   ) {
-    let deviceSettings = this.store.get();
-    if (deviceSettings !== null) {
-      this.storedDeviceSettings = deviceSettings;
-    }
   }
 
   async ngOnInit(): Promise<void> {
-    navigator.mediaDevices.addEventListener('devicechange', () =>
-      this.loadDevices()
-    );
+    this.deviceManager.listenOnChange(async (deviceList) => this.loadDevices(deviceList));
+    const list = await this.deviceManager.captureDeviceList();
+    await this.loadDevices(list);
+    this.log.info('init', this.selectedDevice);
+  }
 
-    this.log.info('sdk: device capture - init', this.storedDeviceSettings);
-
-    await this.loadDevices();
-    await this.startStream();
+  async ngAfterViewInit() {
+    this.viewReady = true;
+    await this.tryStartStream();
+    this.cdr.detectChanges();
   }
 
   ngOnDestroy(): void {
     this.stopStream();
-    navigator.mediaDevices.removeEventListener('devicechange', () =>
-      this.loadDevices()
-    );
+    this.deviceManager.removeOnChange();
   }
 
-  private async loadDevices(): Promise<void> {
-    try {
-      const devices = await navigator.mediaDevices.enumerateDevices();
-
-      this.cameras = devices.filter((d) => d.kind === 'videoinput');
-      this.microphones = devices.filter((d) => d.kind === 'audioinput');
-      this.speakers = devices.filter((d) => d.kind === 'audiooutput');
-
-      if (this.cameras.length > 0) {
-        this.storedDeviceSettings.camera = filterSelectedDevices(this.cameras, this.storedDeviceSettings.camera);
-      }
-      if (this.microphones.length > 0) {
-        this.storedDeviceSettings.microphone = filterSelectedDevices(this.microphones, this.storedDeviceSettings.microphone);
-      }
-      if (this.speakers.length > 0) {
-        this.storedDeviceSettings.speaker = filterSelectedDevices(this.speakers, this.storedDeviceSettings.speaker);
-      }
-    } catch (err: any) {
-      this.errorMessage = `Device list could not be loaded: ${err.message}`;
+  private async loadDevices(devices: MediaDeviceList) {
+    this.cameras = Array.from(devices.cameras.values());
+    this.microphones = Array.from(devices.microphones.values());
+    this.speakers = Array.from(devices.speakers.values());
+    this.selectedDevice = {
+      camera: devices.selectedDevice?.camera ?? null,
+      microphone: devices.selectedDevice?.microphone ?? null,
+      speaker: devices.selectedDevice?.speaker ?? null,
     }
+    await this.tryStartStream();
+    this.cdr.detectChanges();
+  }
+
+  private async tryStartStream() {
+    if (!this.viewReady) return;
+    if (!this.selectedDevice.camera) return;
+
+    await this.startStream();
   }
 
   async startStream(): Promise<void> {
     this.stopStream();
 
     try {
-      this.stream = await navigator.mediaDevices.getUserMedia({
-        video: this.storedDeviceSettings.camera !== null && this.storedDeviceSettings.camera !== undefined && this.storedDeviceSettings.camera !== ''
-          ? {deviceId: {exact: this.storedDeviceSettings.camera}}
-          : true,
-        audio: this.storedDeviceSettings.microphone !== null && this.storedDeviceSettings.microphone !== undefined && this.storedDeviceSettings.microphone !== ''
-          ? {deviceId: {exact: this.storedDeviceSettings.microphone}}
-          : true,
-      });
+      this.stream = await this.deviceManager.getUserMedia(this.selectedDevice);
 
       if (this.videoElement?.nativeElement) {
         this.videoElement.nativeElement.srcObject = this.stream;
@@ -104,25 +96,24 @@ export class DeviceCaptureComponent implements OnInit, OnDestroy {
         });
 
         if (
-          this.storedDeviceSettings.speaker !== null && this.storedDeviceSettings.speaker !== undefined &&
+          this.selectedDevice.speaker !== null && this.selectedDevice.speaker !== undefined &&
           'setSinkId' in this.videoElement.nativeElement
         ) {
           try {
             // @ts-ignore
             await this.videoElement.nativeElement.setSinkId(
-              this.storedDeviceSettings.speaker
+              this.selectedDevice.speaker
             );
+            this.cdr.detectChanges();
           } catch (err: any) {
             this.errorMessage = `Audio output could not be switched. ${err.message}`;
           }
         }
       }
-
-      // this.store.update(this.settings);
-      // this.onSelectChange(this.settings);
       this.errorMessage = null;
-    } catch (err: any) {
-      this.errorMessage = this.mapError(err);
+    } catch (err) {
+      const mediaError = MediaDeviceError.build(err, 'media');
+      this.errorMessage = mediaError.message;
     }
   }
 
@@ -134,57 +125,35 @@ export class DeviceCaptureComponent implements OnInit, OnDestroy {
   }
 
   async onCameraChange(value: any): Promise<void> {
-    this.storedDeviceSettings.camera = value;
+    this.selectedDevice.camera = value;
     await this.startStream();
   }
 
   async onMicrophoneChange(value: any): Promise<void> {
-    this.storedDeviceSettings.microphone = value;
+    this.selectedDevice.microphone = value;
     await this.startStream();
   }
 
   async onSpeakerChange(value: any): Promise<void> {
-    this.storedDeviceSettings.speaker = value;
-    await this.startStream();
-  }
-
-  private mapError(err: any): string {
-    if (err.name === 'NotAllowedError') {
-      return 'Access denied – please allow camera/microphone.';
+    this.selectedDevice.speaker = value;
+    if (
+      this.videoElement?.nativeElement &&
+      'setSinkId' in this.videoElement.nativeElement
+    ) {
+      // @ts-ignore
+      await this.videoElement.nativeElement.setSinkId(value);
     }
-    if (err.name === 'NotFoundError') {
-      return 'No suitable device found.';
-    }
-    if (err.name === 'NotReadableError') {
-      return 'Device is already in use.';
-    }
-    return `Unknown error: ${err.message || err}`;
   }
 
   closeModal() {
-    if (this.onClose !== undefined) {
-      this.log.info('sdk: device capture - close');
-      this.onClose();
-    }
+    this.log.info('close');
+    this.onClose.emit();
   }
 
   select() {
-    if (this.onSelect !== undefined) {
-      this.log.info('sdk: device capture - select');
-      this.store.save(this.storedDeviceSettings);
-      this.onSelect(this.storedDeviceSettings);
-      this.closeModal();
-    }
+    this.log.info('select');
+    this.deviceManager.saveDeviceSettings(this.selectedDevice);
+    this.onSelect.emit();
+    this.closeModal();
   }
-}
-
-let logger = createLogger('DeviceCaptureComponent.f');
-function filterSelectedDevices(devices: MediaDeviceInfo[], search: string | null | undefined): string {
-  if (!search) {
-    logger.debug('sdk: device capture - filterSelectedDevices - no search', devices);
-    return devices[0].deviceId;
-  }
-  let filtered = devices.filter((d) => d.deviceId.includes(search));
-  logger.debug('sdk: device capture - filterSelectedDevices - filtered', filtered);
-  return filtered.length > 0 ? filtered[0].deviceId : devices[0].deviceId;
 }

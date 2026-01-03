@@ -18,8 +18,8 @@
         <div class="selectors col-12 col-md-6">
           <div class="w-100">
             <label for="formGroupCamera" class="form-label">Camera:</label>
-            <select class="form-select" id="formGroupCamera"
-              [ngModel]="storedDeviceSettings.camera"
+            <select class="form-select" id="formGroupCamera"  [disabled]="!cameras.length"
+              [ngModel]="selectedDevice.camera"
               (ngModelChange)="onCameraChange($event)">
               @for (device of cameras; track device.deviceId) {
                 <option [value]="device.deviceId">{{ device.label || 'Unknown Camera' }}</option>
@@ -29,8 +29,8 @@
 
           <div class="w-100 mt-2">
             <label for="formGroupMicrophone" class="form-label">Microphone:</label>
-            <select class="form-select" id="formGroupMicrophone"
-              [ngModel]="storedDeviceSettings.microphone"
+            <select class="form-select" id="formGroupMicrophone" [disabled]="!microphones.length"
+              [ngModel]="selectedDevice.microphone"
               (ngModelChange)="onMicrophoneChange($event)">
               @for (device of microphones; track device.deviceId) {
                 <option [value]="device.deviceId">{{ device.label || 'Unknown Microphone' }}</option>
@@ -40,8 +40,8 @@
 
           <div class="w-100 mt-2">
             <label for="formGroupSpeaker" class="form-label">Speaker:</label>
-            <select class="form-select" id="formGroupSpeaker"
-              [ngModel]="storedDeviceSettings.speaker"
+            <select class="form-select" id="formGroupSpeaker" [disabled]="!speakers.length"
+              [ngModel]="selectedDevice.speaker"
               (ngModelChange)="onSpeakerChange($event)">
               @for (device of speakers; track device.deviceId) {
                 <option [value]="device.deviceId">{{ device.label || 'Unknown Speaker' }}</option>

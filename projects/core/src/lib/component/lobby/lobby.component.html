@@ -74,10 +74,10 @@
       <!--        <div *ngIf="!hasMediaStreamSet || displaySettings">-->
       <!--            <shig-device-settings [cbk]="cbk" [closeCbk]=toggleSettings.bind(this)></shig-device-settings>-->
     <!--        </div>-->
-    @if (!hasMediaStreamSet || displaySettings) {
+    @if (displaySettings) {
       <shig-device-capture
-        [onSelect]=onDeviceSelect.bind(this)
-        [onClose]=toggleSettings.bind(this)
+        (onSelect)=onDeviceSelect()
+        (onClose)=closeSettings()
         [doStreamUpdate]=hasMediaStreamSet
       ></shig-device-capture>
     }
