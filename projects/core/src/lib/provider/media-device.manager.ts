@@ -50,11 +50,12 @@ export class MediaDeviceManager {
   // Device settings
   public async captureDeviceList(): Promise<MediaDeviceList> {
     let deviceSettings = this.getDeviceSettings();
-    this.log.info('capture device list');
+    this.log.debug('get device settings', deviceSettings);
 
     try {
       await this.grandPermissions();
       let deviceList = await navigator.mediaDevices.enumerateDevices();
+      this.log.debug('capture device list', deviceList);
 
       // We use maps to avoid duplicate identifiers, and we are not interested in device groups.
       const medias: MediaDeviceList = {
@@ -68,6 +69,10 @@ export class MediaDeviceManager {
       deviceSettings.clearSelectedDevice();
 
       for (const device of deviceList) {
+        if (!device.deviceId || device.deviceId == '') {
+          continue;
+        }
+
         if (device.kind === 'videoinput' && !medias.cameras.has(device.deviceId)) {
           medias.cameras.set(device.deviceId, device);
           if (device.deviceId == preSelectedDevice.camera) {
@@ -162,7 +167,7 @@ export class MediaDeviceManager {
     this.permissionsGranted = true;
   }
 
-  public listenOnChange(callback:  (deviceList: MediaDeviceList) => Promise<void> ) {
+  public listenOnChange(callback: (deviceList: MediaDeviceList) => Promise<void>) {
     this.abort?.abort();
     this.queue.length = 0;
 

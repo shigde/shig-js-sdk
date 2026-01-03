@@ -25,7 +25,7 @@ export class DeviceCaptureComponent implements OnInit, OnDestroy, AfterViewInit 
   @Output() onSelect = new EventEmitter<void>();
   @Output() onClose = new EventEmitter<void>();
 
-  @Input() doStreamUpdate: boolean = false;
+  @Input() isStreamUpdateModus: boolean = false;
 
   private viewReady = false;
   protected stream: MediaStream | null = null;

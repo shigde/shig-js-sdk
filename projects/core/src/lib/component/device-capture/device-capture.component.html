@@ -5,7 +5,7 @@
       <!-- Header -->
       <div class="modal-header">
         <h1 class="modal-title fs-2" id="modalDeviceCaptureLabel">Device Settings</h1>
-        @if (doStreamUpdate) {
+        @if (isStreamUpdateModus) {
           <button type="button" class="btn-close" data-bs-dismiss="modal" (click)="closeModal()"
           aria-label="Close"></button>
         }
@@ -21,7 +21,7 @@
             <select class="form-select" id="formGroupCamera"  [disabled]="!cameras.length"
               [ngModel]="selectedDevice.camera"
               (ngModelChange)="onCameraChange($event)">
-              @for (device of cameras; track device.deviceId) {
+              @for (device of cameras; track device.deviceId || $index) {
                 <option [value]="device.deviceId">{{ device.label || 'Unknown Camera' }}</option>
               }
             </select>
@@ -32,7 +32,7 @@
             <select class="form-select" id="formGroupMicrophone" [disabled]="!microphones.length"
               [ngModel]="selectedDevice.microphone"
               (ngModelChange)="onMicrophoneChange($event)">
-              @for (device of microphones; track device.deviceId) {
+              @for (device of microphones; track device.deviceId || $index) {
                 <option [value]="device.deviceId">{{ device.label || 'Unknown Microphone' }}</option>
               }
             </select>
@@ -43,7 +43,7 @@
             <select class="form-select" id="formGroupSpeaker" [disabled]="!speakers.length"
               [ngModel]="selectedDevice.speaker"
               (ngModelChange)="onSpeakerChange($event)">
-              @for (device of speakers; track device.deviceId) {
+              @for (device of speakers; track device.deviceId || $index) {
                 <option [value]="device.deviceId">{{ device.label || 'Unknown Speaker' }}</option>
               }
             </select>
@@ -66,11 +66,11 @@
 
       <!-- Footer -->
       <div class="modal-footer">
-        @if (doStreamUpdate) {
+        @if (isStreamUpdateModus) {
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" (click)="closeModal()">Close</button>
           <button type="button" class="btn btn-primary" (click)="select()">Update</button>
         }
-        @if (!doStreamUpdate) {
+        @if (!isStreamUpdateModus) {
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" (click)="closeModal()">Cancel</button>
           <button type="button" class="btn btn-primary" (click)="select()">Select</button>
         }

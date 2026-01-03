@@ -1,4 +1,14 @@
-import {Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild, ViewEncapsulation} from '@angular/core';
+import {
+  AfterViewInit, ChangeDetectorRef,
+  Component,
+  ElementRef,
+  EventEmitter,
+  Input,
+  OnInit,
+  Output,
+  ViewChild,
+  ViewEncapsulation
+} from '@angular/core';
 
 import {Location} from '@angular/common';
 import {BehaviorSubject, tap} from 'rxjs';
@@ -32,7 +42,7 @@ import {
   encapsulation: ViewEncapsulation.None,
   standalone: false
 })
-export class LobbyComponent implements OnInit {
+export class LobbyComponent implements OnInit, AfterViewInit {
   private readonly log = createLogger('LobbyComponent');
 
   @ViewChild('videoStreamElement') videoStreamRef!: ElementRef<HTMLVideoElement>;
@@ -43,8 +53,9 @@ export class LobbyComponent implements OnInit {
   stream: Stream | undefined;
   localGuest: LobbyMediaStream | undefined;
   localGuest$ = new BehaviorSubject<LobbyMediaStream | undefined>(undefined);
-  hasMediaStreamSet = false;
-  displaySettings = false;
+  hasMediaStreamSet$ = new BehaviorSubject(false);
+  displaySettings$ = new BehaviorSubject(false);
+
   isHost = false;
 
   private streamLiveData: StreamLiveData | undefined;
@@ -75,16 +86,13 @@ export class LobbyComponent implements OnInit {
     private lobbyService: LobbyService,
     private peerTubeService: PeerTubeService,
     private params: ParameterService,
-    private location: Location
+    private location: Location,
+    private cdr: ChangeDetectorRef,
   ) {
 
   }
 
   async ngOnInit() {
-    this.startCamera().finally(() => {
-
-    });
-
     if (this.apiPrefix !== undefined) {
       this.params.API_PREFIX = this.apiPrefix;
     }
@@ -105,6 +113,10 @@ export class LobbyComponent implements OnInit {
     setTimeout(() => {
       this.loadComp.emit('Component loaded successfully!');
     }, 100);
+  }
+
+  async ngAfterViewInit() {
+    await this.startCamera();
   }
 
   getStream(): void {
@@ -135,6 +147,7 @@ export class LobbyComponent implements OnInit {
   async startCamera() {
     try {
       let stream = await this.devices.sartDevice();
+      this.hasMediaStreamSet$.next(true);
       if (this.localGuest?.stream) {
         this.localGuest?.stream.getTracks().forEach(t => {
           t.stop();
@@ -143,13 +156,13 @@ export class LobbyComponent implements OnInit {
       this.localGuest = LobbyMediaStream.buildLocal('me', stream);
       this.localGuest$.next(this.localGuest);
       if (this.localGuest?.stream) {
-        this.hasMediaStreamSet = true;
         if (!!this.mixer) {
           this.mixer.appendStream(this.localGuest.stream);
         }
       }
     } catch (e) {
-      this.displaySettings = true;
+      this.hasMediaStreamSet$.next(false);
+      this.displaySettings$.next(true);
     }
   }
 
@@ -201,11 +214,12 @@ export class LobbyComponent implements OnInit {
   }
 
   toggleSettings() {
-    this.displaySettings = !this.displaySettings;
+    let current = this.displaySettings$.getValue();
+    this.displaySettings$.next(!current);
   }
 
   closeSettings() {
-    this.displaySettings = false;
+    this.displaySettings$.next(false);
   }
 
   async onDeviceSelect() {
