@@ -87,7 +87,6 @@ export class LobbyComponent implements OnInit, AfterViewInit {
     private peerTubeService: PeerTubeService,
     private params: ParameterService,
     private location: Location,
-    private cdr: ChangeDetectorRef,
   ) {
 
   }
