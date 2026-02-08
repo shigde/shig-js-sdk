@@ -5,4 +5,5 @@ export * from './lobby/lobby.component';
 export * from './guest-list/guest-list.directive';
 export * from './guest-list/guest-list.component';
 export * from './guest/guest.component';
+export * from './stream-friends/stream-friends.component';
 

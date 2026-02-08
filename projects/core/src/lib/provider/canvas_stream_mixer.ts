@@ -16,9 +16,13 @@ export class CanvasStreamMixer {
     private gainNode?: GainNode;
     private useGainNode = false;
 
-    constructor(elementId: string, img: HTMLImageElement) {
+    constructor(element: string | HTMLCanvasElement, img: HTMLImageElement) {
         this.img = img;
-        this.canvas = window.document.getElementById(elementId) as HTMLCanvasElement;
+        if (typeof  element == "string" ) {
+          this.canvas = window.document.getElementById(element) as HTMLCanvasElement;
+        } else {
+          this.canvas = element;
+        }
         this.canvas.width = WIDTH;
         this.canvas.height = HEIGHT;
         this.context = this.canvas.getContext('2d') as CanvasRenderingContext2D;

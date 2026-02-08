@@ -1,9 +1,10 @@
 import {
-  AfterViewInit, ChangeDetectorRef,
+  AfterViewInit,
   Component,
   ElementRef,
   EventEmitter,
   Input,
+  OnChanges,
   OnInit,
   Output,
   ViewChild,
@@ -11,25 +12,21 @@ import {
 } from '@angular/core';
 
 import {Location} from '@angular/common';
-import {BehaviorSubject, tap} from 'rxjs';
+import {BehaviorSubject, catchError, of, take, tap} from 'rxjs';
 import {environment} from '../../../environments/environment';
 
 import {
-  CanvasStreamMixer, createLogger,
-  LobbyService, MediaDeviceManager,
+  CanvasStreamMixer,
+  createLogger,
+  LobbyService,
+  MediaDeviceManager,
   ParameterService,
   PeerTubeService,
   SessionService,
   StreamService,
 } from '../../provider';
 
-import {
-  DeviceSettings,
-  LobbyMediaPurpose,
-  LobbyMediaStream, SelectedDevice,
-  Stream,
-  StreamLiveData
-} from '../../entities';
+import {LobbyErrorEvent, LobbyMediaPurpose, LobbyMediaStream, Stream, StreamLiveData} from '../../entities';
 
 @Component({
   selector: 'shig-lobby',
@@ -42,10 +39,23 @@ import {
   encapsulation: ViewEncapsulation.None,
   standalone: false
 })
-export class LobbyComponent implements OnInit, AfterViewInit {
+export class LobbyComponent implements OnInit, AfterViewInit, OnChanges {
   private readonly log = createLogger('LobbyComponent');
 
   @ViewChild('videoStreamElement') videoStreamRef!: ElementRef<HTMLVideoElement>;
+  @ViewChild('canvas')
+  set canvasRef(el: ElementRef<HTMLCanvasElement> | undefined) {
+    if (!el) return;
+
+    this.log.info('Canvas ready');
+    this.canvas = el.nativeElement;
+
+    if (!this.mixer) {
+      this.mixer = new CanvasStreamMixer(el.nativeElement, this.image);
+      this.mixer.start();
+    }
+  }
+  canvas!: HTMLCanvasElement;
 
   isInLobby = false;
   state: 'offline' | 'online' = 'offline';
@@ -56,7 +66,7 @@ export class LobbyComponent implements OnInit, AfterViewInit {
   hasMediaStreamSet$ = new BehaviorSubject(false);
   displaySettings$ = new BehaviorSubject(false);
 
-  isHost = false;
+  isHost: boolean = false;
 
   private streamLiveData: StreamLiveData | undefined;
   private mixer?: CanvasStreamMixer;
@@ -66,16 +76,19 @@ export class LobbyComponent implements OnInit, AfterViewInit {
     iceServers: environment.iceServers
   };
 
+  private viewReady = false;
+  private initialized = false;
   @Input() token: string | undefined;
   @Input('apiPrefix') apiPrefix: string | undefined;
   @Input('streamUuid') streamUuid: string | undefined;
   @Input('channelUuid') channelUuid: string | undefined;
-  @Input('userUuid') userUuid: string | undefined;
+  @Input('userUuid') userUuid: string | undefined | null;
   @Input('basePath') basePath: string | undefined;
 
   @Input() role: string | null = 'guest';
 
   @Output() loadComp = new EventEmitter();
+  @Output() onError = new EventEmitter<LobbyErrorEvent>();
 
   private image: HTMLImageElement = new Image;
 
@@ -88,60 +101,75 @@ export class LobbyComponent implements OnInit, AfterViewInit {
     private params: ParameterService,
     private location: Location,
   ) {
-
   }
 
   async ngOnInit() {
-    if (this.apiPrefix !== undefined) {
-      this.params.API_PREFIX = this.apiPrefix;
-    }
     if (this.basePath === undefined) {
       this.basePath = './assets';
     }
 
+    if (this.apiPrefix !== undefined) {
+      this.params.API_PREFIX = this.apiPrefix;
+    }
 
     this.image.src = this.basePath + '/images/face.svg';
-    this.image.onload =  () => {
+    this.image.onload = () => {
       this.log.info('image loaded');
     };
 
     this.session.setAuthenticationToken(this.getToken());
-    this.getStream();
-    this.getStreamLiveData();
 
     setTimeout(() => {
       this.loadComp.emit('Component loaded successfully!');
     }, 100);
   }
 
+  ngOnChanges() {
+    if (
+      !!this.streamUuid &&
+      !!this.userUuid &&
+      !!this.token &&
+      !!this.apiPrefix
+    ) {
+      if (this.initialized) return;
+      this.initStream(this.streamUuid);
+    }
+  }
+
   async ngAfterViewInit() {
     await this.startCamera();
   }
 
-  getStream(): void {
-    if (this.streamUuid !== undefined) {
-      this.streamService.getStream(this.streamUuid)
-        .pipe(tap((resp) => this.stream = resp.data))
-        .subscribe(() => {
-          this.isHost = this.userUuid !== undefined && this.stream?.ownerUuid === this.userUuid;
-          if (this.isHost) {
-            setTimeout(() => {
-              this.mixer = new CanvasStreamMixer('canvasOne', this.image);
-              this.mixer.start();
-            }, 0);
-          }
-        });
+  private initStream(streamUuid:string) {
+    if (this.initialized) {
+      return;
     }
+    this.initialized = true;
+    this.log.info("Load Stream", this.streamUuid);
+    this.streamService.getStream(streamUuid)
+      .pipe(
+        take(1),
+        tap((resp) => this.stream = resp.data),
+        tap((s) => {
+          this.log.info("Stream Owner:", s.data.ownerUuid, "user uuid:", this.userUuid);
+          this.isHost = s.data.ownerUuid === this.userUuid
+        }),
+        catchError((err, caught)=> {
+          this.log.warn("Could not load stream", err);
+          this.onError.emit(LobbyErrorEvent.NO_STREAM_PERMISSIONS);
+          return of(null)
+        }),
+      ).subscribe();
   }
 
-  getStreamLiveData(): void {
-    if (this.streamUuid !== undefined && this.token !== undefined) {
-      this.peerTubeService.fetchStreamLiveData(this.token, this.streamUuid)
-        .pipe(tap((data) => this.streamLiveData = data))
-        .subscribe(() => {
-        });
-    }
-  }
+  // getStreamLiveData(): void {
+  //   if (this.streamUuid !== undefined && this.token !== undefined) {
+  //     this.peerTubeService.fetchStreamLiveData(this.token, this.streamUuid)
+  //       .pipe(tap((data) => this.streamLiveData = data))
+  //       .subscribe(() => {
+  //       });
+  //   }
+  // }
 
   async startCamera() {
     try {

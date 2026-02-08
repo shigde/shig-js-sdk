@@ -6,10 +6,13 @@ import {
   GuestListDirective,
   GuestListComponent,
   GuestComponent,
-  LobbyComponent,
+  LobbyComponent, StreamFriendsComponent,
 } from './component';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {provideHttpClient, withInterceptorsFromDi} from '@angular/common/http';
+import {Combobox, ComboboxInput, ComboboxPopupContainer} from "@angular/aria/combobox";
+import {Listbox, Option} from "@angular/aria/listbox";
+import {OverlayModule} from "@angular/cdk/overlay";
 
 // import '@material/web/common';
 
@@ -21,7 +24,8 @@ import {provideHttpClient, withInterceptorsFromDi} from '@angular/common/http';
     LobbyComponent,
     GuestListDirective,
     GuestListComponent,
-    GuestComponent
+    GuestComponent,
+    StreamFriendsComponent
   ],
   exports: [
     AudioMeterComponent,
@@ -29,9 +33,18 @@ import {provideHttpClient, withInterceptorsFromDi} from '@angular/common/http';
     LobbyComponent
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA],
-  imports: [CommonModule,
+  imports: [
+    Combobox,
+    ComboboxInput,
+    ComboboxPopupContainer,
+    Listbox,
+    Option,
+    OverlayModule,
+    CommonModule,
     FormsModule,
-    ReactiveFormsModule], providers: [provideHttpClient(withInterceptorsFromDi())]
+    ReactiveFormsModule
+  ],
+  providers: [provideHttpClient(withInterceptorsFromDi())]
 })
 export class ShigModule {
 }

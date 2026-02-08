@@ -1,0 +1,141 @@
+<div class="dropdown">
+  <button
+    class="nav-icon-button secondary icon dropdown-toggle"
+    data-bs-toggle="dropdown"
+    data-bs-auto-close="outside"
+    aria-expanded="false"
+    type="button"
+  >
+    <i class="bi bi-person-fill-add fs-4 friends-img"></i>
+  </button>
+
+  <div class="dropdown-menu p-3" style="width: 280px;">
+    <div class="d-flex flex-column align-items-center">
+      <h5>Stream Guests</h5>
+    </div>
+
+
+    <ul class="nav nav-pills flex-column mb-auto">
+      @if (guests().length === 0) {
+
+        <li>
+          <hr class="dropdown-divider">
+        </li>
+
+        <li class="nav-item">
+          <span class="dropdown-item">
+            <i class="bi bi-person-slash me-3"></i> No invited guests!
+          </span>
+        </li>
+      } @else {
+        @for (guest of guests(); track guest.uuid) {
+
+          <li>
+            <hr class="dropdown-divider">
+          </li>
+
+          <li class="nav-item" style="width: 100% !important; position: relative">
+
+            <div class="d-flex align-items-center gap-2">
+
+              <!-- LEFT SIDE: icon + text -->
+              <div class="d-flex align-items-center gap-2 flex-grow-1" style="min-width: 0 !important">
+                <i class="bi bi-person"></i>
+                <span
+                  class="text-truncate"
+                  title="{{ guest.name }}@{{ guest.domain }}"
+                > {{ guest.name }}&#64;{{ guest.domain }}</span>
+              </div>
+
+              <!-- RIGHT SIDE: trash button -->
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-danger"
+                (click)="askRemove(guest)"
+              >
+                <i class="bi bi-trash"></i>
+              </button>
+
+            </div>
+
+            <!-- INLINE CONFIRM -->
+            @if (guestToConfirm === guest) {
+              <div class="px-3 pb-2 d-flex gap-2 justify-content-end confirm-delete">
+                <button
+                  class="btn btn-sm btn-danger"
+                  (click)="confirmRemoveInline(guest)"
+                >
+                  Yes
+                </button>
+
+                <button
+                  class="btn btn-sm btn-outline-danger"
+                  (click)="guestToConfirm = null"
+                >
+                  No
+                </button>
+              </div>
+            }
+
+          </li>
+        }
+      }
+    </ul>
+
+
+    <hr>
+
+    @if (guests().length === 3) {
+
+      <div>Maximum of 3 guests reached.</div>
+
+    } @else {
+
+    <div ngCombobox filterMode="auto-select">
+
+      <div #origin class="input-group">
+        <input type="text" [(ngModel)]="query" ngComboboxInput class="form-control" placeholder="Guest’s username"
+               aria-label="Guest’s username" aria-describedby="basic-addon2">
+        <button class="input-group-text" id="basic-addon2" (click)="addFriend()" [disabled]="isAdding()">
+
+          @if (isAdding()) {
+            <span class="spinner-border spinner-border-sm"></span>
+          } @else {
+            <i class="bi bi-plus-lg"></i>
+          }
+
+        </button>
+      </div>
+
+      <ng-template ngComboboxPopupContainer>
+        <ng-template
+          [cdkConnectedOverlay]="{origin, usePopover: 'inline', matchWidth: true}"
+          [cdkConnectedOverlayOpen]="true"
+        >
+          <div class="popup">
+            @if (loadingAllFriends()) {
+              <div class="d-flex justify-content-center p-3">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+              </div>
+            } @else {
+              @if (friends().length === 0) {
+                <div class="no-results">No results found</div>
+              }
+              <div ngListbox>
+                @for (friend of friends(); track friend.name) {
+                  <div ngOption [value]="friend" [label]=`${friend.name}@${friend.domain}`>
+                    <span class="option-label">{{ `${friend.name}@${friend.domain}` }}</span>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </ng-template>
+      </ng-template>
+    </div>
+    }
+  </div>
+
+</div>

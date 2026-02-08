@@ -3,7 +3,7 @@
   @if (stream) {
     <div class="app-main">
       <!--// Navigation line -->
-      <div class="navigation shadow bg-body rounded-1 border text-body">
+      <div class="navigation shadow bg-body rounded-1 border border-secondary-subtle text-body">
         <div class="nav-group" role="group" aria-label="actions">
           <div class="nav-group-area ">
             <button class="nav-icon-button secondary icon" (click)="goBack()">
@@ -60,6 +60,11 @@
                 </svg>
               </button>
             }
+
+            @if (isHost) {
+              <app-stream-friends [streamUuid]="streamUuid" [userUuid]="userUuid ?? undefined" ></app-stream-friends>
+            }
+
             <!-- Settings -->
             <button class="nav-icon-button secondary icon" (click)="toggleSettings()">
               <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="48" viewBox="0 -960 960 960"
@@ -86,11 +91,10 @@
     <div class="video-call-wrapper shadow border rounded-1">
       <div id="lobby-stream-video" class="stream-video canvas-logo">
         @if (isHost) {
-          <canvas id="canvasOne">
+          <canvas #canvas id="canvasOne">
             Your browser does not support HTML5 Canvas.
           </canvas>
-        }
-        @if (!isHost) {
+        } @else {
           <video id="video-stream" #videoStreamElement muted autoplay></video>
         }
       </div>

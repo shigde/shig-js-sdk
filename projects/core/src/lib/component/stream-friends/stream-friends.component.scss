@@ -1,0 +1,103 @@
+.friends-img {
+  height: 25px;
+  display: inline-block;
+  transform: translateY(-0.20em);
+}
+
+.material-symbols-outlined {
+  font-size: 1.25rem;
+  pointer-events: none;
+}
+.search-icon {
+  left: 0.75rem;
+  position: absolute;
+}
+
+[ngCombobox]:has([aria-expanded='false']) .popup {
+  display: none;
+}
+.popup {
+  width: 100%;
+  margin-top: 20px;
+  padding: 0.5rem;
+  max-height: 11rem;
+  //border: 4px var(--bs-border-style) var(--bs-border-color) !important;
+  font-size: 0.9rem;
+  //background-color:  var(--bs-body-bg);
+
+
+  background-color: var(--bs-dropdown-bg);
+  // background-clip: padding-box;
+  border: var(--bs-dropdown-border-width) solid var(--bs-dropdown-border-color);
+  border-radius: var(--bs-dropdown-border-radius);
+}
+.no-results {
+  padding: 1rem;
+}
+[ngListbox] {
+  gap: 2px;
+  height: 100%;
+  display: flex;
+  overflow: auto;
+  flex-direction: column;
+}
+[ngOption] {
+  display: flex;
+  cursor: pointer;
+  align-items: center;
+  margin: 1px;
+  padding: 0 1rem;
+  min-height: 2.25rem;
+  border-radius: 4px;
+}
+[ngOption]:hover {
+  background-color: color-mix(in srgb, var(--bs-secondary-bg), transparent);
+}
+
+[ngOption]:not([aria-selected='true']) .check-icon {
+  display: none;
+}
+.option-label {
+  flex: 1;
+}
+.check-icon {
+  font-size: 0.9rem;
+}
+
+
+.guest-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.guest-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.guest-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+.guest-row button {
+  transition: opacity .15s;
+}
+
+.guest-row:hover button {
+  opacity: 1;
+}
+
+.confirm-delete {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background-color: var(--bs-dropdown-bg);
+}

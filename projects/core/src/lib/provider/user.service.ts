@@ -21,4 +21,16 @@ export class UserService {
     // returns 200 || 403
     return this.http.get<ApiResponse<User>>(userUrl, this.httpOptions).pipe(map((res) => res.data));
   }
+
+  searchUser(search: string): Observable<User[]> {
+    return this.http
+      .get<ApiResponse<User[]>>(
+        `${this.params.API_PREFIX}/pub/user/search`,
+        {
+          ...this.httpOptions,
+          params: { q: search }
+        }
+      )
+      .pipe(map(res => res.data));
+  }
 }
