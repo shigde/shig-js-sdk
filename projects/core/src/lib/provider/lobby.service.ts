@@ -163,7 +163,7 @@ export class LobbyService {
 
 
   leaveLobby(spaceId: string, streamId: string) {
-    const whipUrl = `${this.params.API_PREFIX}/channel/${spaceId}/stream/${streamId}/whip`;
+    const whipUrl = `${this.params.API_PREFIX}/channel/${spaceId}/stream/${streamId}/lobby/leave`;
     return this.http.delete<any>(whipUrl).pipe(catchError(this.handleError<any>('', '')));
   }
 

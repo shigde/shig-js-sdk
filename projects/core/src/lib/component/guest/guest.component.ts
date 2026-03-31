@@ -9,6 +9,7 @@ import {
 import {LobbyMediaStream} from '../../entities';
 import {createLogger, LobbyService} from '../../provider';
 import {filter, Subscription} from 'rxjs';
+import '@material/web/switch/switch';
 
 @Component({
   selector: 'shig-guest',

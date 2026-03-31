@@ -53,6 +53,7 @@ export class LobbyComponent implements OnInit, AfterViewInit, OnChanges {
     if (!this.mixer) {
       this.mixer = new CanvasStreamMixer(el.nativeElement, this.image);
       this.mixer.start();
+      this.log.info('Canvas mixer started');
     }
   }
   canvas!: HTMLCanvasElement;
@@ -184,10 +185,12 @@ export class LobbyComponent implements OnInit, AfterViewInit, OnChanges {
       this.localGuest$.next(this.localGuest);
       if (this.localGuest?.stream) {
         if (!!this.mixer) {
+          this.log.info('append stream to the canvas mixer');
           this.mixer.appendStream(this.localGuest.stream);
         }
       }
     } catch (e) {
+      this.log.error('Could not start camera or Mixer', e);
       this.hasMediaStreamSet$.next(false);
       this.displaySettings$.next(true);
     }
