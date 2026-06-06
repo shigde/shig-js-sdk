@@ -113,7 +113,7 @@ export class LobbyComponent implements OnInit, AfterViewInit, OnChanges {
       this.params.API_PREFIX = this.apiPrefix;
     }
 
-    this.image.src = this.basePath + '/images/face.svg';
+    this.image.src = this.basePath + '/icons/face.svg';
     this.image.onload = () => {
       this.log.info('image loaded');
     };
@@ -269,9 +269,9 @@ export class LobbyComponent implements OnInit, AfterViewInit, OnChanges {
   }
 
   start(): void {
-    this.log.info('start', this.streamLiveData, this.streamUuid, this.channelUuid);
-    if (this.streamLiveData != undefined && this.streamUuid != undefined && this.channelUuid != undefined) {
-      this.lobbyService.startLiveStream(this.streamLiveData, this.channelUuid, this.streamUuid)
+    this.log.info('start', this.streamUuid, this.channelUuid);
+    if (this.streamUuid != undefined && this.channelUuid != undefined) {
+      this.lobbyService.startLiveStream(this.channelUuid, this.streamUuid)
         .subscribe(() => {
           this.state = 'online';
         });

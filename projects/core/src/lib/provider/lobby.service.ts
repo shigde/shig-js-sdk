@@ -135,24 +135,24 @@ export class LobbyService {
     );
   }
 
-  startLiveStream(streamLiveData: StreamLiveData, spaceId: string, streamId: string) {
-    const startUrl = `${this.params.API_PREFIX}/channel/${spaceId}/stream/${streamId}/live`;
-    const rtmpUrl = (streamLiveData.rtmpUrl) ? streamLiveData.rtmpUrl : streamLiveData.rtmpsUrl;
+  startLiveStream(spaceId: string, streamId: string) {
+    const startUrl = `${this.params.API_PREFIX}/channel/${spaceId}/stream/${streamId}/lobby/live`;
+    // const rtmpUrl = (streamLiveData.rtmpUrl) ? streamLiveData.rtmpUrl : streamLiveData.rtmpsUrl;
 
     const httpOptions = {
       headers: new HttpHeaders({'Content-Type': 'application/json', 'Accept': 'application/json'})
     };
 
-    const body: StreamLiveInfo = {
-      streamKey: `${streamLiveData.streamKey}`,
-      rtmpUrl: `${rtmpUrl}`
-    };
+    // const body: StreamLiveInfo = {
+    //   // streamKey: `${streamLiveData.streamKey}`,
+    //   // rtmpUrl: `${rtmpUrl}`
+    // };
 
-    return this.http.post(startUrl, body, httpOptions).pipe(catchError(this.handleError<any>('', '')));
+    return this.http.post(startUrl, {}, httpOptions).pipe(catchError(this.handleError<any>('', '')));
   }
 
   stopLiveStream(spaceId: string, streamId: string) {
-    const stopUrl = `${this.params.API_PREFIX}/channel/${spaceId}/stream/${streamId}/live`;
+    const stopUrl = `${this.params.API_PREFIX}/channel/${spaceId}/stream/${streamId}/lobby/live`;
     return this.http.delete(stopUrl).pipe(catchError(this.handleError<any>('', '')));
   }
 

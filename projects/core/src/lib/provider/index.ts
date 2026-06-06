@@ -19,3 +19,4 @@ export * from './id-parser';
 export * from './logger';
 export * from './media-device.manager';
 export * from './media-device.error';
+export * from './relay.service';

@@ -1,11 +1,5 @@
 import {EventEmitter} from '@angular/core';
-import {
-  LobbyMedia,
-  LobbyMediaEvent,
-  LobbyMediaIndex,
-  LobbyMediaPurpose,
-  SdpMediaInfo
-} from '../entities';
+import {LobbyMedia, LobbyMediaEvent, LobbyMediaIndex, LobbyMediaPurpose, SdpMediaInfo} from '../entities';
 import {SdpParser} from './sdp-parser';
 import {extractPeerId} from './id-parser';
 import {createLogger} from './logger';
@@ -50,7 +44,55 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
     streams.forEach((ms, streamType) => {
       let streamId = ms.id;
       ms.getTracks().forEach((track) => {
-        this.pc.addTrack(track, ms);
+
+        if (streamType === LobbyMediaPurpose.STREAM) {
+          const transceiver = this.pc.addTransceiver(track, {
+            direction: 'sendonly'
+          });
+          transceiver.sender.setStreams(ms);
+
+          if (track.kind === 'video') {
+            const videoCodecs = RTCRtpSender.getCapabilities('video')!.codecs;
+            // Only H264 for the live stream video
+            // Prio Baseline before High Profile
+            // video/H264 profile-level-id=42e01f Baseline
+            // video/H264 profile-level-id=640c1f High Profile (better quality, but not always compatible with ffmpeg)
+            const h264Codecs = videoCodecs
+              .filter(c => c.mimeType.toLowerCase() === "video/h264")
+              .sort((a, b) => {
+                const score = (c: RTCRtpCodec) =>
+                  c.sdpFmtpLine?.includes("42e01f") ? 2 :
+                    c.sdpFmtpLine?.includes("packetization-mode=1") ? 1 : 0;
+
+                return score(b) - score(a);
+              });
+
+            if (h264Codecs.length === 0) {
+              throw new Error('Browser does not support H264 codec for video track.');
+            }
+            transceiver.setCodecPreferences(h264Codecs);
+          }
+
+          if (track.kind === 'audio') {
+            const audioCodecs = RTCRtpSender.getCapabilities('audio')!.codecs;
+
+            // Only OPUS for the stream audio
+            const opusCodecs = audioCodecs
+              .filter(c => c.mimeType.toLowerCase() === 'audio/opus')
+              .map(c => ({
+                ...c,
+                sdpFmtpLine: 'minptime=10;useinbandfec=1'
+              }));
+
+            if (opusCodecs.length === 0) {
+              throw new Error('Browser does not support opus codec for audio track.');
+            }
+            transceiver.setCodecPreferences(opusCodecs);
+          }
+        } else {
+          this.pc.addTrack(track, ms);
+        }
+
         trackInfo.set(`${streamId} ${track.id}`.trim(), {
           purpose: streamType,
           muted: !track.enabled,
@@ -75,8 +117,9 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
   }
 
   public setAnswer(answer: RTCSessionDescription): Promise<void> {
-    this.log.info('setAnswer: ', answer);
-    return this.pc.setRemoteDescription(answer);
+    const munged = SdpParser.mungeAnswerCodecs(answer);
+    this.log.info('setAnswer: ', munged);
+    return this.pc.setRemoteDescription(munged);
   }
 
   public setRemoteOffer(offer: RTCSessionDescription) {
@@ -195,9 +238,9 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
     return null;
   }
 
-    private logTransceiversState(sdpState: string): void {
-        this.pc.getTransceivers().forEach((t) => {
-          this.log.debug(`transceiver:
+  private logTransceiversState(sdpState: string): void {
+    this.pc.getTransceivers().forEach((t) => {
+      this.log.debug(`transceiver:
             state: ${sdpState}
             mid: ${t.mid}
             direction: ${t.direction}
@@ -207,7 +250,7 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
             enabled: ${t.receiver.track.enabled}
             state: ${t.receiver.track.readyState}
             `
-            );
-        });
-    }
+      );
+    });
+  }
 }

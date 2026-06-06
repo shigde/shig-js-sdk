@@ -56,6 +56,10 @@ export class GuestComponent implements AfterViewInit, OnDestroy {
   ngAfterViewInit() {
     if (this.media && this.media.stream) {
       this.getVideoElement().srcObject = this.media.stream;
+      if (this.isLocal) {
+        this.getVideoElement().muted = true;
+        this.getVideoElement().volume = 0;
+      }
     }
   }
 
