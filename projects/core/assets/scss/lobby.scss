@@ -293,22 +293,72 @@ canvasOne {
 }
 
 .video-call-wrapper {
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    display: flex;
-    flex-wrap: wrap;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  min-height: 0;
+}
+
+shig-stream-leayout-editor {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+shig-stream-leayout-editor nav {
+  flex: 0 0 auto;
+}
+
+.stream-mixer {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  overflow: hidden;
+}
+
+.stream-mixer canvas {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.stream-layout-editor {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+}
+
+.stream-layout-editor:fullscreen {
+  width: 100vw;
+  height: 100vh;
+}
+
+.stream-layout-editor:fullscreen .stream-mixer {
+  flex: 1;
 }
 
 .stream-video {
-    width: 100%;
-    height: 100%;
-    position: relative;
+  width: 100%;
+  height: 100%;
+  position: relative;
 }
 
-.stream-video canvas,
-.stream-video video
-{
+.stream-video video {
     width: 100%;
     height: 100%;
     object-fit: cover;

@@ -16,7 +16,6 @@ import {BehaviorSubject, catchError, of, take, tap} from 'rxjs';
 import {environment} from '../../../environments/environment';
 
 import {
-  CanvasStreamMixer,
   createLogger,
   LobbyService,
   MediaDeviceManager,
@@ -27,6 +26,8 @@ import {
 } from '../../provider';
 
 import {LobbyErrorEvent, LobbyMediaPurpose, LobbyMediaStream, Stream, StreamLiveData} from '../../entities';
+import {StreamLayoutEditorComponent} from "../stream-layout-editor/stream-layout-editor.component";
+import {StreamMixerService} from "../../provider/stream-mixer.service";
 
 @Component({
   selector: 'shig-lobby',
@@ -43,20 +44,7 @@ export class LobbyComponent implements OnInit, AfterViewInit, OnChanges {
   private readonly log = createLogger('LobbyComponent');
 
   @ViewChild('videoStreamElement') videoStreamRef!: ElementRef<HTMLVideoElement>;
-  @ViewChild('canvas')
-  set canvasRef(el: ElementRef<HTMLCanvasElement> | undefined) {
-    if (!el) return;
-
-    this.log.info('Canvas ready');
-    this.canvas = el.nativeElement;
-
-    if (!this.mixer) {
-      this.mixer = new CanvasStreamMixer(el.nativeElement, this.image);
-      this.mixer.start();
-      this.log.info('Canvas mixer started');
-    }
-  }
-  canvas!: HTMLCanvasElement;
+  @ViewChild(StreamLayoutEditorComponent)
 
   isInLobby = false;
   state: 'offline' | 'online' = 'offline';
@@ -70,7 +58,6 @@ export class LobbyComponent implements OnInit, AfterViewInit, OnChanges {
   isHost: boolean = false;
 
   private streamLiveData: StreamLiveData | undefined;
-  private mixer?: CanvasStreamMixer;
 
   private readonly config: RTCConfiguration = {
     bundlePolicy: "max-bundle",
@@ -91,14 +78,12 @@ export class LobbyComponent implements OnInit, AfterViewInit, OnChanges {
   @Output() loadComp = new EventEmitter();
   @Output() onError = new EventEmitter<LobbyErrorEvent>();
 
-  private image: HTMLImageElement = new Image;
-
   constructor(
     private session: SessionService,
     private devices: MediaDeviceManager,
     private streamService: StreamService,
     private lobbyService: LobbyService,
-    private peerTubeService: PeerTubeService,
+    private mixer: StreamMixerService,
     private params: ParameterService,
     private location: Location,
   ) {
@@ -112,11 +97,6 @@ export class LobbyComponent implements OnInit, AfterViewInit, OnChanges {
     if (this.apiPrefix !== undefined) {
       this.params.API_PREFIX = this.apiPrefix;
     }
-
-    this.image.src = this.basePath + '/icons/face.svg';
-    this.image.onload = () => {
-      this.log.info('image loaded');
-    };
 
     this.session.setAuthenticationToken(this.getToken());
 
@@ -186,7 +166,7 @@ export class LobbyComponent implements OnInit, AfterViewInit, OnChanges {
       if (this.localGuest?.stream) {
         if (!!this.mixer) {
           this.log.info('append stream to the canvas mixer');
-          this.mixer.appendStream(this.localGuest.stream);
+          this.mixer.appendStream('video-local');
         }
       }
     } catch (e) {
@@ -220,8 +200,7 @@ export class LobbyComponent implements OnInit, AfterViewInit, OnChanges {
   addLobbyMediaStream(media: LobbyMediaStream): void {
     if (!!this.mixer && media.purpose === LobbyMediaPurpose.GUEST && !!media.stream) {
       const videoId = `video-${media.streamId}`;
-      this.mixer.appendStream(media.stream);
-      this.mixer?.videoElements.set(videoId, document.getElementById(videoId) as HTMLVideoElement);
+      this.mixer.appendStream(videoId);
     }
     if (!this.isHost && media.purpose === LobbyMediaPurpose.STREAM && !!media.stream) {
       this.getStreamVideoElement().srcObject = media.stream;
@@ -230,9 +209,8 @@ export class LobbyComponent implements OnInit, AfterViewInit, OnChanges {
 
   removeLobbyMediaStream(media: LobbyMediaStream): void {
     if (!!this.mixer && media.purpose === LobbyMediaPurpose.GUEST && !!media.stream) {
-      this.mixer.removeStream(media.stream);
-      const videoId = `video-${media.streamId}`;
-      this.mixer?.videoElements.delete(videoId);
+      const videoId = `video-${media.streamId}`
+      this.mixer.removeStream(videoId);
     }
   }
 
@@ -260,12 +238,7 @@ export class LobbyComponent implements OnInit, AfterViewInit, OnChanges {
   toggleActive(videoId: string, checkboxId: string) {
     const shadowRoot = document.getElementById(checkboxId)?.shadowRoot;
     const isSelected = !shadowRoot?.querySelector('div')?.classList.contains('selected');
-
-    if (isSelected) {
-      this.mixer?.videoElements.set(videoId, document.getElementById(videoId) as HTMLVideoElement);
-    } else {
-      this.mixer?.videoElements.delete(videoId);
-    }
+    this.mixer.toggleActive(isSelected, videoId);
   }
 
   start(): void {

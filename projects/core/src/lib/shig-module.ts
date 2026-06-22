@@ -1,12 +1,12 @@
 import {CUSTOM_ELEMENTS_SCHEMA, NgModule, NO_ERRORS_SCHEMA} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {
-  AudioMeterComponent,
-  DeviceCaptureComponent,
-  GuestListDirective,
-  GuestListComponent,
-  GuestComponent,
-  LobbyComponent, StreamFriendsComponent,
+    AudioMeterComponent,
+    DeviceCaptureComponent,
+    GuestListDirective,
+    GuestListComponent,
+    GuestComponent,
+    LobbyComponent, StreamFriendsComponent, StreamLayoutEditorComponent,
 } from './component';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {provideHttpClient, withInterceptorsFromDi} from '@angular/common/http';
@@ -33,17 +33,18 @@ import {OverlayModule} from "@angular/cdk/overlay";
     LobbyComponent
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA],
-  imports: [
-    Combobox,
-    ComboboxInput,
-    ComboboxPopupContainer,
-    Listbox,
-    Option,
-    OverlayModule,
-    CommonModule,
-    FormsModule,
-    ReactiveFormsModule
-  ],
+    imports: [
+        Combobox,
+        ComboboxInput,
+        ComboboxPopupContainer,
+        Listbox,
+        Option,
+        OverlayModule,
+        CommonModule,
+        FormsModule,
+        ReactiveFormsModule,
+        StreamLayoutEditorComponent
+    ],
   providers: [provideHttpClient(withInterceptorsFromDi())]
 })
 export class ShigModule {
