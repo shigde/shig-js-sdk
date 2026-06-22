@@ -4,6 +4,7 @@ import {SceneNode} from "../entities";
 
 const WIDTH = 1920;
 const HEIGHT = 1080;
+const DEFAULT_FPS = 30;
 
 @Injectable({providedIn: 'root'})
 export class StreamMixerService {
@@ -20,7 +21,8 @@ export class StreamMixerService {
   private audioDestination: MediaStreamAudioDestinationNode | undefined;
   private audioSources: Map<string, MediaStreamAudioSourceNode> = new Map<string, MediaStreamAudioSourceNode>();
   private running = false;
-  private animationId: number = 0;
+  private renderTimerId: number | undefined;
+  private canvasVideoTrack: CanvasCaptureMediaStreamTrack | undefined;
 
   constructor() {
   }
@@ -35,10 +37,10 @@ export class StreamMixerService {
     this.context.imageSmoothingEnabled = true;
   }
 
-  start(): void {
+  start(fps = DEFAULT_FPS): void {
     if (this.running) return;
     this.running = true;
-    this.render();
+    this.startRenderTimer(fps);
   };
 
   stop(): void {
@@ -47,7 +49,8 @@ export class StreamMixerService {
     this.videoElements.clear();
     this.mediaStreams.clear();
     this.releaseAudio();
-    cancelAnimationFrame(this.animationId);
+    this.stopRenderTimer();
+    this.canvasVideoTrack = undefined;
   };
 
   appendStream(videoId: string, name = 'Guest', id = videoId): void {
@@ -102,7 +105,11 @@ export class StreamMixerService {
     if (this.canvas === undefined) {
       return new MediaStream();
     }
-    const mixedStream = this.canvas.captureStream(fps);
+    const mixedStream = this.canvas.captureStream(0);
+    this.canvasVideoTrack = mixedStream.getVideoTracks()[0] as CanvasCaptureMediaStreamTrack | undefined;
+    this.startRenderTimer(fps);
+    this.render();
+
     const mixedAudioStream = this.getMixedAudioStream();
 
     mixedAudioStream?.getAudioTracks().forEach(track => {
@@ -134,6 +141,19 @@ export class StreamMixerService {
     this.canvas.style.height = `${height}px`;
   }
 
+  private startRenderTimer(fps = DEFAULT_FPS): void {
+    this.stopRenderTimer();
+    this.render();
+    this.renderTimerId = window.setInterval(() => this.render(), 1000 / fps);
+  }
+
+  private stopRenderTimer(): void {
+    if (this.renderTimerId === undefined) return;
+
+    window.clearInterval(this.renderTimerId);
+    this.renderTimerId = undefined;
+  }
+
   private render(): void {
     if (!this.running) return;
     if (this.canvas === undefined) return;
@@ -150,7 +170,7 @@ export class StreamMixerService {
 
     if (activeNodes.length === 0) {
       this.drawNoVideoPlaceholder({x: 0, y: 0, width: this.canvas.width, height: this.canvas.height}, ctx);
-      this.animationId = requestAnimationFrame(() => this.render());
+      this.requestCanvasFrame();
       return;
     }
 
@@ -160,7 +180,11 @@ export class StreamMixerService {
       this.drawNode(node, tiles[index], ctx);
     });
 
-    this.animationId = requestAnimationFrame(() => this.render());
+    this.requestCanvasFrame();
+  }
+
+  private requestCanvasFrame(): void {
+    this.canvasVideoTrack?.requestFrame();
   }
 
   private getTileLayout(count: number, w: number, h: number): Array<{
