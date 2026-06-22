@@ -11,6 +11,7 @@ export class StreamMixerService {
   private readonly log = createLogger('StreamMixerService');
   private canvas: HTMLCanvasElement | undefined;
   private img: HTMLImageElement | undefined;
+  private logo: HTMLImageElement | undefined;
   private context: CanvasRenderingContext2D | undefined;
   private nodes: Map<string, SceneNode> = new Map<string, SceneNode>();
   private videoElements: Map<string, HTMLVideoElement> = new Map<string, HTMLVideoElement>();
@@ -24,9 +25,10 @@ export class StreamMixerService {
   constructor() {
   }
 
-  init(nativeElement: HTMLCanvasElement, image: HTMLImageElement) {
+  init(nativeElement: HTMLCanvasElement, image: HTMLImageElement, logo?: HTMLImageElement) {
     this.canvas = nativeElement;
     this.img = image;
+    this.logo = logo;
     this.canvas.width = WIDTH;
     this.canvas.height = HEIGHT;
     this.context = this.canvas.getContext('2d') as CanvasRenderingContext2D;
@@ -146,6 +148,12 @@ export class StreamMixerService {
       .filter(node => node.active)
       .slice(0, 4);
 
+    if (activeNodes.length === 0) {
+      this.drawNoVideoPlaceholder({x: 0, y: 0, width: this.canvas.width, height: this.canvas.height}, ctx);
+      this.animationId = requestAnimationFrame(() => this.render());
+      return;
+    }
+
     const tiles = this.getTileLayout(activeNodes.length, this.canvas.width, this.canvas.height);
 
     activeNodes.forEach((node, index) => {
@@ -197,7 +205,15 @@ export class StreamMixerService {
   ): void {
     ctx.save();
 
-    this.drawVideoCover(node.video, tile, ctx);
+    const cameraOff = node.cameraOff || node.video.classList.contains('camera-off');
+
+    if (cameraOff) {
+      this.drawMutedVideoPlaceholder(tile, ctx);
+    } else if (!this.isVideoRenderable(node.video)) {
+      this.drawNoVideoPlaceholder(tile, ctx);
+    } else {
+      this.drawVideoCover(node.video, tile, ctx);
+    }
 
     ctx.strokeStyle = 'rgba(255,255,255,0.35)';
     ctx.lineWidth = 2;
@@ -207,6 +223,62 @@ export class StreamMixerService {
     this.drawNameLabel(node, tile, ctx);
 
     ctx.restore();
+  }
+
+  private isVideoRenderable(video: HTMLVideoElement): boolean {
+    return video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA &&
+      video.videoWidth > 0 &&
+      video.videoHeight > 0;
+  }
+
+  private drawMutedVideoPlaceholder(
+    tile: { x: number; y: number; width: number; height: number },
+    ctx: CanvasRenderingContext2D,
+  ): void {
+    this.drawPlaceholderImage(tile, ctx);
+  }
+
+  private drawNoVideoPlaceholder(
+    tile: { x: number; y: number; width: number; height: number },
+    ctx: CanvasRenderingContext2D,
+  ): void {
+    this.drawPlaceholderImage(tile, ctx, this.logo, this.getPrimaryColor());
+  }
+
+  private drawPlaceholderImage(
+    tile: { x: number; y: number; width: number; height: number },
+    ctx: CanvasRenderingContext2D,
+    image: HTMLImageElement | undefined = this.img,
+    backgroundColor = 'rgba(60, 63, 86, 1)',
+  ): void {
+    ctx.fillStyle = backgroundColor;
+    ctx.fillRect(tile.x, tile.y, tile.width, tile.height);
+
+    if (image === undefined || !image.complete || !image.naturalWidth || !image.naturalHeight) {
+      return;
+    }
+
+    const maxWidth = tile.width * 0.35;
+    const maxHeight = tile.height * 0.35;
+    const imageAspect = image.naturalWidth / image.naturalHeight;
+
+    let width = maxWidth;
+    let height = width / imageAspect;
+
+    if (height > maxHeight) {
+      height = maxHeight;
+      width = height * imageAspect;
+    }
+
+    const x = tile.x + (tile.width - width) / 2;
+    const y = tile.y + (tile.height - height) / 2;
+
+    ctx.drawImage(image, x, y, width, height);
+  }
+
+  private getPrimaryColor(): string {
+    const primary = getComputedStyle(document.body).getPropertyValue('--md-sys-color-primary').trim();
+    return primary || '#262a42';
   }
 
   private drawVideoCover(
