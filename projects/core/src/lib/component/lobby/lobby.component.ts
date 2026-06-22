@@ -45,6 +45,7 @@ export class LobbyComponent implements OnInit, AfterViewInit, OnChanges {
 
   @ViewChild('videoStreamElement') videoStreamRef!: ElementRef<HTMLVideoElement>;
   @ViewChild(StreamLayoutEditorComponent)
+  private streamLayoutEditor?: StreamLayoutEditorComponent;
 
   isInLobby = false;
   state: 'offline' | 'online' = 'offline';
@@ -163,12 +164,6 @@ export class LobbyComponent implements OnInit, AfterViewInit, OnChanges {
       }
       this.localGuest = LobbyMediaStream.buildLocal('me', stream);
       this.localGuest$.next(this.localGuest);
-      if (this.localGuest?.stream) {
-        if (!!this.mixer) {
-          this.log.info('append stream to the canvas mixer');
-          this.mixer.appendStream('video-local');
-        }
-      }
     } catch (e) {
       this.log.error('Could not start camera or Mixer', e);
       this.hasMediaStreamSet$.next(false);

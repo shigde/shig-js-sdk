@@ -14,6 +14,10 @@ export class StreamMixerService {
   private context: CanvasRenderingContext2D | undefined;
   private nodes: Map<string, SceneNode> = new Map<string, SceneNode>();
   private videoElements: Map<string, HTMLVideoElement> = new Map<string, HTMLVideoElement>();
+  private mediaStreams: Map<string, MediaStream> = new Map<string, MediaStream>();
+  private audioContext: AudioContext | undefined;
+  private audioDestination: MediaStreamAudioDestinationNode | undefined;
+  private audioSources: Map<string, MediaStreamAudioSourceNode> = new Map<string, MediaStreamAudioSourceNode>();
   private running = false;
   private animationId: number = 0;
 
@@ -39,6 +43,8 @@ export class StreamMixerService {
     this.running = false;
     this.nodes.clear();
     this.videoElements.clear();
+    this.mediaStreams.clear();
+    this.releaseAudio();
     cancelAnimationFrame(this.animationId);
   };
 
@@ -61,6 +67,12 @@ export class StreamMixerService {
 
     this.nodes.set(id, node);
     this.videoElements.set(videoId, video);
+
+    const stream = video.srcObject as MediaStream | null;
+    if (stream) {
+      this.mediaStreams.set(id, stream);
+      this.connectAudioSource(id, stream);
+    }
   }
 
   removeStream(videoId: string): void {
@@ -68,6 +80,8 @@ export class StreamMixerService {
       if (node.videoId === videoId) {
         this.nodes.delete(id);
         this.videoElements.delete(videoId);
+        this.mediaStreams.delete(id);
+        this.disconnectAudioSource(id);
         break;
       }
     }
@@ -86,7 +100,14 @@ export class StreamMixerService {
     if (this.canvas === undefined) {
       return new MediaStream();
     }
-    return this.canvas.captureStream(fps);
+    const mixedStream = this.canvas.captureStream(fps);
+    const mixedAudioStream = this.getMixedAudioStream();
+
+    mixedAudioStream?.getAudioTracks().forEach(track => {
+      mixedStream.addTrack(track);
+    });
+
+    return mixedStream;
   }
 
   public resizeCanvas(containerWidth: number, containerHeight: number) {
@@ -263,5 +284,62 @@ export class StreamMixerService {
     ctx.fillStyle = '#cfe4ff';
     ctx.font = 'bold 15px sans-serif';
     ctx.fillText(node.name, labelX + 12, labelY + 23);
+  }
+
+  private getMixedAudioStream(): MediaStream | undefined {
+    const streamsWithAudio = [...this.mediaStreams.entries()]
+      .filter(([, stream]) => stream.getAudioTracks().length > 0);
+
+    if (!streamsWithAudio.length) {
+      return undefined;
+    }
+
+    if (this.audioContext === undefined) {
+      this.audioContext = this.getAudioContext();
+    }
+
+    if (this.audioDestination === undefined) {
+      this.audioDestination = this.audioContext.createMediaStreamDestination();
+    }
+
+    streamsWithAudio.forEach(([id, stream]) => {
+      this.connectAudioSource(id, stream);
+    });
+
+    return this.audioDestination.stream;
+  }
+
+  private connectAudioSource(id: string, stream: MediaStream): void {
+    if (stream.getAudioTracks().length === 0) return;
+    if (this.audioContext === undefined || this.audioDestination === undefined) return;
+    if (this.audioSources.has(id)) return;
+
+    const source = this.audioContext.createMediaStreamSource(stream);
+    source.connect(this.audioDestination);
+    this.audioSources.set(id, source);
+  }
+
+  private disconnectAudioSource(id: string): void {
+    const source = this.audioSources.get(id);
+    if (source === undefined) return;
+
+    source.disconnect();
+    this.audioSources.delete(id);
+  }
+
+  private getAudioContext(): AudioContext {
+    const AudioContextCtor = window.AudioContext || (window as any).webkitAudioContext;
+    return new AudioContextCtor();
+  }
+
+  private releaseAudio(): void {
+    this.audioSources.forEach(source => source.disconnect());
+    this.audioSources.clear();
+
+    this.audioDestination?.disconnect();
+    this.audioDestination = undefined;
+
+    this.audioContext?.close();
+    this.audioContext = undefined;
   }
 }
