@@ -7,4 +7,10 @@ export type SceneNode = {
   muted?: boolean;
   cameraOff?: boolean;
   active: boolean;
+
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+  zIndex?: number;
 };

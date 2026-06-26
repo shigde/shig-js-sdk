@@ -35,8 +35,8 @@
   },
   "private": false,
   "peerDependencies": {
-    "@angular/aria": "^21.1.1",
     "@angular/animations": "^21.0.6",
+    "@angular/aria": "^21.1.1",
     "@angular/common": "^21.0.6",
     "@angular/compiler": "^21.0.6",
     "@angular/core": "^21.0.6",
@@ -52,7 +52,8 @@
     "rxjs": "~7.8.0",
     "sdp-transform": "^2.14.1",
     "tslib": "^2.3.0",
-    "zone.js": "~0.15.0"
+    "zone.js": "~0.15.0",
+    "konva": "^10.3.0"
   },
   "devDependencies": {
     "@angular/build": "^21.0.4",

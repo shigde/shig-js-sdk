@@ -38,8 +38,8 @@
     "@types/debug": "^4.1.12",
     "dexie": "^3.2.4",
     "sdp-transform": "^2.14.1",
-    "debug": "^4.4.3"
-
+    "debug": "^4.4.3",
+    "konva": "^10.3.0"
   },
   "dependencies": {
     "tslib": "^2.3.0"

@@ -6,6 +6,21 @@ const WIDTH = 1920;
 const HEIGHT = 1080;
 const DEFAULT_FPS = 30;
 
+type Tile = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+type SceneNodeLayout = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  zIndex?: number;
+};
+
 @Injectable({providedIn: 'root'})
 export class StreamMixerService {
 
@@ -20,6 +35,8 @@ export class StreamMixerService {
   private audioContext: AudioContext | undefined;
   private audioDestination: MediaStreamAudioDestinationNode | undefined;
   private audioSources: Map<string, MediaStreamAudioSourceNode> = new Map<string, MediaStreamAudioSourceNode>();
+  private silentAudioSource: ConstantSourceNode | undefined;
+  private silentAudioGain: GainNode | undefined;
   private running = false;
   private renderTimerId: number | undefined;
   private canvasVideoTrack: CanvasCaptureMediaStreamTrack | undefined;
@@ -101,6 +118,52 @@ export class StreamMixerService {
     }
   }
 
+  updateNodeLayout(id: string, layout: SceneNodeLayout): void {
+    const node = this.nodes.get(id);
+    if (node === undefined) return;
+
+    node.x = this.clamp(layout.x, 0, 1);
+    node.y = this.clamp(layout.y, 0, 1);
+    node.width = this.clamp(layout.width, 0.01, 1);
+    node.height = this.clamp(layout.height, 0.01, 1);
+    node.zIndex = layout.zIndex ?? node.zIndex;
+  }
+
+  resetTileLayout(): void {
+    const activeNodes = this.getActiveNodes();
+    const tiles = this.getTileLayout(activeNodes.length, 1, 1);
+
+    activeNodes.forEach((node, index) => {
+      const tile = tiles[index];
+      node.x = tile.x;
+      node.y = tile.y;
+      node.width = tile.width;
+      node.height = tile.height;
+      node.zIndex = index;
+    });
+  }
+
+  getSceneLayout(): Array<SceneNodeLayout & { id: string; videoId: string; name: string; active: boolean }> {
+    const activeNodes = this.getActiveNodes();
+    const fallbackTiles = this.getTileLayout(activeNodes.length, 1, 1);
+
+    return activeNodes.map((node, index) => {
+      const fallbackTile = fallbackTiles[index];
+
+      return {
+        id: node.id,
+        videoId: node.videoId,
+        name: node.name,
+        active: node.active,
+        x: node.x ?? fallbackTile.x,
+        y: node.y ?? fallbackTile.y,
+        width: node.width ?? fallbackTile.width,
+        height: node.height ?? fallbackTile.height,
+        zIndex: node.zIndex,
+      };
+    });
+  }
+
   getMixedStream(fps = 30): MediaStream {
     if (this.canvas === undefined) {
       return new MediaStream();
@@ -112,7 +175,7 @@ export class StreamMixerService {
 
     const mixedAudioStream = this.getMixedAudioStream();
 
-    mixedAudioStream?.getAudioTracks().forEach(track => {
+    mixedAudioStream.getAudioTracks().forEach(track => {
       mixedStream.addTrack(track);
     });
 
@@ -164,9 +227,7 @@ export class StreamMixerService {
     ctx.fillStyle = '#111';
     ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-    const activeNodes = [...this.nodes.values()]
-      .filter(node => node.active)
-      .slice(0, 4);
+    const activeNodes = this.getActiveNodes();
 
     if (activeNodes.length === 0) {
       this.drawNoVideoPlaceholder({x: 0, y: 0, width: this.canvas.width, height: this.canvas.height}, ctx);
@@ -174,10 +235,12 @@ export class StreamMixerService {
       return;
     }
 
-    const tiles = this.getTileLayout(activeNodes.length, this.canvas.width, this.canvas.height);
+    const canvasWidth = this.canvas.width;
+    const canvasHeight = this.canvas.height;
+    const tiles = this.getTileLayout(activeNodes.length, canvasWidth, canvasHeight);
 
     activeNodes.forEach((node, index) => {
-      this.drawNode(node, tiles[index], ctx);
+      this.drawNode(node, this.getNodeTile(node, tiles[index], canvasWidth, canvasHeight), ctx);
     });
 
     this.requestCanvasFrame();
@@ -187,12 +250,32 @@ export class StreamMixerService {
     this.canvasVideoTrack?.requestFrame();
   }
 
-  private getTileLayout(count: number, w: number, h: number): Array<{
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  }> {
+  private getActiveNodes(): SceneNode[] {
+    return [...this.nodes.values()]
+      .filter(node => node.active)
+      .sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0))
+      .slice(0, 4);
+  }
+
+  private getNodeTile(node: SceneNode, fallbackTile: Tile, width: number, height: number): Tile {
+    if (
+      node.x === undefined ||
+      node.y === undefined ||
+      node.width === undefined ||
+      node.height === undefined
+    ) {
+      return fallbackTile;
+    }
+
+    return {
+      x: node.x * width,
+      y: node.y * height,
+      width: node.width * width,
+      height: node.height * height,
+    };
+  }
+
+  private getTileLayout(count: number, w: number, h: number): Tile[] {
     if (count <= 0) return [];
 
     if (count === 1) {
@@ -224,7 +307,7 @@ export class StreamMixerService {
 
   private drawNode(
     node: SceneNode,
-    tile: { x: number; y: number; width: number; height: number },
+    tile: Tile,
     ctx: CanvasRenderingContext2D,
   ): void {
     ctx.save();
@@ -256,21 +339,21 @@ export class StreamMixerService {
   }
 
   private drawMutedVideoPlaceholder(
-    tile: { x: number; y: number; width: number; height: number },
+    tile: Tile,
     ctx: CanvasRenderingContext2D,
   ): void {
     this.drawPlaceholderImage(tile, ctx);
   }
 
   private drawNoVideoPlaceholder(
-    tile: { x: number; y: number; width: number; height: number },
+    tile: Tile,
     ctx: CanvasRenderingContext2D,
   ): void {
     this.drawPlaceholderImage(tile, ctx, this.logo, this.getPrimaryColor());
   }
 
   private drawPlaceholderImage(
-    tile: { x: number; y: number; width: number; height: number },
+    tile: Tile,
     ctx: CanvasRenderingContext2D,
     image: HTMLImageElement | undefined = this.img,
     backgroundColor = 'rgba(60, 63, 86, 1)',
@@ -307,7 +390,7 @@ export class StreamMixerService {
 
   private drawVideoCover(
     video: HTMLVideoElement,
-    tile: { x: number; y: number; width: number; height: number },
+    tile: Tile,
     ctx: CanvasRenderingContext2D,
   ): void {
     const sourceWidth = video.videoWidth;
@@ -349,7 +432,7 @@ export class StreamMixerService {
 
   private drawIconBar(
     node: SceneNode,
-    tile: { x: number; y: number; width: number; height: number },
+    tile: Tile,
     ctx: CanvasRenderingContext2D,
   ): void {
 
@@ -364,7 +447,7 @@ export class StreamMixerService {
 
   private drawNameLabel(
     node: SceneNode,
-    tile: { x: number; y: number; width: number; height: number },
+    tile: Tile,
     ctx: CanvasRenderingContext2D,
   ): void {
     const labelWidth = Math.min(160, tile.width - 24);
@@ -382,25 +465,21 @@ export class StreamMixerService {
     ctx.fillText(node.name, labelX + 12, labelY + 23);
   }
 
-  private getMixedAudioStream(): MediaStream | undefined {
-    const streamsWithAudio = [...this.mediaStreams.entries()]
-      .filter(([, stream]) => stream.getAudioTracks().length > 0);
+  private clamp(value: number, min: number, max: number): number {
+    return Math.min(Math.max(value, min), max);
+  }
 
-    if (!streamsWithAudio.length) {
-      return undefined;
-    }
-
+  private getMixedAudioStream(): MediaStream {
     if (this.audioContext === undefined) {
       this.audioContext = this.getAudioContext();
     }
 
     if (this.audioDestination === undefined) {
       this.audioDestination = this.audioContext.createMediaStreamDestination();
+      this.connectSilentAudioSource();
     }
 
-    streamsWithAudio.forEach(([id, stream]) => {
-      this.connectAudioSource(id, stream);
-    });
+    this.mediaStreams.forEach((stream, id) => this.connectAudioSource(id, stream));
 
     return this.audioDestination.stream;
   }
@@ -413,6 +492,23 @@ export class StreamMixerService {
     const source = this.audioContext.createMediaStreamSource(stream);
     source.connect(this.audioDestination);
     this.audioSources.set(id, source);
+  }
+
+  private connectSilentAudioSource(): void {
+    if (this.audioContext === undefined || this.audioDestination === undefined) return;
+    if (this.silentAudioSource !== undefined) return;
+
+    const gain = this.audioContext.createGain();
+    gain.gain.value = 0;
+    gain.connect(this.audioDestination);
+
+    const source = this.audioContext.createConstantSource();
+    source.offset.value = 0;
+    source.connect(gain);
+    source.start();
+
+    this.silentAudioGain = gain;
+    this.silentAudioSource = source;
   }
 
   private disconnectAudioSource(id: string): void {
@@ -431,6 +527,13 @@ export class StreamMixerService {
   private releaseAudio(): void {
     this.audioSources.forEach(source => source.disconnect());
     this.audioSources.clear();
+
+    this.silentAudioSource?.stop();
+    this.silentAudioSource?.disconnect();
+    this.silentAudioSource = undefined;
+
+    this.silentAudioGain?.disconnect();
+    this.silentAudioGain = undefined;
 
     this.audioDestination?.disconnect();
     this.audioDestination = undefined;
