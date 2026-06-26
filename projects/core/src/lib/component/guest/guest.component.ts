@@ -1,6 +1,7 @@
 import {
   AfterViewInit, ChangeDetectorRef,
   Component, ElementRef,
+  HostListener,
   HostBinding,
   Input,
   OnDestroy, ViewChild,
@@ -8,6 +9,7 @@ import {
 } from '@angular/core';
 import {LobbyMediaStream} from '../../entities';
 import {createLogger, LobbyService} from '../../provider';
+import {StreamMixerService} from '../../provider/stream-mixer.service';
 import {filter, Subscription} from 'rxjs';
 import '@material/web/switch/switch';
 
@@ -34,10 +36,17 @@ export class GuestComponent implements AfterViewInit, OnDestroy {
 
   public audioMuted = false;
   public cameraMuted = false;
+  public mixVolume = 1;
+  public audioMixerOpen = false;
+  public audioMixerOrientation: 'vertical' | 'horizontal' = 'vertical';
   private muteSub: Subscription;
   private readonly log = createLogger('GuestComponent');
 
-  constructor(private ref: ChangeDetectorRef, private lobbyService: LobbyService) {
+  constructor(
+    private ref: ChangeDetectorRef,
+    private lobbyService: LobbyService,
+    private mixer: StreamMixerService,
+  ) {
     this.muteSub = this.lobbyService.mute$.pipe(
       filter((media) => media !== null),
       filter((media) => media?.streamId == this.media?.streamId),
@@ -54,6 +63,7 @@ export class GuestComponent implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit() {
+    this.updateAudioMixerOrientation();
     if (this.media && this.media.stream) {
       this.getVideoElement().srcObject = this.media.stream;
       if (this.isLocal) {
@@ -109,13 +119,40 @@ export class GuestComponent implements AfterViewInit, OnDestroy {
     const isSelected = this.isSelected();
     if (isSelected) {
       this.activateGuestStreamCbk(this.media);
+      this.updateMixVolume();
     } else {
       this.deactivateGuestStreamCbk(this.media);
     }
   }
 
+  setMixVolume(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.mixVolume = Number(input.value);
+    this.updateMixVolume();
+  }
+
+  toggleAudioMixer(): void {
+    this.audioMixerOpen = !this.audioMixerOpen;
+    this.updateAudioMixerOrientation();
+  }
+
+  @HostListener('window:resize')
+  onResize(): void {
+    this.updateAudioMixerOrientation();
+  }
+
   private getVideoElement(): HTMLVideoElement {
     return this.videoRef.nativeElement;
+  }
+
+  private updateMixVolume(): void {
+    this.mixer.setVolume(`video-${this.media.streamId}`, this.mixVolume);
+  }
+
+  private updateAudioMixerOrientation(): void {
+    this.audioMixerOrientation = window.matchMedia('(max-width: 900px)').matches
+      ? 'horizontal'
+      : 'vertical';
   }
 
   private isSelected(): boolean {
@@ -123,4 +160,3 @@ export class GuestComponent implements AfterViewInit, OnDestroy {
     return !shadowRoot?.querySelector('div')?.classList.contains('selected');
   }
 }
-

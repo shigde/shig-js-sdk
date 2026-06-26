@@ -35,6 +35,8 @@ export class StreamMixerService {
   private audioContext: AudioContext | undefined;
   private audioDestination: MediaStreamAudioDestinationNode | undefined;
   private audioSources: Map<string, MediaStreamAudioSourceNode> = new Map<string, MediaStreamAudioSourceNode>();
+  private audioGains: Map<string, GainNode> = new Map<string, GainNode>();
+  private volumeById: Map<string, number> = new Map<string, number>();
   private silentAudioSource: ConstantSourceNode | undefined;
   private silentAudioGain: GainNode | undefined;
   private running = false;
@@ -104,6 +106,7 @@ export class StreamMixerService {
         this.videoElements.delete(videoId);
         this.mediaStreams.delete(id);
         this.disconnectAudioSource(id);
+        this.volumeById.delete(id);
         break;
       }
     }
@@ -116,6 +119,16 @@ export class StreamMixerService {
         return;
       }
     }
+  }
+
+  setVolume(videoId: string, volume: number): void {
+    const normalizedVolume = this.clamp(volume, 0, 2);
+    this.volumeById.set(videoId, normalizedVolume);
+    this.audioGains.get(videoId)?.gain.setTargetAtTime(
+      normalizedVolume,
+      this.audioContext?.currentTime ?? 0,
+      0.01,
+    );
   }
 
   updateNodeLayout(id: string, layout: SceneNodeLayout): void {
@@ -490,8 +503,14 @@ export class StreamMixerService {
     if (this.audioSources.has(id)) return;
 
     const source = this.audioContext.createMediaStreamSource(stream);
-    source.connect(this.audioDestination);
+    const gain = this.audioContext.createGain();
+    gain.gain.value = this.volumeById.get(id) ?? 1;
+
+    source.connect(gain);
+    gain.connect(this.audioDestination);
+
     this.audioSources.set(id, source);
+    this.audioGains.set(id, gain);
   }
 
   private connectSilentAudioSource(): void {
@@ -517,6 +536,9 @@ export class StreamMixerService {
 
     source.disconnect();
     this.audioSources.delete(id);
+
+    this.audioGains.get(id)?.disconnect();
+    this.audioGains.delete(id);
   }
 
   private getAudioContext(): AudioContext {
@@ -527,6 +549,9 @@ export class StreamMixerService {
   private releaseAudio(): void {
     this.audioSources.forEach(source => source.disconnect());
     this.audioSources.clear();
+    this.audioGains.forEach(gain => gain.disconnect());
+    this.audioGains.clear();
+    this.volumeById.clear();
 
     this.silentAudioSource?.stop();
     this.silentAudioSource?.disconnect();

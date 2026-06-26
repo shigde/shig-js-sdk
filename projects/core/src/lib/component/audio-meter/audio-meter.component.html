@@ -1,4 +1,4 @@
-<div class="meter" [ngClass]="orientation">
+<div class="meter" [ngClass]="[orientation, size]">
   @for (i of [].constructor(segments); track i; let idx = $index) {
     <div #bar class="bar"></div>
   }

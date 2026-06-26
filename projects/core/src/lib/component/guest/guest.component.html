@@ -11,5 +11,33 @@
   }
 </div>
 <a href="#" class="name-tag">{{ media?.name }}</a>
+@if (onHost && media?.stream) {
+  <button
+    class="guest-audio-mixer-toggle"
+    type="button"
+    [class.active]="audioMixerOpen"
+    (click)="toggleAudioMixer()">
+    <i class="bi bi-sliders"></i>
+  </button>
+}
+@if (onHost && media?.stream && audioMixerOpen) {
+  <div class="guest-audio-mixer">
+    <app-audio-meter
+      [stream]="media.stream ?? null"
+      [segments]="8"
+      [orientation]="audioMixerOrientation"
+      size="compact">
+    </app-audio-meter>
+    <input
+      class="guest-volume-slider"
+      type="range"
+      min="0"
+      max="2"
+      step="0.05"
+      [value]="mixVolume"
+      (input)="setMixVolume($event)"
+      title="Mix volume">
+  </div>
+}
 <div class="guest-camera-off rounded-1 mb-1 border bg-body" [ngClass]="{'display-none': !cameraMuted}"></div>
 <video id="video-{{ media?.streamId }}" #videoElement muted autoplay [ngClass]="{'camera-off': cameraMuted}" class="rounded-1 mb-2 border"></video>

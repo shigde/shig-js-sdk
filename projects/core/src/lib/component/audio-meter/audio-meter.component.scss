@@ -20,6 +20,23 @@
   height: 30px;
 }
 
+.meter.compact {
+  gap: 1px;
+  padding: 2px;
+  border-radius: 3px;
+  background: rgba(17, 17, 17, 0.72);
+}
+
+.meter.horizontal.compact {
+  width: 72px;
+  height: 12px;
+}
+
+.meter.vertical.compact {
+  width: 12px;
+  height: 72px;
+}
+
 .bar {
   flex: 1;
   background: #333;
