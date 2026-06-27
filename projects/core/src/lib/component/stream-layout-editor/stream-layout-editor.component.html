@@ -5,7 +5,7 @@
 
       <div class="nav-group">
         <div class="nav-group-area">
-          <div class="dropdown-center">
+          <div class="dropdown-center stream-overlay-dropdown">
             <button
               class="btn btn-sm btn-outline-primary dropdown-toggle"
               type="button"
@@ -22,6 +22,53 @@
                 </button>
               </li>
             </ul>
+          </div>
+
+          <div class="dropdown-center">
+            <button
+              class="btn btn-sm btn-outline-primary dropdown-toggle"
+              type="button"
+              data-bs-toggle="dropdown">
+
+              Overlay
+
+            </button>
+
+            <div class="dropdown-menu stream-overlay-menu">
+              <button
+                class="dropdown-item stream-overlay-toggle"
+                type="button"
+                [class.active]="nameOverlayEnabled"
+                (click)="toggleNameOverlay()">
+                <i
+                  class="bi"
+                  [class.bi-check-square-fill]="nameOverlayEnabled"
+                  [class.bi-square]="!nameOverlayEnabled">
+                </i>
+                <span>Name-Overlay</span>
+              </button>
+
+              <div class="dropdown-divider"></div>
+
+              <div class="stream-overlay-size">
+                <button
+                  class="btn btn-sm"
+                  type="button"
+                  [class.btn-primary]="nameOverlaySize === 'A'"
+                  [class.btn-outline-primary]="nameOverlaySize !== 'A'"
+                  (click)="setNameOverlaySize('A')">
+                  Small
+                </button>
+                <button
+                  class="btn btn-sm"
+                  type="button"
+                  [class.btn-primary]="nameOverlaySize === 'B'"
+                  [class.btn-outline-primary]="nameOverlaySize !== 'B'"
+                  (click)="setNameOverlaySize('B')">
+                  Large
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

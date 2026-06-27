@@ -2,6 +2,7 @@ import {Component, ElementRef, HostListener, Input, OnDestroy, OnInit, ViewChild
 import Konva from 'konva';
 import {createLogger} from "../../provider";
 import {StreamMixerService} from "../../provider/stream-mixer.service";
+import {NameplateOverlaySize, StreamOverlayService} from "../../provider/stream-overlay.service";
 
 @Component({
   selector: 'shig-stream-leayout-editor',
@@ -36,6 +37,8 @@ export class StreamLayoutEditorComponent implements OnInit, OnDestroy {
 
   ready = false;
   layoutEditMode = false;
+  nameOverlayEnabled = false;
+  nameOverlaySize: NameplateOverlaySize = 'B';
   canvas!: HTMLCanvasElement;
   private stageContainer: HTMLDivElement | undefined;
   private stage: Konva.Stage | undefined;
@@ -47,6 +50,7 @@ export class StreamLayoutEditorComponent implements OnInit, OnDestroy {
 
   constructor(
     private mixer: StreamMixerService,
+    private overlays: StreamOverlayService,
   ) {
   }
 
@@ -72,6 +76,9 @@ export class StreamLayoutEditorComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    this.nameOverlayEnabled = this.overlays.isNameplateEnabled();
+    this.nameOverlaySize = this.overlays.getNameplateSize();
+
     this.loadImage(this.faceImage, this.basePath + '/icons/face.svg');
     this.loadImage(this.logoImage, this.basePath + '/icons/logo.png');
 
@@ -119,6 +126,16 @@ export class StreamLayoutEditorComponent implements OnInit, OnDestroy {
       this.transformer?.nodes([]);
       this.layer?.batchDraw();
     }
+  }
+
+  toggleNameOverlay(): void {
+    this.nameOverlayEnabled = !this.nameOverlayEnabled;
+    this.overlays.setNameplateEnabled(this.nameOverlayEnabled);
+  }
+
+  setNameOverlaySize(size: NameplateOverlaySize): void {
+    this.nameOverlaySize = size;
+    this.overlays.setNameplateSize(size);
   }
 
   private loadImage(image: HTMLImageElement, src: string): void {

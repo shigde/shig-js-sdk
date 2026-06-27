@@ -17,11 +17,43 @@ type NameplateSnapshot = {
   height: number;
 };
 
+export type NameplateOverlaySize = 'A' | 'B';
+
+type NameplateStyle = {
+  maxWidth: number;
+  height: number;
+  paddingX: number;
+  borderRadius: number;
+  fontSize: number;
+};
+
 @Injectable({providedIn: 'root'})
 export class StreamOverlayService {
   private readonly log = createLogger('StreamOverlayService');
   private nameplateSnapshots: Map<string, NameplateSnapshot> = new Map<string, NameplateSnapshot>();
   private pendingNameplateSnapshots: Set<string> = new Set<string>();
+  private nameplateEnabled = false;
+  private nameplateSize: NameplateOverlaySize = 'B';
+
+  isNameplateEnabled(): boolean {
+    return this.nameplateEnabled;
+  }
+
+  getNameplateSize(): NameplateOverlaySize {
+    return this.nameplateSize;
+  }
+
+  setNameplateEnabled(enabled: boolean): void {
+    this.nameplateEnabled = enabled;
+  }
+
+  setNameplateSize(size: NameplateOverlaySize): void {
+    if (this.nameplateSize === size) return;
+
+    this.nameplateSize = size;
+    this.nameplateSnapshots.clear();
+    this.pendingNameplateSnapshots.clear();
+  }
 
   clear(): void {
     this.nameplateSnapshots.clear();
@@ -34,12 +66,15 @@ export class StreamOverlayService {
     ctx: CanvasRenderingContext2D,
     onReady?: () => void,
   ): void {
+    if (!this.nameplateEnabled) return;
+
     const displayName = name?.trim() || 'Guest';
+    const cacheKey = this.getNameplateCacheKey(displayName);
     const margin = Math.min(14, Math.max(6, tile.width * 0.02));
-    const snapshot = this.nameplateSnapshots.get(displayName);
+    const snapshot = this.nameplateSnapshots.get(cacheKey);
 
     if (snapshot === undefined) {
-      this.captureNameplate(displayName, onReady);
+      this.captureNameplate(displayName, cacheKey, onReady);
       return;
     }
 
@@ -56,16 +91,16 @@ export class StreamOverlayService {
     ctx.drawImage(snapshot.image, labelX, labelY, labelWidth, labelHeight);
   }
 
-  private captureNameplate(name: string, onReady?: () => void): void {
-    if (this.pendingNameplateSnapshots.has(name)) return;
+  private captureNameplate(name: string, cacheKey: string, onReady?: () => void): void {
+    if (this.pendingNameplateSnapshots.has(cacheKey)) return;
 
-    this.pendingNameplateSnapshots.add(name);
+    this.pendingNameplateSnapshots.add(cacheKey);
 
     void this.createNameplateSnapshot(name)
-      .then(snapshot => this.nameplateSnapshots.set(name, snapshot))
+      .then(snapshot => this.nameplateSnapshots.set(cacheKey, snapshot))
       .catch(error => this.log.warn('Could not render nameplate overlay', error))
       .finally(() => {
-        this.pendingNameplateSnapshots.delete(name);
+        this.pendingNameplateSnapshots.delete(cacheKey);
         onReady?.();
       });
   }
@@ -97,6 +132,7 @@ export class StreamOverlayService {
   }
 
   private createNameplateElement(name: string): HTMLDivElement {
+    const style = this.getNameplateStyle();
     const element = document.createElement('div');
     element.textContent = name;
     element.style.cssText = [
@@ -105,22 +141,46 @@ export class StreamOverlayService {
       'top:-10000px',
       'display:inline-flex',
       'align-items:center',
-      'max-width:320px',
-      'height:72px',
-      'padding:0 24px',
+      `max-width:${style.maxWidth}px`,
+      `height:${style.height}px`,
+      `padding:0 ${style.paddingX}px`,
       'box-sizing:border-box',
       'overflow:hidden',
       'white-space:nowrap',
       'text-overflow:ellipsis',
-      'border-radius:10px',
+      `border-radius:${style.borderRadius}px`,
       'background:rgba(35,45,77,0.86)',
       'color:#cfe4ff',
-      'font:700 30px sans-serif',
-      'line-height:72px',
+      `font:700 ${style.fontSize}px sans-serif`,
+      `line-height:${style.height}px`,
       'pointer-events:none',
       'z-index:-1',
     ].join(';');
 
     return element;
+  }
+
+  private getNameplateCacheKey(name: string): string {
+    return `${this.nameplateSize}:${name}`;
+  }
+
+  private getNameplateStyle(): NameplateStyle {
+    if (this.nameplateSize === 'A') {
+      return {
+        maxWidth: 240,
+        height: 54,
+        paddingX: 18,
+        borderRadius: 8,
+        fontSize: 22,
+      };
+    }
+
+    return {
+      maxWidth: 320,
+      height: 72,
+      paddingX: 24,
+      borderRadius: 10,
+      fontSize: 30,
+    };
   }
 }
