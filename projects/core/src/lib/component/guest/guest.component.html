@@ -28,15 +28,17 @@
       [orientation]="audioMixerOrientation"
       size="compact">
     </app-audio-meter>
-    <input
-      class="guest-volume-slider"
-      type="range"
-      min="0"
-      max="2"
-      step="0.05"
-      [value]="mixVolume"
-      (input)="setMixVolume($event)"
-      title="Mix volume">
+    <div class="guest-volume-control">
+      <input
+        class="guest-volume-slider"
+        type="range"
+        min="0"
+        max="2"
+        step="0.05"
+        [value]="mixVolume"
+        (input)="setMixVolume($event)"
+        title="Mix volume">
+    </div>
   </div>
 }
 <div class="guest-camera-off rounded-1 mb-1 border bg-body" [ngClass]="{'display-none': !cameraMuted}"></div>

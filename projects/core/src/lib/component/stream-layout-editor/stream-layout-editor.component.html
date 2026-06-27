@@ -1,0 +1,60 @@
+<div #fullscreenContainer class="stream-layout-editor">
+
+  <nav class="navbar bg-body-tertiary">
+    <div class="container-fluid">
+
+      <div class="nav-group">
+        <div class="nav-group-area">
+          <div class="dropdown-center">
+            <button
+              class="btn btn-sm btn-outline-primary dropdown-toggle"
+              type="button"
+              data-bs-toggle="dropdown">
+
+              Layout
+
+            </button>
+
+            <ul class="dropdown-menu">
+              <li>
+                <button class="dropdown-item" type="button" (click)="resetTileLayout()">
+                  Tile Grid
+                </button>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <button
+        class="btn btn-sm btn-outline-primary"
+        [class.active]="layoutEditMode"
+        (click)="toggleLayoutEditMode()">
+
+        <i class="bi bi-bounding-box-circles"></i>
+
+      </button>
+
+      <button
+        class="btn btn-sm btn-outline-primary"
+        (click)="toggleFullscreen()">
+
+        <i
+          class="bi"
+          [class.bi-fullscreen]="!isFullscreen"
+          [class.bi-fullscreen-exit]="isFullscreen">
+        </i>
+
+      </button>
+
+    </div>
+  </nav>
+
+  <div id="lobby-stream-video" class="stream-mixer canvas-logo">
+    <canvas #canvas id="canvasOne">
+      Your browser does not support HTML5 Canvas.
+    </canvas>
+    <div #stageContainer class="layout-stage" [class.is-editing]="layoutEditMode"></div>
+  </div>
+
+</div>
