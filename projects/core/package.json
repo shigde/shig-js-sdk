@@ -36,6 +36,7 @@
     "@angular/router": "^21.0.6",
     "@material/web": "^2.3.0",
     "@types/debug": "^4.1.12",
+    "@zumer/snapdom": "^2.12.9",
     "dexie": "^3.2.4",
     "sdp-transform": "^2.14.1",
     "debug": "^4.4.3",

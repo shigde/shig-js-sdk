@@ -1,6 +1,7 @@
 import {Injectable} from "@angular/core";
 import {createLogger} from "./logger";
 import {SceneNode} from "../entities";
+import {StreamOverlayService} from "./stream-overlay.service";
 
 const WIDTH = 1920;
 const HEIGHT = 1080;
@@ -43,7 +44,9 @@ export class StreamMixerService {
   private renderTimerId: number | undefined;
   private canvasVideoTrack: CanvasCaptureMediaStreamTrack | undefined;
 
-  constructor() {
+  constructor(
+    private overlays: StreamOverlayService,
+  ) {
   }
 
   init(nativeElement: HTMLCanvasElement, image: HTMLImageElement, logo?: HTMLImageElement) {
@@ -67,6 +70,7 @@ export class StreamMixerService {
     this.nodes.clear();
     this.videoElements.clear();
     this.mediaStreams.clear();
+    this.overlays.clear();
     this.releaseAudio();
     this.stopRenderTimer();
     this.canvasVideoTrack = undefined;
@@ -339,7 +343,6 @@ export class StreamMixerService {
     ctx.lineWidth = 2;
     ctx.strokeRect(tile.x, tile.y, tile.width, tile.height);
 
-    this.drawIconBar(node, tile, ctx);
     this.drawNameLabel(node, tile, ctx);
 
     ctx.restore();
@@ -443,39 +446,12 @@ export class StreamMixerService {
     );
   }
 
-  private drawIconBar(
-    node: SceneNode,
-    tile: Tile,
-    ctx: CanvasRenderingContext2D,
-  ): void {
-
-    ctx.fillStyle = 'rgb(255 255 255 / 0)';
-    ctx.fillRect(tile.x + 12, tile.y + 12, 76, 34);
-
-    ctx.fillStyle = '#aadaff';
-    ctx.font = '18px sans-serif';
-    ctx.fillText(node.muted ? '🔇' : '🎙', tile.x + 22, tile.y + 35);
-    ctx.fillText(node.cameraOff ? '🚫' : '📹', tile.x + 55, tile.y + 35);
-  }
-
   private drawNameLabel(
     node: SceneNode,
     tile: Tile,
     ctx: CanvasRenderingContext2D,
   ): void {
-    const labelWidth = Math.min(160, tile.width - 24);
-    const labelHeight = 36;
-    const labelX = tile.x + tile.width - labelWidth - 14;
-    const labelY = tile.y + tile.height - labelHeight - 14;
-
-    ctx.fillStyle = 'rgba(35,45,77,0.86)';
-    ctx.beginPath();
-    ctx.roundRect(labelX, labelY, labelWidth, labelHeight, 5);
-    ctx.fill();
-
-    ctx.fillStyle = '#cfe4ff';
-    ctx.font = 'bold 15px sans-serif';
-    ctx.fillText(node.name, labelX + 12, labelY + 23);
+    this.overlays.drawNameplate(node.name, tile, ctx, () => this.requestCanvasFrame());
   }
 
   private clamp(value: number, min: number, max: number): number {

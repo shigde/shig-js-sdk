@@ -195,7 +195,7 @@ export class LobbyComponent implements OnInit, AfterViewInit, OnChanges {
   addLobbyMediaStream(media: LobbyMediaStream): void {
     if (!!this.mixer && media.purpose === LobbyMediaPurpose.GUEST && !!media.stream) {
       const videoId = `video-${media.streamId}`;
-      this.mixer.appendStream(videoId);
+      this.mixer.appendStream(videoId, media.name || 'Guest');
     }
     if (!this.isHost && media.purpose === LobbyMediaPurpose.STREAM && !!media.stream) {
       this.getStreamVideoElement().srcObject = media.stream;

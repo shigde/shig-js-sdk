@@ -14,6 +14,8 @@ export * from './user.service';
 export * from './webrtc-connection';
 export * from './peertube.service';
 export * from './canvas_stream_mixer';
+export * from './stream-mixer.service';
+export * from './stream-overlay.service';
 export * from './sdp-parser';
 export * from './id-parser';
 export * from './logger';
