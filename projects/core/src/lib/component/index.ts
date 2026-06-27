@@ -7,4 +7,4 @@ export * from './guest-list/guest-list.component';
 export * from './guest/guest.component';
 export * from './stream-friends/stream-friends.component';
 export * from './stream-layout-editor/stream-layout-editor.component';
-
+export * from './stream-overlay-menu/stream-overlay-menu.component';
