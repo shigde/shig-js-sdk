@@ -59,16 +59,21 @@ export class LobbyService {
     const wc = new WebrtcConnection(config, 'egress');
     this.egress = wc;
     new ChannelMessenger(this.egress.createDataChannel('whep'));
+    let renegotiationChain: Promise<void> = Promise.resolve();
 
     messenger.subscribe((msg) => {
       if (msg.type === ChannelMsgType.OfferMsg) {
-        wc.setRemoteOffer(msg.data.sdp)
+        const offerNumber = msg.data.number;
+        renegotiationChain = renegotiationChain
+          .catch(() => undefined)
+          .then(() => wc.setRemoteOffer(msg.data.sdp))
           .then((answer) => ({
             type: ChannelMsgType.AnswerMsg,
             id: msg.id,
-            data: {sdp: answer, number: msg.data.number} as SdpMsgData
+            data: {sdp: answer, number: offerNumber} as SdpMsgData
           }) as ChannelMsg)
-          .then((answer) => messenger.send(answer));
+          .then((answer) => messenger.send(answer))
+          .catch((error) => this.log.error('renegotiation failed', error));
       }
       if (msg.type === ChannelMsgType.MuteMsg) {
         wc.muteRemoteMedia(msg.data.mid, msg.data.mute);

@@ -187,6 +187,9 @@ export class StreamMixerService {
     }
     const mixedStream = this.canvas.captureStream(0);
     this.canvasVideoTrack = mixedStream.getVideoTracks()[0] as CanvasCaptureMediaStreamTrack | undefined;
+    if (this.canvasVideoTrack) {
+      this.canvasVideoTrack.contentHint = 'motion';
+    }
     this.startRenderTimer(fps);
     this.render();
 
@@ -201,9 +204,6 @@ export class StreamMixerService {
 
   public resizeCanvas(containerWidth: number, containerHeight: number) {
     if (this.canvas === undefined) return;
-    if (this.context === undefined) return;
-    const rect = this.canvas.getBoundingClientRect();
-
     const targetAspect = 16 / 9;
 
     let width = containerWidth;
@@ -213,9 +213,6 @@ export class StreamMixerService {
       height = containerHeight;
       width = height * targetAspect;
     }
-
-    this.canvas.width = Math.round(width);
-    this.canvas.height = Math.round(height);
 
     this.canvas.style.width = `${width}px`;
     this.canvas.style.height = `${height}px`;

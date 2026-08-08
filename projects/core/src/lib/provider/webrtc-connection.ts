@@ -39,8 +39,10 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
     return this.dataChannel;
   }
 
-  public createOffer(streams: Map<LobbyMediaPurpose, MediaStream>, info: string): Promise<RTCSessionDescription> {
+  public async createOffer(streams: Map<LobbyMediaPurpose, MediaStream>, info: string): Promise<RTCSessionDescription> {
     const trackInfo = new Map<string, SdpMediaInfo>();
+    const senderParameterUpdates: Promise<void>[] = [];
+
     streams.forEach((ms, streamType) => {
       let streamId = ms.id;
       ms.getTracks().forEach((track) => {
@@ -71,6 +73,7 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
               throw new Error('Browser does not support H264 codec for video track.');
             }
             transceiver.setCodecPreferences(h264Codecs);
+            senderParameterUpdates.push(this.configureStreamVideoSender(transceiver.sender));
           }
 
           if (track.kind === 'audio') {
@@ -101,10 +104,28 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
       });
     });
 
+    await Promise.all(senderParameterUpdates);
+
     // @ts-ignore
     return this.pc.createOffer()
       .then((offer) => this.pc.setLocalDescription(offer))
       .then(_ => SdpParser.mungeOfferInfo(this.pc.localDescription as RTCSessionDescription, trackInfo));
+  }
+
+  private async configureStreamVideoSender(sender: RTCRtpSender): Promise<void> {
+    const parameters = sender.getParameters();
+    parameters.encodings = parameters.encodings?.length ? parameters.encodings : [{}];
+    parameters.encodings[0] = {
+      ...parameters.encodings[0],
+      maxBitrate: 5_000_000,
+      maxFramerate: 30,
+    };
+
+    try {
+      await sender.setParameters(parameters);
+    } catch (error) {
+      this.log.warn('failed to configure stream video sender parameters', error);
+    }
   }
 
   // Ice Gathering ----------------------------

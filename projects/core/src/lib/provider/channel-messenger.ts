@@ -34,7 +34,7 @@ export class ChannelMessenger extends EventEmitter<ChannelMsg> {
       const number = Number(msg.data.number);
 
       msg.data = {number, sdp} as SdpMsgData;
-      msg.type = ChannelMsgType.OfferMsg;
+      msg.type = ChannelMsgType.AnswerMsg;
       this.emit(msg);
     }
 
