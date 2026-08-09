@@ -117,7 +117,7 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
     parameters.encodings = parameters.encodings?.length ? parameters.encodings : [{}];
     parameters.encodings[0] = {
       ...parameters.encodings[0],
-      maxBitrate: 5_000_000,
+      maxBitrate: 10_000_000,
       maxFramerate: 30,
     };
 
