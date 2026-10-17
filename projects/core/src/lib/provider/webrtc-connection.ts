@@ -10,6 +10,7 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
   private readonly pc: RTCPeerConnection;
   private readonly remoteMedia: Map<LobbyMediaIndex, LobbyMedia> = new Map<LobbyMediaIndex, LobbyMedia>();
   private dataChannel: RTCDataChannel | undefined;
+  private readonly localSenders = new Map<LobbyMediaPurpose, RTCRtpSender[]>();
 
   constructor(
     private readonly config: RTCConfiguration,
@@ -44,6 +45,8 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
     const senderParameterUpdates: Promise<void>[] = [];
 
     streams.forEach((ms, streamType) => {
+      const senders: RTCRtpSender[] = [];
+      this.localSenders.set(streamType, senders);
       let streamId = ms.id;
       ms.getTracks().forEach((track) => {
 
@@ -52,28 +55,10 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
             direction: 'sendonly'
           });
           transceiver.sender.setStreams(ms);
+          senders.push(transceiver.sender);
 
           if (track.kind === 'video') {
-            const videoCodecs = RTCRtpSender.getCapabilities('video')!.codecs;
-            // Only H264 for the live stream video
-            // Prio Baseline before High Profile
-            // video/H264 profile-level-id=42e01f Baseline
-            // video/H264 profile-level-id=640c1f High Profile (better quality, but not always compatible with ffmpeg)
-            const h264Codecs = videoCodecs
-              .filter(c => c.mimeType.toLowerCase() === "video/h264")
-              .sort((a, b) => {
-                const score = (c: RTCRtpCodec) =>
-                  c.sdpFmtpLine?.includes("42e01f") ? 2 :
-                    c.sdpFmtpLine?.includes("packetization-mode=1") ? 1 : 0;
-
-                return score(b) - score(a);
-              });
-
-            if (h264Codecs.length === 0) {
-              throw new Error('Browser does not support H264 codec for video track.');
-            }
-            transceiver.setCodecPreferences(h264Codecs);
-            senderParameterUpdates.push(this.configureStreamVideoSender(transceiver.sender));
+            senderParameterUpdates.push(this.configureVideoSender(transceiver.sender));
           }
 
           if (track.kind === 'audio') {
@@ -93,7 +78,11 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
             transceiver.setCodecPreferences(opusCodecs);
           }
         } else {
-          this.pc.addTrack(track, ms);
+          const sender = this.pc.addTrack(track, ms);
+          senders.push(sender);
+          if (track.kind === 'video') {
+            senderParameterUpdates.push(this.configureVideoSender(sender));
+          }
         }
 
         trackInfo.set(`${streamId} ${track.id}`.trim(), {
@@ -109,22 +98,56 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
     // @ts-ignore
     return this.pc.createOffer()
       .then((offer) => this.pc.setLocalDescription(offer))
-      .then(_ => SdpParser.mungeOfferInfo(this.pc.localDescription as RTCSessionDescription, trackInfo));
+      .then(_ => {
+        return SdpParser.mungeOfferInfo(this.pc.localDescription as RTCSessionDescription, trackInfo);
+      });
   }
 
-  private async configureStreamVideoSender(sender: RTCRtpSender): Promise<void> {
+  public async replaceStream(purpose: LobbyMediaPurpose, stream: MediaStream): Promise<void> {
+    const senders = this.localSenders.get(purpose);
+    const tracks = stream.getTracks();
+    if (!senders || senders.length !== tracks.length) {
+      throw new Error('Device change requires the same negotiated media kinds.');
+    }
+    const replacements = senders.map(sender => {
+      const previous = sender.track;
+      const track = tracks.find(candidate => candidate.kind === previous?.kind);
+      if (!previous || !track) {
+        throw new Error('No matching track for the negotiated sender.');
+      }
+      track.enabled = previous.enabled;
+      return {sender, previous, track};
+    });
+    const replaced: typeof replacements = [];
+    try {
+      for (const replacement of replacements) {
+        await replacement.sender.replaceTrack(replacement.track);
+        replaced.push(replacement);
+      }
+    } catch (error) {
+      // A failed second replacement must not leave audio and video on different devices.
+      for (const replacement of replaced.reverse()) {
+        await replacement.sender.replaceTrack(replacement.previous);
+      }
+      throw error;
+    }
+  }
+
+  private async configureVideoSender(sender: RTCRtpSender): Promise<void> {
     const parameters = sender.getParameters();
     parameters.encodings = parameters.encodings?.length ? parameters.encodings : [{}];
     parameters.encodings[0] = {
       ...parameters.encodings[0],
       maxBitrate: 10_000_000,
       maxFramerate: 30,
+      scaleResolutionDownBy: 1,
     };
+    (parameters as any).degradationPreference = 'maintain-resolution';
 
     try {
       await sender.setParameters(parameters);
     } catch (error) {
-      this.log.warn('failed to configure stream video sender parameters', error);
+      this.log.warn('failed to configure video sender parameters', error);
     }
   }
 
@@ -138,9 +161,8 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
   }
 
   public setAnswer(answer: RTCSessionDescription): Promise<void> {
-    const munged = SdpParser.mungeAnswerCodecs(answer);
-    this.log.info('setAnswer: ', munged);
-    return this.pc.setRemoteDescription(munged);
+    this.log.info('setAnswer: ', answer);
+    return this.pc.setRemoteDescription(answer);
   }
 
   public setRemoteOffer(offer: RTCSessionDescription) {
@@ -154,6 +176,23 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
   }
 
   public close(): Promise<void> {
+    this.localSenders.clear();
+    if (this.dataChannel !== undefined) {
+      this.dataChannel.onmessage = null;
+      this.dataChannel.onopen = null;
+      this.dataChannel.onclose = null;
+
+      if (this.dataChannel.readyState === 'connecting' || this.dataChannel.readyState === 'open') {
+        this.dataChannel.close();
+      }
+
+      this.dataChannel = undefined;
+    }
+
+    this.pc.getTransceivers().forEach((transceiver) => {
+      transceiver.stop();
+    });
+
     this.pc.ontrack = null;
     this.pc.oniceconnectionstatechange = null;
     this.pc.onconnectionstatechange = null;

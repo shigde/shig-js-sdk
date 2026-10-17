@@ -103,6 +103,16 @@ export class StreamMixerService {
     }
   }
 
+  updateStream(videoId: string, stream: MediaStream): void {
+    for (const [id, node] of this.nodes) {
+      if (node.videoId === videoId && this.mediaStreams.get(id) !== stream) {
+        this.disconnectAudioSource(id);
+        this.mediaStreams.set(id, stream);
+        this.connectAudioSource(id, stream);
+      }
+    }
+  }
+
   removeStream(videoId: string): void {
     for (const [id, node] of this.nodes) {
       if (node.videoId === videoId) {

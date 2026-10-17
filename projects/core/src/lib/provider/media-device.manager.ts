@@ -1,7 +1,7 @@
 import {Injectable} from '@angular/core';
 import {createLogger} from './logger';
 import {LocalStoreService} from './local-store.service';
-import {DeviceSettings, MediaDeviceList, SelectedDevice} from '../entities';
+import {DeviceSettings, DeviceSettingsOptions, MediaDeviceList, ResolutionValue, SelectedDevice} from '../entities';
 import {MediaDeviceError} from './media-device.error';
 
 @Injectable({
@@ -36,7 +36,7 @@ export class MediaDeviceManager {
     }
 
     try {
-      return await this.getUserMedia(device.getSelectedDevice());
+      return await this.getUserMedia(device.getSelectedDevice(), device.quality);
     } catch (err) {
       if (err instanceof MediaDeviceError) {
         this.log.warn('start media stream failed', err.mediaErrorType);
@@ -119,20 +119,52 @@ export class MediaDeviceManager {
    *
    * @throws MediaDeviceError if no devices are available or permission is denied.
    */
-  public async getUserMedia(settings: SelectedDevice): Promise<MediaStream> {
-    const constraints = this.getConstraintByDevice(settings);
+  public async getUserMedia(
+    settings: SelectedDevice,
+    quality: ResolutionValue = DeviceSettingsOptions.defaultQuality,
+  ): Promise<MediaStream> {
+    const constraints = this.getConstraintByDevice(settings, quality);
     try {
-      return await navigator.mediaDevices.getUserMedia(constraints);
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      stream.getVideoTracks().forEach(track => {
+        track.contentHint = 'detail';
+      });
+      return stream;
     } catch (err) {
       throw MediaDeviceError.build(err, 'media');
     }
   }
 
-  private getConstraintByDevice(settings: SelectedDevice): MediaStreamConstraints {
+  private getConstraintByDevice(
+    settings: SelectedDevice,
+    quality: ResolutionValue,
+  ): MediaStreamConstraints {
+    const resolution = this.resolutionConstraint(quality);
     return {
       audio: {deviceId: {exact: `${settings.microphone}`}},
-      video: {deviceId: {exact: `${settings.camera}`}},
+      video: {
+        deviceId: {exact: `${settings.camera}`},
+        width: {ideal: resolution.width},
+        height: {ideal: resolution.height},
+        frameRate: {ideal: 30, max: 30},
+      },
     };
+  }
+
+  private resolutionConstraint(quality: ResolutionValue): { width: number; height: number } {
+    switch (quality) {
+      case 'qvga':
+      case 'vga':
+      case 'shd':
+        return {width: 1280, height: 720};
+      case 'fhd':
+        return {width: 1920, height: 1080};
+      case 'qhd':
+        return {width: 2560, height: 1440};
+      case 'hd':
+      default:
+        return {width: 1280, height: 720};
+    }
   }
 
   public getDeviceSettings() {

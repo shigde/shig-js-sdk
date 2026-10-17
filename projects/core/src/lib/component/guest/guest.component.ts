@@ -79,6 +79,7 @@ export class GuestComponent implements AfterViewInit, OnDestroy {
     this.media = media;
     if (this.media.stream) {
       this.getVideoElement().srcObject = this.media.stream;
+      this.mixer.updateStream(this.getVideoElement().id, this.media.stream);
       this.log.info('update guest tracks - add media:', this.media.stream.getVideoTracks());
     }
     this.ref.detectChanges();

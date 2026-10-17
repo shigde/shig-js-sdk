@@ -47,6 +47,11 @@ export class ChannelMessenger extends EventEmitter<ChannelMsg> {
   }
 
   public send(msg: ChannelMsg): void {
+    if (this.dc.readyState !== 'open') {
+      this.log.warn('skip message because data channel is not open', this.dc.readyState, msg);
+      return;
+    }
+
     if (Number(msg.type) === ChannelMsgType.OfferMsg || Number(msg.type) === ChannelMsgType.AnswerMsg) {
       msg.data.sdp = msg.data.sdp.sdp;
     }
@@ -54,5 +59,15 @@ export class ChannelMessenger extends EventEmitter<ChannelMsg> {
     const json = JSON.stringify({...msg, type: msg.type.toString()});
     const bytes = new TextEncoder().encode(json);
     this.dc.send(bytes);
+  }
+
+  public close(): void {
+    this.dc.onmessage = null;
+    this.dc.onopen = null;
+    this.dc.onclose = null;
+
+    if (this.dc.readyState === 'connecting' || this.dc.readyState === 'open') {
+      this.dc.close();
+    }
   }
 }

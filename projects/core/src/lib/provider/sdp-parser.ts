@@ -61,7 +61,7 @@ export class SdpParser {
       const dataArray = description.split(' ');
       purpose = getMediaStreamTypeByNumber(Number(dataArray[0]));
       muted = getMuted(dataArray[1]);
-      info = dataArray[2];
+      info = dataArray.slice(2).join(' ');
     }
     return {purpose, muted, info};
   }
@@ -79,84 +79,6 @@ export class SdpParser {
       }
     }
     return {track, stream};
-  }
-
-  static mungeAnswerCodecs(answer: RTCSessionDescription): RTCSessionDescription {
-    const sdp = answer.sdp!;
-    const sections = sdp.split(/\r\n(?=m=)/);
-
-    const sessionPart = sections[0];
-    const mediaParts = sections.slice(1);
-
-    const mungedMedia = mediaParts.map(section => {
-      if (section.startsWith('m=audio')) {
-        return this.keepCodecs(section, codec =>
-          codec.mime.toLowerCase() === 'opus'
-        );
-      }
-
-      if (section.startsWith('m=video')) {
-        return this.keepCodecs(section, codec =>
-          codec.mime.toLowerCase() === 'h264' &&
-          codec.fmtp.includes('packetization-mode=1') &&
-          codec.fmtp.includes('profile-level-id=42e01f')
-        );
-      }
-
-      return section;
-    });
-
-    return new RTCSessionDescription({
-      type: answer.type,
-      sdp: [sessionPart, ...mungedMedia].join('\r\n')
-    });
-  }
-
-  private static keepCodecs(
-    section: string,
-    keep: (codec: { pt: string; mime: string; fmtp: string }) => boolean
-  ): string {
-    const lines = section.split('\r\n').filter(Boolean);
-
-    const rtpmap = new Map<string, string>();
-    const fmtp = new Map<string, string>();
-
-    for (const line of lines) {
-      let m = line.match(/^a=rtpmap:(\d+)\s+([^/]+)/i);
-      if (m) rtpmap.set(m[1], m[2]);
-
-      m = line.match(/^a=fmtp:(\d+)\s+(.+)$/i);
-      if (m) fmtp.set(m[1], m[2]);
-    }
-
-    const keepPts = new Set<string>();
-
-    for (const [pt, mime] of rtpmap) {
-      if (keep({pt, mime, fmtp: fmtp.get(pt) ?? ''})) {
-        keepPts.add(pt);
-      }
-    }
-
-    // RTX entfernen, außer du willst retransmission behalten.
-    // Für maximale Einfachheit: nur echte Ziel-Codecs behalten.
-    const mLine = lines[0].split(' ');
-    const header = mLine.slice(0, 3);
-    const pts = mLine.slice(3).filter(pt => keepPts.has(pt));
-
-    const newLines = lines.filter(line => {
-      if (line.startsWith('m=')) return true;
-
-      const ptMatch = line.match(/^a=(rtpmap|fmtp|rtcp-fb):(\d+)/);
-      if (ptMatch) {
-        return keepPts.has(ptMatch[2]);
-      }
-
-      return true;
-    });
-
-    newLines[0] = [...header, ...pts].join(' ');
-
-    return newLines.join('\r\n');
   }
 
 }

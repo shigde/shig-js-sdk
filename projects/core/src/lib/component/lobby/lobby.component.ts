@@ -12,6 +12,7 @@ import {
 } from '@angular/core';
 
 import {Location} from '@angular/common';
+import {HttpErrorResponse} from '@angular/common/http';
 import {BehaviorSubject, catchError, of, take, tap} from 'rxjs';
 import {environment} from '../../../environments/environment';
 
@@ -67,6 +68,7 @@ export class LobbyComponent implements OnInit, AfterViewInit, OnChanges {
 
   private viewReady = false;
   private initialized = false;
+  private deviceChange: Promise<void> = Promise.resolve();
   @Input() token: string | undefined;
   @Input('apiPrefix') apiPrefix: string | undefined;
   @Input('streamUuid') streamUuid: string | undefined;
@@ -153,20 +155,29 @@ export class LobbyComponent implements OnInit, AfterViewInit, OnChanges {
   //   }
   // }
 
-  async startCamera() {
+  startCamera(): Promise<void> {
+    this.deviceChange = this.deviceChange.then(() => this.updateCamera());
+    return this.deviceChange;
+  }
+
+  private async updateCamera(): Promise<void> {
+    let stream: MediaStream | undefined;
+    const previous = this.localGuest?.stream;
     try {
-      let stream = await this.devices.sartDevice();
+      stream = await this.devices.sartDevice();
+      stream.getTracks().forEach(track => {
+        const oldTrack = previous?.getTracks().find(old => old.kind === track.kind);
+        if (oldTrack) track.enabled = oldTrack.enabled;
+      });
+      await this.lobbyService.replaceGuestStream(stream);
       this.hasMediaStreamSet$.next(true);
-      if (this.localGuest?.stream) {
-        this.localGuest?.stream.getTracks().forEach(t => {
-          t.stop();
-        });
-      }
       this.localGuest = LobbyMediaStream.buildLocal('me', stream);
       this.localGuest$.next(this.localGuest);
+      previous?.getTracks().forEach(track => track.stop());
     } catch (e) {
+      stream?.getTracks().forEach(track => track.stop());
       this.log.error('Could not start camera or Mixer', e);
-      this.hasMediaStreamSet$.next(false);
+      this.hasMediaStreamSet$.next(!!previous);
       this.displaySettings$.next(true);
     }
   }
@@ -188,7 +199,23 @@ export class LobbyComponent implements OnInit, AfterViewInit, OnChanges {
         streams.set(LobbyMediaPurpose.STREAM, this.mixer.getMixedStream());
       }
 
-      this.lobbyService.join(streams, this.channelUuid, this.streamUuid, this.config, 'Guest').then(() => this.isInLobby = true);
+      this.session.getUserName().pipe(take(1)).subscribe((name) => {
+        this.lobbyService.join(streams, this.channelUuid!, this.streamUuid!, this.config, name || 'Guest')
+          .then(() => this.isInLobby = true)
+          .catch((error) => {
+            this.log.error('Could not join lobby', error);
+            this.isInLobby = false;
+
+            if (
+              (error instanceof HttpErrorResponse && error.status === 409) ||
+              error?.message === 'Lobby connection already exists. Leave the lobby before joining again.'
+            ) {
+              this.onError.emit(LobbyErrorEvent.LOBBY_CONNECTION_EXISTS);
+            } else {
+              this.onError.emit(LobbyErrorEvent.LOBBY_JOIN_FAILED);
+            }
+          });
+      });
     }
   }
 

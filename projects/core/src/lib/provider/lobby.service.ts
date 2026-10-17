@@ -2,7 +2,7 @@ import {Injectable} from '@angular/core';
 import {HttpClient, HttpHeaders} from '@angular/common/http';
 
 import {WebrtcConnection} from './webrtc-connection';
-import {BehaviorSubject, catchError, lastValueFrom, Observable, of, tap} from 'rxjs';
+import {BehaviorSubject, catchError, lastValueFrom, Observable, of, tap, throwError} from 'rxjs';
 import {MessageService} from './message.service';
 import {ChannelMessenger} from './channel-messenger';
 import {
@@ -31,6 +31,7 @@ export class LobbyService {
   private ingress: WebrtcConnection | undefined;
   // receiving media stream
   private egress: WebrtcConnection | undefined;
+  private joining = false;
 
   httpOptions = {
     headers: new HttpHeaders({'Content-Type': 'application/sdp', 'Accept': 'application/sdp'}),
@@ -40,9 +41,34 @@ export class LobbyService {
   constructor(private http: HttpClient, private messageService: MessageService, private params: ParameterService) {
   }
 
-  public join(stream: Map<LobbyMediaPurpose, MediaStream>, spaceId: string, streamId: string, config: RTCConfiguration, info: string): Promise<unknown> {
-    return this.createSendingConnection(stream, spaceId, streamId, config, info)
-      .then((messenger) => this.createReceivingConnection(messenger, spaceId, streamId, config));
+  public async join(stream: Map<LobbyMediaPurpose, MediaStream>, spaceId: string, streamId: string, config: RTCConfiguration, info: string): Promise<unknown> {
+    if (this.joining || this.ingress !== undefined || this.egress !== undefined) {
+      throw new Error('Lobby connection already exists. Leave the lobby before joining again.');
+    }
+
+    this.joining = true;
+    let publishJoined = false;
+
+    try {
+      const messenger = await this.createSendingConnection(stream, spaceId, streamId, config, info);
+      publishJoined = true;
+      return await this.createReceivingConnection(messenger, spaceId, streamId, config);
+    } catch (error) {
+      if (publishJoined) {
+        await lastValueFrom(this.leaveLobby(spaceId, streamId));
+      }
+      await this.closeConnections();
+      throw error;
+    } finally {
+      this.joining = false;
+    }
+  }
+
+  public async replaceGuestStream(stream: MediaStream): Promise<void> {
+    if (this.joining) {
+      throw new Error('Wait until joining the lobby has completed before changing devices.');
+    }
+    await this.ingress?.replaceStream(LobbyMediaPurpose.GUEST, stream);
   }
 
   private createSendingConnection(streams: Map<LobbyMediaPurpose, MediaStream>, spaceId: string, streamId: string, config: RTCConfiguration, info: string): Promise<ChannelMessenger> {
@@ -58,7 +84,6 @@ export class LobbyService {
   private createReceivingConnection(messenger: ChannelMessenger, spaceId: string, streamId: string, config: RTCConfiguration): Promise<unknown> {
     const wc = new WebrtcConnection(config, 'egress');
     this.egress = wc;
-    new ChannelMessenger(this.egress.createDataChannel('whep'));
     let renegotiationChain: Promise<void> = Promise.resolve();
 
     messenger.subscribe((msg) => {
@@ -111,7 +136,7 @@ export class LobbyService {
     // @ts-ignore
     return lastValueFrom(this.http.post(whipUrl, body, this.httpOptions).pipe(
         tap(a => this.log.debug('sendWhip', a)),
-        catchError(this.handleError<string>('sendWhip', ''))
+        catchError(this.handleFatalError<string>('sendWhip'))
       )
     ).then(answer => ({type: 'answer', sdp: answer} as RTCSessionDescription));
   }
@@ -123,7 +148,7 @@ export class LobbyService {
     // @ts-ignore
     return lastValueFrom(this.http.post(whepUrl, body, this.httpOptions).pipe(
         tap(a => this.log.debug('sendWhepOfferReq', a)),
-        catchError(this.handleError<string>('sendWhep', ''))
+        catchError(this.handleFatalError<string>('sendWhep'))
       )
     ).then(offer => ({type: 'offer', sdp: offer} as RTCSessionDescription));
   }
@@ -135,7 +160,7 @@ export class LobbyService {
     // @ts-ignore
     return lastValueFrom(this.http.patch(whepUrl, body, this.httpOptions).pipe(
         tap(a => this.log.debug('sendWhepAnswer', a)),
-        catchError(this.handleError<string>('sendWhepAnswer', ''))
+        catchError(this.handleFatalError<string>('sendWhepAnswer'))
       )
     );
   }
@@ -169,7 +194,19 @@ export class LobbyService {
 
   leaveLobby(spaceId: string, streamId: string) {
     const whipUrl = `${this.params.API_PREFIX}/channel/${spaceId}/stream/${streamId}/lobby/leave`;
+    void this.closeConnections();
     return this.http.delete<any>(whipUrl).pipe(catchError(this.handleError<any>('', '')));
+  }
+
+  public async closeConnections(): Promise<void> {
+    this.messenger?.close();
+    this.messenger = undefined;
+
+    const connections = [this.ingress, this.egress].filter((connection): connection is WebrtcConnection => connection !== undefined);
+    this.ingress = undefined;
+    this.egress = undefined;
+
+    await Promise.all(connections.map((connection) => connection.close()));
   }
 
   /**
@@ -188,6 +225,14 @@ export class LobbyService {
 
       // Let the app keep running by returning an empty result.
       return of(result as T);
+    };
+  }
+
+  private handleFatalError<T>(operation = 'operation') {
+    return (error: any): Observable<T> => {
+      this.log.error(`${operation} failed: ${error.message}`, error);
+      this.logMessage(`${operation} failed: ${error.message}`);
+      return throwError(() => error);
     };
   }
 

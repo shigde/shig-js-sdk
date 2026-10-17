@@ -27,7 +27,7 @@ export interface SelectBandwidthValue extends SelectValue {
 }
 
 export class DeviceSettingsOptions {
-  public static readonly defaultQuality = 'vga';
+  public static readonly defaultQuality = 'hd';
   public static readonly defaultVideoCodec = 'vp8';
   public static readonly defaultBandwidth = '512';
 
@@ -40,7 +40,7 @@ export class DeviceSettingsOptions {
     {value: 'vga', viewValue: 'VGA (640 x 360)'},
     {value: 'shd', viewValue: 'SHD (960 x 540)'},
     {value: 'hd', viewValue: 'HD (1280 x 720)'},
-    {value: 'fhd', viewValue: 'FHD (1980 x 1080)'},
+    {value: 'fhd', viewValue: 'FHD (1920 x 1080)'},
     {value: 'qhd', viewValue: 'QHD (2560 x 1440)'}
   ];
   public readonly videoCodec: SelectVideoCodecValue[] = [
