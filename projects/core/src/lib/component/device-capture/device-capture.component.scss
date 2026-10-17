@@ -94,3 +94,12 @@ video {
     transform: translateY(0);
   }
 }
+.device-preview {
+  position: relative;
+  aspect-ratio: 16 / 9;
+
+  video { height: 100%; object-fit: contain; }
+}
+
+.modal-content { position: relative; }
+.device-fields { border: 0; min-width: 0; }

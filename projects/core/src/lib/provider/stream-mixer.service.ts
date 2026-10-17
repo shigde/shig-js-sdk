@@ -73,6 +73,7 @@ export class StreamMixerService {
     this.overlays.clear();
     this.releaseAudio();
     this.stopRenderTimer();
+    this.canvasVideoTrack?.stop();
     this.canvasVideoTrack = undefined;
   };
 

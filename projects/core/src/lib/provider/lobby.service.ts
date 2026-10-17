@@ -207,6 +207,9 @@ export class LobbyService {
     this.egress = undefined;
 
     await Promise.all(connections.map((connection) => connection.close()));
+    this.add$.next(null);
+    this.mute$.next(null);
+    this.remove$.next(null);
   }
 
   /**

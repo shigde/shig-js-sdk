@@ -1,5 +1,5 @@
 import {
-  AfterViewInit, ChangeDetectorRef,
+  AfterViewInit, computed, signal,
   Component,
   ElementRef, EventEmitter, Input,
   OnDestroy,
@@ -28,7 +28,13 @@ export class DeviceCaptureComponent implements OnInit, OnDestroy, AfterViewInit 
   @Input() isStreamUpdateModus: boolean = false;
 
   private viewReady = false;
+  private destroyed = false;
+  private readonly initialLoading = signal(true);
+  private readonly pendingOperations = signal(0);
+  private previewChange: Promise<void> = Promise.resolve();
   protected stream: MediaStream | null = null;
+
+  readonly isLoading = computed(() => this.initialLoading() || this.pendingOperations() > 0);
 
   errorMessage: string | null = null;
 
@@ -41,29 +47,34 @@ export class DeviceCaptureComponent implements OnInit, OnDestroy, AfterViewInit 
 
   constructor(
     protected deviceManager: MediaDeviceManager,
-    private cdr: ChangeDetectorRef,
   ) {
   }
 
   async ngOnInit(): Promise<void> {
-    this.deviceManager.listenOnChange(async (deviceList) => this.loadDevices(deviceList));
-    const list = await this.deviceManager.captureDeviceList();
-    await this.loadDevices(list);
-    this.log.info('init', this.selectedDevice);
+    try {
+      this.deviceManager.listenOnChange(async (deviceList) => this.loadDevices(deviceList));
+      const list = await this.deviceManager.captureDeviceList();
+      if (!this.destroyed) await this.loadDevices(list);
+    } catch (err) {
+      this.errorMessage = MediaDeviceError.build(err, 'media').message;
+    } finally {
+      this.initialLoading.set(false);
+    }
   }
 
   async ngAfterViewInit() {
     this.viewReady = true;
     await this.tryStartStream();
-    this.cdr.detectChanges();
   }
 
   ngOnDestroy(): void {
+    this.destroyed = true;
     this.stopStream();
     this.deviceManager.removeOnChange();
   }
 
   private async loadDevices(devices: MediaDeviceList) {
+    if (this.destroyed) return;
     this.cameras = Array.from(devices.cameras.values());
     this.microphones = Array.from(devices.microphones.values());
     this.speakers = Array.from(devices.speakers.values());
@@ -73,7 +84,6 @@ export class DeviceCaptureComponent implements OnInit, OnDestroy, AfterViewInit 
       speaker: devices.selectedDevice?.speaker ?? null,
     }
     await this.tryStartStream();
-    this.cdr.detectChanges();
   }
 
   private async tryStartStream() {
@@ -83,11 +93,26 @@ export class DeviceCaptureComponent implements OnInit, OnDestroy, AfterViewInit 
     await this.startStream();
   }
 
-  async startStream(): Promise<void> {
+  startStream(): Promise<void> {
+    this.pendingOperations.update(count => count + 1);
+    this.previewChange = this.previewChange.then(() => this.openStream()).finally(() => {
+      this.pendingOperations.update(count => count - 1);
+    });
+    return this.previewChange;
+  }
+
+  private async openStream(): Promise<void> {
+    if (this.destroyed) return;
     this.stopStream();
+    this.errorMessage = null;
 
     try {
-      this.stream = await this.deviceManager.getUserMedia(this.selectedDevice);
+      const stream = await this.deviceManager.getUserMedia(this.selectedDevice);
+      if (this.destroyed) {
+        stream.getTracks().forEach(track => track.stop());
+        return;
+      }
+      this.stream = stream;
 
       if (this.videoElement?.nativeElement) {
         this.videoElement.nativeElement.srcObject = this.stream;
@@ -104,13 +129,11 @@ export class DeviceCaptureComponent implements OnInit, OnDestroy, AfterViewInit 
             await this.videoElement.nativeElement.setSinkId(
               this.selectedDevice.speaker
             );
-            this.cdr.detectChanges();
           } catch (err: any) {
             this.errorMessage = `Audio output could not be switched. ${err.message}`;
           }
         }
       }
-      this.errorMessage = null;
     } catch (err) {
       const mediaError = MediaDeviceError.build(err, 'media');
       this.errorMessage = mediaError.message;
@@ -125,32 +148,43 @@ export class DeviceCaptureComponent implements OnInit, OnDestroy, AfterViewInit 
   }
 
   async onCameraChange(value: any): Promise<void> {
+    if (this.isLoading()) return;
     this.selectedDevice.camera = value;
     await this.startStream();
   }
 
   async onMicrophoneChange(value: any): Promise<void> {
+    if (this.isLoading()) return;
     this.selectedDevice.microphone = value;
     await this.startStream();
   }
 
   async onSpeakerChange(value: any): Promise<void> {
+    if (this.isLoading()) return;
     this.selectedDevice.speaker = value;
-    if (
-      this.videoElement?.nativeElement &&
-      'setSinkId' in this.videoElement.nativeElement
-    ) {
-      // @ts-ignore
-      await this.videoElement.nativeElement.setSinkId(value);
+    this.pendingOperations.update(count => count + 1);
+    try {
+      if (
+        this.videoElement?.nativeElement &&
+        'setSinkId' in this.videoElement.nativeElement
+      ) {
+        await this.videoElement.nativeElement.setSinkId(value);
+      }
+    } catch (err) {
+      this.errorMessage = MediaDeviceError.build(err, 'media').message;
+    } finally {
+      this.pendingOperations.update(count => count - 1);
     }
   }
 
   closeModal() {
+    if (this.isLoading()) return;
     this.log.info('close');
     this.onClose.emit();
   }
 
   select() {
+    if (this.isLoading() || !this.stream) return;
     this.log.info('select');
     this.deviceManager.saveDeviceSettings(this.selectedDevice);
     this.onSelect.emit();

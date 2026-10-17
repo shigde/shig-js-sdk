@@ -22,6 +22,14 @@
     animation: rotation 1s linear infinite;
 }
 
+.spinner-container.local {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    border-radius: inherit;
+    cursor: progress;
+}
+
 @keyframes rotation {
     0% {
         transform: rotate(0deg);

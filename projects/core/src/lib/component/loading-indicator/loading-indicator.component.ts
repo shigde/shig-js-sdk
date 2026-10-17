@@ -17,6 +17,9 @@ export class LoadingIndicatorComponent implements OnInit {
 
     loading$: Observable<boolean>;
 
+    @Input() active: boolean | undefined;
+    @Input() local = false;
+
     @Input()
     detectRouteTransitions = false;
 

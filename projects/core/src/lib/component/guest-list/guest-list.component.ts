@@ -1,6 +1,7 @@
 import {
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   ComponentRef,
   EventEmitter,
   HostBinding,
@@ -12,6 +13,7 @@ import {
 } from '@angular/core';
 import {LobbyMediaPurpose, LobbyMediaStream} from '../../entities';
 import {filter, Observable} from 'rxjs';
+import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import {createLogger, LobbyService} from '../../provider';
 import {GuestComponent} from '../guest/guest.component';
 import {GuestListDirective} from './guest-list.directive';
@@ -37,8 +39,8 @@ export class GuestListComponent implements OnInit {
   public readonly cmpRefMap = new Map<string, ComponentRef<GuestComponent>>();
   private readonly log = createLogger('GuestListComponent');
 
-  constructor(private ref: ChangeDetectorRef, private lobbyService: LobbyService) {
-    this.lobbyService.add$.pipe(filter(s => s !== null)).subscribe((s) => {
+  constructor(private ref: ChangeDetectorRef, private lobbyService: LobbyService, private destroyRef: DestroyRef) {
+    this.lobbyService.add$.pipe(filter(s => s !== null), takeUntilDestroyed(this.destroyRef)).subscribe((s) => {
       this.log.info('add', s);
       if (s !== null && s?.media.purpose == LobbyMediaPurpose.GUEST) {
         this.upsertGuest(LobbyMediaStream.build(s.media, s.stream));
@@ -47,7 +49,7 @@ export class GuestListComponent implements OnInit {
         this.activateLobbyMediaStreamEvent.emit(LobbyMediaStream.build(s.media, s.stream));
       }
     });
-    this.lobbyService.remove$.pipe(filter(s => s !== null)).subscribe((media) => {
+    this.lobbyService.remove$.pipe(filter(s => s !== null), takeUntilDestroyed(this.destroyRef)).subscribe((media) => {
       this.log.info('remove', media);
       if (media !== null && media.purpose == LobbyMediaPurpose.GUEST && this.hasGuest(media.streamId)) {
         this.removeGuest(media.streamId);
@@ -59,7 +61,7 @@ export class GuestListComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.localGuest$.subscribe((local) => {
+    this.localGuest$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((local) => {
       if (local !== undefined) {
         this.upsertGuest(local, true);
       }

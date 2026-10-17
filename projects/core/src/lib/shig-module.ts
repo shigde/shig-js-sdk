@@ -6,7 +6,7 @@ import {
     GuestListDirective,
     GuestListComponent,
     GuestComponent,
-    LobbyComponent, StreamFriendsComponent, StreamLayoutEditorComponent,
+    LobbyComponent, StreamFriendsComponent, StreamLayoutEditorComponent, LoadingIndicatorComponent,
 } from './component';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {provideHttpClient, withInterceptorsFromDi} from '@angular/common/http';
@@ -41,6 +41,7 @@ import {OverlayModule} from "@angular/cdk/overlay";
         Option,
         OverlayModule,
         CommonModule,
+        LoadingIndicatorComponent,
         FormsModule,
         ReactiveFormsModule,
         StreamLayoutEditorComponent

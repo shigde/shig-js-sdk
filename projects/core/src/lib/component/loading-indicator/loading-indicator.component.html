@@ -1,5 +1,5 @@
-@if(loading$ | async) {
-    <div class="spinner-container">
+@if(active ?? (loading$ | async)) {
+    <div class="spinner-container" [class.local]="local" role="status" aria-label="Loading">
         <span class="loader"></span>
     </div>
 }
