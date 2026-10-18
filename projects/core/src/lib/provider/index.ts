@@ -22,3 +22,6 @@ export * from './logger';
 export * from './media-device.manager';
 export * from './media-device.error';
 export * from './relay.service';
+export * from './loading.service';
+export * from './error.handler';
+export * from './stream-placeholder';
