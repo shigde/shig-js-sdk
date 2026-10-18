@@ -1,82 +1,54 @@
-<div class="dropdown">
-  <button
-    class="nav-icon-button secondary icon dropdown-toggle"
-    data-bs-toggle="dropdown"
-    data-bs-auto-close="outside"
-    aria-expanded="false"
-    aria-label="Stream Guests"
-    title="Stream Guests"
-    type="button"
-  >
-    <i class="bi bi-person-fill-add fs-4 friends-img"></i>
-  </button>
-
-  <div class="dropdown-menu p-3" style="width: 280px;">
+<section class="stream-guest-settings">
+  <div>
     <div class="d-flex flex-column align-items-center">
-      <h5>Stream Guests</h5>
+      <h3>Invited guests</h3>
     </div>
 
 
-    <ul class="nav nav-pills flex-column mb-auto">
+    <ul class="invited-guest-list list-unstyled mb-0">
       @if (guests().length === 0) {
 
-        <li>
-          <hr class="dropdown-divider">
-        </li>
-
         <li class="nav-item">
-          <span class="dropdown-item">
+          <span class="text-body-secondary">
             <i class="bi bi-person-slash me-3"></i> No invited guests!
           </span>
         </li>
       } @else {
         @for (guest of guests(); track guest.uuid) {
 
-          <li>
-            <hr class="dropdown-divider">
-          </li>
-
-          <li class="nav-item" style="width: 100% !important; position: relative">
-
-            <div class="d-flex align-items-center gap-2">
-
-              <!-- LEFT SIDE: icon + text -->
-              <div class="d-flex align-items-center gap-2 flex-grow-1" style="min-width: 0 !important">
-                <i class="bi bi-person"></i>
+          <li class="invited-guest-row">
+            @if (guestToConfirm === guest) {
+              <span class="invitation-confirm-label" role="status"
+                    [attr.title]="guest.name + '@' + guest.domain">Remove invitation?</span>
+              <div class="invitation-actions">
+                <button type="button" class="invitation-action is-danger"
+                        title="Confirm removal" aria-label="Confirm removal"
+                        [disabled]="isAdding()" (click)="confirmRemoveInline(guest)">
+                  <i class="bi bi-check-lg" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="invitation-action"
+                        title="Cancel removal" aria-label="Cancel removal"
+                        (click)="guestToConfirm = null">
+                  <i class="bi bi-x-lg" aria-hidden="true"></i>
+                </button>
+              </div>
+            } @else {
+              <div class="invitation-identity">
+                <i class="bi bi-person" aria-hidden="true"></i>
                 <span
                   class="text-truncate"
                   title="{{ guest.name }}@{{ guest.domain }}"
                 > {{ guest.name }}&#64;{{ guest.domain }}</span>
               </div>
 
-              <!-- RIGHT SIDE: trash button -->
               <button
                 type="button"
-                class="btn btn-sm btn-outline-danger"
+                class="invitation-action is-danger"
+                title="Remove invitation" aria-label="Remove invitation"
                 (click)="askRemove(guest)"
               >
-                <i class="bi bi-trash"></i>
+                <i class="bi bi-trash" aria-hidden="true"></i>
               </button>
-
-            </div>
-
-            <!-- INLINE CONFIRM -->
-            @if (guestToConfirm === guest) {
-              <div class="px-3 pb-2 d-flex gap-2 justify-content-end confirm-delete">
-                <button
-                  class="btn btn-sm btn-danger"
-                  (click)="confirmRemoveInline(guest)"
-                >
-                  Yes
-                </button>
-
-                <button
-                  class="btn btn-sm btn-outline-danger"
-                  (click)="guestToConfirm = null"
-                >
-                  No
-                </button>
-              </div>
             }
 
           </li>
@@ -87,7 +59,7 @@
 
     <hr>
 
-    @if (guests().length === 3) {
+    @if (guests().length >= 3) {
 
       <div>Maximum of 3 guests reached.</div>
 
@@ -95,10 +67,10 @@
 
     <div ngCombobox filterMode="auto-select">
 
-      <div #origin class="input-group">
+      <div class="guest-search-input">
         <input type="text" [(ngModel)]="query" ngComboboxInput class="form-control" placeholder="Guest’s username"
-               aria-label="Guest’s username" aria-describedby="basic-addon2">
-        <button class="input-group-text" id="basic-addon2" (click)="addFriend()" [disabled]="isAdding()">
+               aria-label="Guest’s username">
+        <button type="button" class="guest-invite-button" title="Invite guest" aria-label="Invite guest" (click)="addFriend()" [disabled]="isAdding()">
 
           @if (isAdding()) {
             <span class="spinner-border spinner-border-sm"></span>
@@ -110,10 +82,6 @@
       </div>
 
       <ng-template ngComboboxPopupContainer>
-        <ng-template
-          [cdkConnectedOverlay]="{origin, usePopover: 'inline', matchWidth: true}"
-          [cdkConnectedOverlayOpen]="true"
-        >
           <div class="popup">
             @if (loadingAllFriends()) {
               <div class="d-flex justify-content-center p-3">
@@ -134,10 +102,9 @@
               </div>
             }
           </div>
-        </ng-template>
       </ng-template>
     </div>
     }
   </div>
 
-</div>
+</section>

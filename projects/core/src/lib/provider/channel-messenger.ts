@@ -1,20 +1,28 @@
 import {EventEmitter} from '@angular/core';
+import {Subject} from 'rxjs';
 
 import {ChannelMsg, ChannelMsgType, MuteMsgData, SdpMsgData} from '../entities';
 import {createLogger} from './logger';
 
 
 export class ChannelMessenger extends EventEmitter<ChannelMsg> {
+  readonly closed$ = new Subject<void>();
   private readonly log = createLogger('ChannelMessenger');
 
   constructor(private dc: RTCDataChannel) {
     super();
     dc.onmessage = this.onReceiveChannelMessageCallback.bind(this);
+    dc.onclose = () => this.closed$.next();
   }
 
   private onReceiveChannelMessageCallback(me: MessageEvent<any>): void {
     const msg = JSON.parse(new TextDecoder().decode(me.data as ArrayBuffer)) as ChannelMsg;
     this.log.info("Received message:", msg);
+    if (Number(msg.type) === ChannelMsgType.HostStatus && ['present', 'waiting', 'closed'].includes(msg.data)) {
+      msg.type = ChannelMsgType.HostStatus;
+      this.emit(msg);
+      return;
+    }
 
     if (msg?.type != null && Number(msg.type) === ChannelMsgType.OfferMsg) {
       const sdp: RTCSessionDescription = {
@@ -62,6 +70,7 @@ export class ChannelMessenger extends EventEmitter<ChannelMsg> {
   }
 
   public close(): void {
+    this.closed$.complete();
     this.dc.onmessage = null;
     this.dc.onopen = null;
     this.dc.onclose = null;

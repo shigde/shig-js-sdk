@@ -1,5 +1,5 @@
-<div class="meter" [ngClass]="[orientation, size]">
-  @for (i of [].constructor(segments); track i; let idx = $index) {
+<div class="meter" [ngClass]="[orientation, size, theme]" role="img" aria-label="Audio level">
+  @for (i of [].constructor(segments); track $index) {
     <div #bar class="bar"></div>
   }
 </div>

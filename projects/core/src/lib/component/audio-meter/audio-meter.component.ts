@@ -22,6 +22,7 @@ export class AudioMeterComponent implements AfterViewInit, OnDestroy, OnChanges 
 
   @Input() orientation: 'vertical' | 'horizontal' = 'vertical';
   @Input() size: 'normal' | 'compact' = 'normal';
+  @Input() theme: 'dark' | 'light' = 'dark';
   @Input() segments: number = 10;
   @Input() stream: MediaStream | null = null; // extern pass
 
@@ -66,8 +67,10 @@ export class AudioMeterComponent implements AfterViewInit, OnDestroy, OnChanges 
         return;
       }
 
-      this.audioContext = new AudioContext();
-      await this.audioContext.resume().catch(() => undefined);
+      const context = new AudioContext();
+      this.audioContext = context;
+      await context.resume().catch(() => undefined);
+      if (this.audioContext !== context) return;
 
       this.analyser = this.audioContext.createAnalyser();
       this.analyser.fftSize = 256;
@@ -121,14 +124,14 @@ export class AudioMeterComponent implements AfterViewInit, OnDestroy, OnChanges 
     this.bars.forEach((bar, index) => {
       if (index < activeBars) {
         if (index < this.segments * 0.6) {
-          bar.nativeElement.style.background = 'limegreen';
+          bar.nativeElement.style.background = 'var(--audio-meter-good, limegreen)';
         } else if (index < this.segments * 0.8) {
-          bar.nativeElement.style.background = 'yellow';
+          bar.nativeElement.style.background = 'var(--audio-meter-attention, yellow)';
         } else {
-          bar.nativeElement.style.background = 'red';
+          bar.nativeElement.style.background = 'var(--audio-meter-warning, red)';
         }
       } else {
-        bar.nativeElement.style.background = '#333';
+        bar.nativeElement.style.background = 'var(--audio-meter-idle, #333)';
       }
     });
 
@@ -137,6 +140,6 @@ export class AudioMeterComponent implements AfterViewInit, OnDestroy, OnChanges 
   private resetBars(): void {
     if (!this.bars) return;
 
-    this.bars.forEach((bar) => (bar.nativeElement.style.background = '#333'));
+    this.bars.forEach((bar) => (bar.nativeElement.style.background = 'var(--audio-meter-idle, #333)'));
   }
 }

@@ -3,6 +3,8 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
+  inject,
   Input,
   signal,
   viewChild,
@@ -10,7 +12,7 @@ import {
 } from '@angular/core';
 import {Combobox} from '@angular/aria/combobox';
 import {Listbox, Option} from '@angular/aria/listbox';
-import {toObservable} from '@angular/core/rxjs-interop';
+import {takeUntilDestroyed, toObservable} from '@angular/core/rxjs-interop';
 import {
   catchError,
   debounceTime,
@@ -35,6 +37,7 @@ import {StreamFriend} from '../../entities';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StreamFriendsComponent {
+  private readonly destroyRef = inject(DestroyRef);
   private log = createLogger('StreamFriendsComponent');
 
   /* =======================
@@ -51,6 +54,7 @@ export class StreamFriendsComponent {
     this.friendService.getStreamFriendsList(value)
       .pipe(
         take(1),
+        takeUntilDestroyed(this.destroyRef),
         tap(friends => {
           this.log.info('Load streaming friends');
           this.guests.set(friends);
@@ -155,6 +159,7 @@ export class StreamFriendsComponent {
             finalize(() => this.loadingAllFriends.set(false)),
           );
         }),
+        takeUntilDestroyed(this.destroyRef),
       )
       .subscribe();
   }
@@ -199,6 +204,7 @@ export class StreamFriendsComponent {
           this.combobox()?.close();
         }),
         finalize(() => this.isAdding.set(false)),
+        takeUntilDestroyed(this.destroyRef),
       ).subscribe();
   }
 
@@ -211,7 +217,8 @@ export class StreamFriendsComponent {
     this.friendService.removeStreamFriend(this._streamUuid, uuid).pipe(
       take(1),
       tap(() => this.guests.update(g => g.filter(friend => friend.uuid !== uuid))),
-      finalize(() => this.isAdding.set(false))
+      finalize(() => this.isAdding.set(false)),
+      takeUntilDestroyed(this.destroyRef),
     ).subscribe();
   }
 }

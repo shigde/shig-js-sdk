@@ -13,33 +13,31 @@
 <a href="#" class="name-tag">{{ media?.name }}</a>
 @if (onHost && media?.stream) {
   <button
+    cdkOverlayOrigin #audioSettingsOrigin="cdkOverlayOrigin"
     class="guest-audio-mixer-toggle"
     type="button"
+    title="Guest settings" aria-label="Guest settings"
+    [attr.aria-expanded]="audioMixerOpen" [attr.aria-controls]="audioSettings.panelId"
     [class.active]="audioMixerOpen"
     (click)="toggleAudioMixer()">
     <i class="bi bi-sliders"></i>
   </button>
-}
-@if (onHost && media?.stream && audioMixerOpen) {
-  <div class="guest-audio-mixer">
-    <app-audio-meter
-      [stream]="media.stream ?? null"
-      [segments]="8"
-      [orientation]="audioMixerOrientation"
-      size="compact">
-    </app-audio-meter>
-    <div class="guest-volume-control">
-      <input
-        class="guest-volume-slider"
-        type="range"
-        min="0"
-        max="2"
-        step="0.05"
-        [value]="mixVolume"
-        (input)="setMixVolume($event)"
-        title="Mix volume">
-    </div>
-  </div>
+  <shig-settings-panel #audioSettings [origin]="audioSettingsOrigin" [(open)]="audioMixerOpen"
+                       [subtitle]="media.name || 'Guest'" [tabs]="audioSettingsTabs" activeTab="audio">
+    @if (audioMixerOpen) {
+      <div class="guest-settings-audio">
+        <div class="guest-settings-level">
+          <span>Audio level</span>
+          <app-audio-meter [stream]="media.stream ?? null" [segments]="16" orientation="horizontal" theme="light"></app-audio-meter>
+        </div>
+        <label class="guest-settings-volume">
+          <span class="guest-settings-volume-label">Mix volume <output>{{ mixVolume * 100 | number:'1.0-0' }}%</output></span>
+          <input type="range" min="0" max="2" step="0.05" [value]="mixVolume"
+                 (input)="setMixVolume($event)" aria-label="Mix volume">
+        </label>
+      </div>
+    }
+  </shig-settings-panel>
 }
 <div class="guest-camera-off rounded-1 mb-1 border bg-body" [ngClass]="{'display-none': !cameraMuted}"></div>
 <video id="video-{{ media?.streamId }}" #videoElement muted autoplay [ngClass]="{'camera-off': cameraMuted}" class="rounded-1 mb-2 border"></video>

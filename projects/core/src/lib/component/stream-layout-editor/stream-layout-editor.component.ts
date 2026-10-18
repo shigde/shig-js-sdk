@@ -2,11 +2,10 @@ import {Component, ElementRef, HostListener, Input, OnDestroy, OnInit, ViewChild
 import Konva from 'konva';
 import {createLogger} from "../../provider";
 import {StreamMixerService} from "../../provider/stream-mixer.service";
-import {StreamOverlayMenuComponent} from "../stream-overlay-menu/stream-overlay-menu.component";
 
 @Component({
   selector: 'shig-stream-leayout-editor',
-  imports: [StreamOverlayMenuComponent],
+  imports: [],
   templateUrl: './stream-layout-editor.component.html',
   styleUrl: './stream-layout-editor.component.scss',
 })
@@ -52,18 +51,20 @@ export class StreamLayoutEditorComponent implements OnInit, OnDestroy {
   }
 
   async toggleFullscreen() {
-    if (!document.fullscreenElement) {
-      await this.fullscreenContainer.nativeElement.requestFullscreen();
-      this.isFullscreen = true;
-    } else {
-      await document.exitFullscreen();
-      this.isFullscreen = false;
+    try {
+      if (document.fullscreenElement !== this.fullscreenContainer.nativeElement) {
+        await this.fullscreenContainer.nativeElement.requestFullscreen();
+      } else {
+        await document.exitFullscreen();
+      }
+    } catch (error) {
+      this.log.warn('Could not change fullscreen mode', error);
     }
   }
 
   @HostListener('document:fullscreenchange')
   fullscreenChanged() {
-    this.isFullscreen = !!document.fullscreenElement;
+    this.isFullscreen = document.fullscreenElement === this.fullscreenContainer.nativeElement;
     this.updateStageSize();
   }
 

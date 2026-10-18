@@ -1,0 +1,43 @@
+<ng-template cdkConnectedOverlay
+             [cdkConnectedOverlayOrigin]="origin"
+             [cdkConnectedOverlayOpen]="open"
+             [cdkConnectedOverlayPositions]="positions"
+             [cdkConnectedOverlayPush]="true"
+             [cdkConnectedOverlayViewportMargin]="12"
+             [cdkConnectedOverlayHasBackdrop]="true"
+             cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
+             (backdropClick)="close()"
+             (detach)="close()"
+             (overlayKeydown)="onOverlayKeydown($event)">
+  <section class="settings-panel" [id]="panelId" role="dialog" [attr.aria-labelledby]="panelId + '-heading'"
+           cdkTrapFocus [cdkTrapFocusAutoCapture]="true">
+    <header class="settings-panel-header">
+      <i class="bi bi-sliders" aria-hidden="true"></i>
+      <div class="settings-panel-heading">
+        <h2 [id]="panelId + '-heading'">{{ heading }}</h2>
+        @if (subtitle) { <span class="settings-panel-subtitle" [title]="subtitle">{{ subtitle }}</span> }
+      </div>
+      <button class="settings-panel-close" type="button" title="Close settings" aria-label="Close settings"
+              cdkFocusInitial (click)="close()"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+    </header>
+    @if (tabs.length) {
+      <div class="settings-panel-tabs" role="tablist" aria-label="Settings sections">
+        @for (tab of tabs; track tab.id; let index = $index) {
+          <button type="button" role="tab" class="settings-panel-tab"
+                  [id]="panelId + '-tab-' + tab.id"
+                  [class.is-active]="activeTab === tab.id"
+                  [attr.aria-selected]="activeTab === tab.id"
+                  [attr.aria-controls]="panelId + '-content'"
+                  [tabIndex]="activeTab === tab.id ? 0 : -1"
+                  (keydown)="onTabKeydown($event, index)" (click)="activeTabChange.emit(tab.id)">
+            <i [class]="'bi ' + tab.icon" aria-hidden="true"></i><span>{{ tab.label }}</span>
+          </button>
+        }
+      </div>
+    }
+    <div class="settings-panel-content" [id]="panelId + '-content'" [attr.role]="tabs.length ? 'tabpanel' : null"
+         [attr.aria-labelledby]="tabs.length ? panelId + '-tab-' + activeTab : null">
+      <ng-content></ng-content>
+    </div>
+  </section>
+</ng-template>

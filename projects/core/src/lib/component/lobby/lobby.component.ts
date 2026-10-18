@@ -18,7 +18,7 @@ import {
 import {Location} from '@angular/common';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import {HttpErrorResponse} from '@angular/common/http';
-import {BehaviorSubject, catchError, lastValueFrom, of, take, tap} from 'rxjs';
+import {BehaviorSubject, catchError, distinctUntilChanged, EMPTY, exhaustMap, lastValueFrom, map, of, switchMap, take, tap, timeout, timer} from 'rxjs';
 import {environment} from '../../../environments/environment';
 
 import {
@@ -52,16 +52,22 @@ export class LobbyComponent implements OnInit, AfterViewInit, OnChanges, OnDestr
 
   private videoStreamRef?: ElementRef<HTMLVideoElement>;
   private remoteMixedStream?: MediaStream;
+  remoteVideoPlaying = false;
   @ViewChild('videoStreamElement') set remoteVideo(ref: ElementRef<HTMLVideoElement> | undefined) {
+    if (ref?.nativeElement !== this.videoStreamRef?.nativeElement) this.remoteVideoPlaying = false;
     this.videoStreamRef = ref;
-    if (ref && this.remoteMixedStream) ref.nativeElement.srcObject = this.remoteMixedStream;
+    if (ref && this.remoteMixedStream && this.hostPresent) ref.nativeElement.srcObject = this.remoteMixedStream;
   }
   @ViewChild(StreamLayoutEditorComponent)
-  private streamLayoutEditor?: StreamLayoutEditorComponent;
+  streamLayoutEditor?: StreamLayoutEditorComponent;
+  readonly getStreamLayoutEditor = () => this.streamLayoutEditor;
 
   isInLobby = false;
   isJoining = false;
   isDeviceLoading = false;
+  hostPresent = false;
+  lobbyNotice = '';
+  private readonly presencePolling$ = new BehaviorSubject(true);
   private destroyed = false;
   private joiningTask?: Promise<unknown>;
   private leavingTask?: Promise<void>;
@@ -158,7 +164,8 @@ export class LobbyComponent implements OnInit, AfterViewInit, OnChanges, OnDestr
         tap((resp) => this.stream = resp.data),
         tap((s) => {
           this.log.info("Stream Owner:", s.data.ownerUuid, "user uuid:", this.userUuid);
-          this.isHost = s.data.ownerUuid === this.userUuid
+          this.isHost = s.data.ownerUuid === this.userUuid;
+          this.watchHostPresence();
           this.relay.pollHasAnnouncement(s.data.channelUuid, s.data.uuid)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe(live => {
@@ -172,6 +179,42 @@ export class LobbyComponent implements OnInit, AfterViewInit, OnChanges, OnDestr
           return of(null)
         }),
       ).subscribe();
+  }
+
+  private watchHostPresence(): void {
+    this.lobbyService.hostStatus$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(status => {
+        if (!status || this.destroyed) return;
+        this.hostPresent = status === 'present';
+        if (!this.isHost && status !== 'present') this.resetRemoteVideo();
+        if (status === 'closed' && this.connectionActive) {
+          this.lobbyNotice = 'The lobby has closed. Waiting for host.';
+          void this.leaveCurrentLobby(false).catch(error => this.log.warn('Could not close lobby connections', error));
+        } else if (status === 'present') {
+          this.lobbyNotice = '';
+          if (this.videoStreamRef && this.remoteMixedStream && this.videoStreamRef.nativeElement.srcObject !== this.remoteMixedStream) {
+            this.videoStreamRef.nativeElement.srcObject = this.remoteMixedStream;
+          }
+        }
+        this.cdr.markForCheck();
+      });
+
+    this.presencePolling$.pipe(
+      distinctUntilChanged(),
+      switchMap(enabled => enabled && !this.isHost
+        ? timer(0, 5000).pipe(exhaustMap(() => this.lobbyService.hostPresence(this.channelUuid!, this.streamUuid!).pipe(
+            timeout(8000),
+            map(response => response.data),
+            catchError(() => of(false)),
+          )))
+        : EMPTY),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe(present => {
+      this.hostPresent = present;
+      if (present) this.lobbyNotice = '';
+      this.cdr.markForCheck();
+    });
   }
 
   // getStreamLiveData(): void {
@@ -228,7 +271,7 @@ export class LobbyComponent implements OnInit, AfterViewInit, OnChanges, OnDestr
   }
 
   join(): void {
-    if (this.connectionActive || this.isDeviceLoading || this.leavingTask) return;
+    if (this.connectionActive || this.isDeviceLoading || this.leavingTask || (!this.isHost && !this.hostPresent)) return;
     if (!!this.stream && !!this.localGuest?.stream && this.streamUuid !== undefined && this.channelUuid !== undefined) {
       const streams: Map<LobbyMediaPurpose, MediaStream> = new Map<LobbyMediaPurpose, MediaStream>();
       streams.set(LobbyMediaPurpose.GUEST, this.localGuest.stream);
@@ -238,6 +281,8 @@ export class LobbyComponent implements OnInit, AfterViewInit, OnChanges, OnDestr
       }
 
       this.isJoining = true;
+      this.lobbyNotice = '';
+      this.presencePolling$.next(false);
       this.joiningTask = lastValueFrom(this.session.getUserName().pipe(take(1)))
         .then(name => this.lobbyService.join(streams, this.channelUuid!, this.streamUuid!, this.config, name || 'Guest'))
           .then(() => { if (!this.destroyed) this.isInLobby = true; })
@@ -245,7 +290,13 @@ export class LobbyComponent implements OnInit, AfterViewInit, OnChanges, OnDestr
             this.log.error('Could not join lobby', error);
             this.isInLobby = false;
 
-            if (
+            let reason = error.error?.message;
+            if (typeof error.error === 'string') {
+              try { reason = JSON.parse(error.error).message; } catch { /* Non-JSON HTTP error. */ }
+            }
+            if (error instanceof HttpErrorResponse && error.status === 409 && reason === 'Waiting for host') {
+              this.hostPresent = false;
+            } else if (
               (error instanceof HttpErrorResponse && error.status === 409) ||
               error?.message === 'Lobby connection already exists. Leave the lobby before joining again.'
             ) {
@@ -256,6 +307,7 @@ export class LobbyComponent implements OnInit, AfterViewInit, OnChanges, OnDestr
           })
           .finally(() => {
             this.isJoining = false;
+            if (!this.isInLobby && !this.destroyed) this.presencePolling$.next(true);
             if (!this.destroyed) this.cdr.markForCheck();
           });
     }
@@ -267,15 +319,16 @@ export class LobbyComponent implements OnInit, AfterViewInit, OnChanges, OnDestr
       this.mixer.appendStream(videoId, media.name || 'Guest');
     }
     if (!this.isHost && media.purpose === LobbyMediaPurpose.STREAM && !!media.stream) {
+      if (this.remoteMixedStream !== media.stream) this.remoteVideoPlaying = false;
       this.remoteMixedStream = media.stream;
-      if (this.videoStreamRef) this.videoStreamRef.nativeElement.srcObject = media.stream;
+      if (this.videoStreamRef && this.hostPresent) this.videoStreamRef.nativeElement.srcObject = media.stream;
     }
   }
 
   removeLobbyMediaStream(media: LobbyMediaStream): void {
     if (media.purpose === LobbyMediaPurpose.STREAM && media.streamId === this.remoteMixedStream?.id) {
       this.remoteMixedStream = undefined;
-      if (this.videoStreamRef) this.videoStreamRef.nativeElement.srcObject = null;
+      this.resetRemoteVideo();
     }
     if (!!this.mixer && media.purpose === LobbyMediaPurpose.GUEST && !!media.stream) {
       const videoId = `video-${media.streamId}`
@@ -288,6 +341,16 @@ export class LobbyComponent implements OnInit, AfterViewInit, OnChanges, OnDestr
       this.log.warn('Invalid token: ', this.token);
     }
     return (this.token === undefined) ? 'unauthorized' : this.token;
+  }
+
+  private resetRemoteVideo(): void {
+    this.remoteVideoPlaying = false;
+    const video = this.videoStreamRef?.nativeElement;
+    if (video) {
+      video.pause();
+      video.srcObject = null;
+      video.load();
+    }
   }
 
   toggleSettings() {
@@ -333,20 +396,21 @@ export class LobbyComponent implements OnInit, AfterViewInit, OnChanges, OnDestr
     void this.leaveCurrentLobby().then(() => window.location.reload());
   }
 
-  leaveCurrentLobby(): Promise<void> {
+  leaveCurrentLobby(notifyServer = true): Promise<void> {
     if (this.leavingTask) return this.leavingTask;
     const wasActive = this.connectionActive;
     this.leavingTask = (async () => {
       await this.joiningTask;
       try {
-        if (wasActive && this.streamUuid && this.channelUuid) {
+        if (notifyServer && wasActive && this.streamUuid && this.channelUuid) {
           await lastValueFrom(this.lobbyService.leaveLobby(this.channelUuid, this.streamUuid));
         }
       } finally {
         await this.lobbyService.closeConnections();
         this.isInLobby = false;
+        if (!this.destroyed) this.presencePolling$.next(true);
         this.remoteMixedStream = undefined;
-        if (this.videoStreamRef) this.videoStreamRef.nativeElement.srcObject = null;
+        this.resetRemoteVideo();
         if (!this.destroyed) this.cdr.markForCheck();
       }
     })().finally(() => this.leavingTask = undefined);
@@ -355,6 +419,7 @@ export class LobbyComponent implements OnInit, AfterViewInit, OnChanges, OnDestr
 
   ngOnDestroy(): void {
     this.destroyed = true;
+    this.presencePolling$.next(false);
     void this.leaveCurrentLobby().catch(error => this.log.warn('Could not leave lobby', error));
     this.localGuest?.stream?.getTracks().forEach(track => track.stop());
   }

@@ -16,8 +16,8 @@
 .meter.horizontal {
   flex-direction: row;
   justify-content: center;
-  width: 200px;
-  height: 30px;
+  width: var(--audio-meter-length, 200px);
+  height: var(--audio-meter-thickness, 30px);
 }
 
 .meter.compact {
@@ -42,6 +42,14 @@
   background: #333;
   border-radius: 2px;
   transition: background 0.1s linear;
+}
+
+.meter.light {
+  --audio-meter-idle: #d9e5ed;
+  --audio-meter-good: var(--action-color, #41dd95);
+  --audio-meter-attention: var(--attention-color, #ffdb8d);
+  --audio-meter-warning: var(--warning-color, #dc3545);
+  background: #edf3f7;
 }
 
 .meter.vertical .bar {

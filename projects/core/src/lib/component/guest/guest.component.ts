@@ -1,7 +1,6 @@
 import {
   AfterViewInit, ChangeDetectorRef,
   Component, ElementRef,
-  HostListener,
   HostBinding,
   Input,
   OnDestroy, ViewChild,
@@ -18,7 +17,8 @@ import '@material/web/switch/switch';
   templateUrl: './guest.component.html',
   styleUrls: [
     './../../../../assets/scss/lobby.scss',
-    './../../../../assets/scss/styles.scss'
+    './../../../../assets/scss/styles.scss',
+    './guest.component.scss'
   ],
   encapsulation: ViewEncapsulation.None,
   standalone: false
@@ -38,7 +38,7 @@ export class GuestComponent implements AfterViewInit, OnDestroy {
   public cameraMuted = false;
   public mixVolume = 1;
   public audioMixerOpen = false;
-  public audioMixerOrientation: 'vertical' | 'horizontal' = 'vertical';
+  readonly audioSettingsTabs = [{id: 'audio', label: 'Audio', icon: 'bi-volume-up'}];
   private muteSub: Subscription;
   private readonly log = createLogger('GuestComponent');
 
@@ -63,7 +63,6 @@ export class GuestComponent implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit() {
-    this.updateAudioMixerOrientation();
     if (this.media && this.media.stream) {
       this.getVideoElement().srcObject = this.media.stream;
       if (this.isLocal) {
@@ -134,12 +133,6 @@ export class GuestComponent implements AfterViewInit, OnDestroy {
 
   toggleAudioMixer(): void {
     this.audioMixerOpen = !this.audioMixerOpen;
-    this.updateAudioMixerOrientation();
-  }
-
-  @HostListener('window:resize')
-  onResize(): void {
-    this.updateAudioMixerOrientation();
   }
 
   private getVideoElement(): HTMLVideoElement {
@@ -148,12 +141,6 @@ export class GuestComponent implements AfterViewInit, OnDestroy {
 
   private updateMixVolume(): void {
     this.mixer.setVolume(`video-${this.media.streamId}`, this.mixVolume);
-  }
-
-  private updateAudioMixerOrientation(): void {
-    this.audioMixerOrientation = window.matchMedia('(max-width: 900px)').matches
-      ? 'horizontal'
-      : 'vertical';
   }
 
   private isSelected(): boolean {

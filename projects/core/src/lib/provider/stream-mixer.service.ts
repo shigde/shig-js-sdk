@@ -2,6 +2,7 @@ import {Injectable} from "@angular/core";
 import {createLogger} from "./logger";
 import {SceneNode} from "../entities";
 import {StreamOverlayService} from "./stream-overlay.service";
+import {createStreamPlaceholder} from './stream-placeholder';
 
 const WIDTH = 1920;
 const HEIGHT = 1080;
@@ -29,6 +30,8 @@ export class StreamMixerService {
   private canvas: HTMLCanvasElement | undefined;
   private img: HTMLImageElement | undefined;
   private logo: HTMLImageElement | undefined;
+  private streamPlaceholder?: HTMLCanvasElement;
+  private streamPlaceholderTheme?: string;
   private context: CanvasRenderingContext2D | undefined;
   private nodes: Map<string, SceneNode> = new Map<string, SceneNode>();
   private videoElements: Map<string, HTMLVideoElement> = new Map<string, HTMLVideoElement>();
@@ -53,6 +56,7 @@ export class StreamMixerService {
     this.canvas = nativeElement;
     this.img = image;
     this.logo = logo;
+    this.streamPlaceholder = undefined;
     this.canvas.width = WIDTH;
     this.canvas.height = HEIGHT;
     this.context = this.canvas.getContext('2d') as CanvasRenderingContext2D;
@@ -373,7 +377,17 @@ export class StreamMixerService {
     tile: Tile,
     ctx: CanvasRenderingContext2D,
   ): void {
-    this.drawPlaceholderImage(tile, ctx, this.logo, this.getPrimaryColor());
+    const theme = document.documentElement.getAttribute('data-bs-theme') ?? 'light';
+    if (!this.streamPlaceholder || this.streamPlaceholderTheme !== theme) {
+      const style = getComputedStyle(document.body);
+      const background = style.getPropertyValue('--bs-secondary-bg').trim()
+        || (theme === 'dark' ? '#343a40' : '#e9ecef');
+      const foreground = style.getPropertyValue('--bs-secondary-color').trim()
+        || (theme === 'dark' ? '#adb5bd' : '#6c757d');
+      this.streamPlaceholder = createStreamPlaceholder(WIDTH, HEIGHT, this.logo, background, foreground);
+      this.streamPlaceholderTheme = theme;
+    }
+    ctx.drawImage(this.streamPlaceholder, tile.x, tile.y, tile.width, tile.height);
   }
 
   private drawPlaceholderImage(

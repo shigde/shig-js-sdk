@@ -1,26 +1,10 @@
-.stream-overlay-dropdown {
-  margin-left: 6px;
-}
-
-.stream-overlay-menu {
-  min-width: 210px;
-  padding: 8px;
-}
-
-.stream-overlay-toggle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border-radius: 4px;
-}
-
-.stream-overlay-toggle.active {
-  color: var(--bs-dropdown-link-active-color);
-  background-color: var(--bs-dropdown-link-active-bg);
-}
+.stream-overlay-settings { display: grid; gap: 20px; }
+.stream-overlay-settings .form-check { margin: 0; }
+.stream-overlay-settings fieldset { margin: 0; padding: 0; border: 0; }
+.stream-overlay-settings legend { margin-bottom: 12px; font-size: 14px; }
 
 .stream-overlay-size {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px;
+  gap: 12px;
 }

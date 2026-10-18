@@ -1,0 +1,25 @@
+<button cdkOverlayOrigin #origin="cdkOverlayOrigin" type="button"
+        class="nav-icon-button secondary icon" title="Stream Settings" aria-label="Stream Settings"
+        [attr.aria-expanded]="open" [attr.aria-controls]="settings.panelId" (click)="open = !open">
+  <i class="bi bi-sliders" aria-hidden="true"></i>
+</button>
+<shig-settings-panel #settings [origin]="origin" [(open)]="open" [tabs]="tabs" [(activeTab)]="activeTab">
+  @if (open) {
+    @switch (activeTab) {
+      @case ('layout') {
+        <div class="stream-layout-settings">
+          <label class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" role="switch"
+                   [checked]="editor?.layoutEditMode" [disabled]="!editor?.ready"
+                   (change)="editor?.toggleLayoutEditMode()">
+            <span class="form-check-label">Edit layout</span>
+          </label>
+          <button class="btn btn-outline-primary" type="button" [disabled]="!editor?.ready"
+                  (click)="editor?.resetTileLayout()"><i class="bi bi-grid" aria-hidden="true"></i> Tile Grid</button>
+        </div>
+      }
+      @case ('overlay') { <shig-stream-overlay-menu></shig-stream-overlay-menu> }
+      @case ('guests') { <app-stream-friends [streamUuid]="streamUuid" [userUuid]="userUuid"></app-stream-friends> }
+    }
+  }
+</shig-settings-panel>

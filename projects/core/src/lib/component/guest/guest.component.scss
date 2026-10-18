@@ -1,0 +1,7 @@
+.guest-settings-audio { display: grid; gap: 24px; color: var(--bs-body-color, #343a40); }
+.guest-settings-level, .guest-settings-volume { display: grid; gap: 12px; margin: 0; font-size: 14px; }
+.guest-settings-level app-audio-meter { --audio-meter-length: 100%; --audio-meter-thickness: 24px; }
+.guest-settings-volume-label { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.guest-settings-volume output { font-variant-numeric: tabular-nums; color: var(--bs-secondary-color, #6c757d); }
+.guest-settings-volume input { width: 100%; height: 24px; margin: 0; accent-color: var(--bs-primary, #8dcaff); cursor: pointer; }
+.guest-settings-volume input:focus-visible { outline: 2px solid var(--bs-primary, #8dcaff); outline-offset: 4px; }

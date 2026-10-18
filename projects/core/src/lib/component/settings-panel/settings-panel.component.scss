@@ -1,0 +1,74 @@
+.settings-panel {
+  width: min(360px, calc(100vw - 24px));
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
+  color: var(--bs-body-color, #343a40);
+  background: var(--bs-body-bg, #fff);
+  border: 1px solid var(--bs-border-color, #dce0e4);
+  border-radius: 8px;
+  box-shadow: 0 8px 28px #00000024;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.settings-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-bottom: 1px solid var(--bs-border-color, #dce0e4);
+}
+.settings-panel-header > i { font-size: 20px; }
+.settings-panel-heading { min-width: 0; flex: 1; }
+h2 { margin: 0; font-size: 18px; font-weight: 600; }
+.settings-panel-subtitle {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--bs-secondary-color, #6c757d);
+  font-size: 12px;
+}
+.settings-panel-close {
+  display: grid;
+  place-items: center;
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 4px;
+  color: inherit;
+  background: transparent;
+}
+.settings-panel-close:hover { background: #edf3f7; }
+.settings-panel-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--bs-border-color, #dce0e4);
+  overflow-x: auto;
+}
+.settings-panel-tab {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  font: inherit;
+  color: var(--bs-secondary-color, #6c757d);
+  background: transparent;
+}
+.settings-panel-tab > i { font-size: 16px; }
+.settings-panel-tab.is-active {
+  color: var(--bs-body-color, #343a40);
+  border-bottom-color: var(--bs-primary, #8dcaff);
+  font-weight: 600;
+}
+.settings-panel-tab:hover { color: var(--bs-body-color, #343a40); }
+.settings-panel-tab:focus-visible { outline-offset: -3px; }
+.settings-panel-content { padding: 20px 16px; }
+button:focus-visible { outline: 2px solid var(--bs-primary, #8dcaff); outline-offset: 2px; }

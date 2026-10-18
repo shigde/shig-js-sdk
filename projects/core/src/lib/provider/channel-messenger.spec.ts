@@ -16,6 +16,19 @@ class FakeDataChannel {
 }
 
 describe('ChannelMessenger', () => {
+  it('decodes host presence changes independently of signaling messages', () => {
+    const dc = new FakeDataChannel();
+    const messenger = new ChannelMessenger(dc as unknown as RTCDataChannel);
+    const received: string[] = [];
+    messenger.subscribe(msg => {
+      expect(msg.type).toBe(ChannelMsgType.HostStatus);
+      received.push(msg.data);
+    });
+    for (const status of ['waiting', 'present', 'closed']) {
+      dc.receive({type: '4', data: status});
+    }
+    expect(received).toEqual(['waiting', 'present', 'closed']);
+  });
   it('keeps offer messages as offers', done => {
     const dc = new FakeDataChannel();
     const messenger = new ChannelMessenger(dc as unknown as RTCDataChannel);

@@ -1,5 +1,6 @@
 import {Injectable} from '@angular/core';
-import {HttpClient, HttpHeaders} from '@angular/common/http';
+import {HttpClient, HttpContext, HttpHeaders} from '@angular/common/http';
+import {SkipLoading} from '../interceptors/loading.interceptor';
 
 import {WebrtcConnection} from './webrtc-connection';
 import {BehaviorSubject, catchError, lastValueFrom, Observable, of, tap, throwError} from 'rxjs';
@@ -7,7 +8,7 @@ import {MessageService} from './message.service';
 import {ChannelMessenger} from './channel-messenger';
 import {
   ChannelMsg,
-  ChannelMsgType, LobbyMedia,
+  ChannelMsgType, HostStatus, LobbyMedia,
   LobbyMediaPurpose, LobbyMediaStream, MuteMsgData,
   SdpMsgData,
   StreamLiveData,
@@ -22,6 +23,7 @@ import {createLogger} from './logger';
   providedIn: 'root'
 })
 export class LobbyService {
+  readonly hostStatus$ = new BehaviorSubject<HostStatus | null>(null);
   private readonly log = createLogger('LobbyService');
   public add$ = new BehaviorSubject<{ media: LobbyMedia, stream: MediaStream } | null>(null);
   public mute$ = new BehaviorSubject<LobbyMedia | null>(null);
@@ -72,9 +74,14 @@ export class LobbyService {
   }
 
   private createSendingConnection(streams: Map<LobbyMediaPurpose, MediaStream>, spaceId: string, streamId: string, config: RTCConfiguration, info: string): Promise<ChannelMessenger> {
+    this.hostStatus$.next(null);
     this.ingress = new WebrtcConnection(config, 'ingress');
     const msg = new ChannelMessenger(this.ingress.createDataChannel('whip'));
     this.messenger = msg;
+    msg.subscribe(message => {
+      if (message.type === ChannelMsgType.HostStatus) this.hostStatus$.next(message.data as HostStatus);
+    });
+    msg.closed$.subscribe(() => this.hostStatus$.next('closed'));
     return this.ingress.createOffer(streams, info)
       .then((offer) => this.sendWhip(offer, spaceId, streamId))
       .then((answer) => this.ingress?.setAnswer(answer))
@@ -189,6 +196,12 @@ export class LobbyService {
   statusLiveStream(spaceId: string, streamId: string) {
     const getUrl = `${this.params.API_PREFIX}/channel/${spaceId}/stream/${streamId}/live`;
     return this.http.get<StreamLiveStatus>(getUrl).pipe(catchError(this.handleError<any>('', '')));
+  }
+
+  hostPresence(spaceId: string, streamId: string): Observable<{data: boolean}> {
+    return this.http.get<{data: boolean}>(`${this.params.API_PREFIX}/channel/${spaceId}/stream/${streamId}/lobby/host`, {
+      context: new HttpContext().set(SkipLoading, true),
+    });
   }
 
 

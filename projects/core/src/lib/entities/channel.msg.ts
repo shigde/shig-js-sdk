@@ -7,8 +7,11 @@ export interface ChannelMsg {
 export enum ChannelMsgType {
     OfferMsg = 1,
     AnswerMsg,
-    MuteMsg
+    MuteMsg,
+    HostStatus
 }
+
+export type HostStatus = 'present' | 'waiting' | 'closed';
 
 export interface SdpMsgData {
     number: number;

@@ -1,46 +1,19 @@
-<div class="dropdown-center stream-overlay-dropdown">
-  <button
-    class="btn btn-sm btn-outline-primary dropdown-toggle"
-    type="button"
-    data-bs-toggle="dropdown">
-
-    Overlay
-
-  </button>
-
-  <div class="dropdown-menu stream-overlay-menu">
-    <button
-      class="dropdown-item stream-overlay-toggle"
-      type="button"
-      [class.active]="nameOverlayEnabled"
-      (click)="toggleNameOverlay()">
-      <i
-        class="bi"
-        [class.bi-check-square-fill]="nameOverlayEnabled"
-        [class.bi-square]="!nameOverlayEnabled">
-      </i>
-      <span>Name-Overlay</span>
-    </button>
-
-    <div class="dropdown-divider"></div>
-
+<div class="stream-overlay-settings">
+  <label class="form-check form-switch">
+    <input class="form-check-input" type="checkbox" role="switch" [checked]="nameOverlayEnabled" (change)="toggleNameOverlay()">
+    <span class="form-check-label">Name overlay</span>
+  </label>
+  <fieldset [disabled]="!nameOverlayEnabled">
+    <legend>Size</legend>
     <div class="stream-overlay-size">
-      <button
-        class="btn btn-sm"
-        type="button"
-        [class.btn-primary]="nameOverlaySize === 'A'"
-        [class.btn-outline-primary]="nameOverlaySize !== 'A'"
-        (click)="setNameOverlaySize('A')">
-        Small
-      </button>
-      <button
-        class="btn btn-sm"
-        type="button"
-        [class.btn-primary]="nameOverlaySize === 'B'"
-        [class.btn-outline-primary]="nameOverlaySize !== 'B'"
-        (click)="setNameOverlaySize('B')">
-        Large
-      </button>
+      <label class="form-check">
+        <input class="form-check-input" type="radio" name="name-overlay-size" [checked]="nameOverlaySize === 'A'" (change)="setNameOverlaySize('A')">
+        <span class="form-check-label">Small</span>
+      </label>
+      <label class="form-check">
+        <input class="form-check-input" type="radio" name="name-overlay-size" [checked]="nameOverlaySize === 'B'" (change)="setNameOverlaySize('B')">
+        <span class="form-check-label">Large</span>
+      </label>
     </div>
-  </div>
+  </fieldset>
 </div>
