@@ -1,13 +1,16 @@
-import {fakeAsync, tick} from '@angular/core/testing';
+import {PollingService} from './polling.service';
+import {SessionService} from './session.service';
+import {fakeAsync, TestBed, tick} from '@angular/core/testing';
 import {HttpClient} from '@angular/common/http';
 import {of, throwError} from 'rxjs';
 import {ParameterService} from './parameter.service';
 import {RelayService} from './relay.service';
 
 describe('RelayService live status', () => {
+  beforeEach(() => TestBed.configureTestingModule({providers: [{provide: SessionService, useValue: {getUser: () => of(null)}}]}));
   it('shares polling within a channel and stops after the last subscriber leaves', fakeAsync(() => {
     const get = jasmine.createSpy('get').and.returnValue(of('stream-a'));
-    const relay = new RelayService({get} as unknown as HttpClient, {API_PREFIX: '/api'} as ParameterService);
+    const relay = new RelayService({get} as unknown as HttpClient, {API_PREFIX: '/api'} as ParameterService, TestBed.inject(PollingService));
     let liveA = false;
     let liveB = true;
     const first = relay.pollHasAnnouncement('channel', 'stream-a').subscribe(value => liveA = value);
@@ -27,11 +30,11 @@ describe('RelayService live status', () => {
 
   it('retries on the next interval after a failed request', fakeAsync(() => {
     const get = jasmine.createSpy('get').and.returnValues(throwError(() => new Error('network')), of('stream'));
-    const relay = new RelayService({get} as unknown as HttpClient, {API_PREFIX: '/api'} as ParameterService);
+    const relay = new RelayService({get} as unknown as HttpClient, {API_PREFIX: '/api'} as ParameterService, TestBed.inject(PollingService));
     let live = false;
     const subscription = relay.pollHasAnnouncement('channel', 'stream').subscribe(value => live = value);
     tick(0);
-    tick(5000);
+    tick(10000);
     expect(live).toBeTrue();
     subscription.unsubscribe();
   }));

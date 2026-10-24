@@ -1,6 +1,8 @@
-import {BehaviorSubject, of} from 'rxjs';
-import {fakeAsync, flushMicrotasks, tick} from '@angular/core/testing';
-import {HttpErrorResponse} from '@angular/common/http';
+import {PollingService} from '../../provider/polling.service';
+import {SessionService} from '../../provider/session.service';
+import {BehaviorSubject, map, of} from 'rxjs';
+import {fakeAsync, flushMicrotasks, TestBed, tick} from '@angular/core/testing';
+import {HttpClient, HttpErrorResponse} from '@angular/common/http';
 import {LobbyComponent} from './lobby.component';
 import {HostStatus, LobbyMediaPurpose, LobbyMediaStream, Stream} from '../../entities';
 
@@ -14,6 +16,7 @@ describe('Lobby setup and joining', () => {
   let destroyCallbacks: (() => void)[];
 
   beforeEach(() => {
+    TestBed.configureTestingModule({providers: [{provide: SessionService, useValue: {getUser: () => of({uuid: 'guest'})}}, {provide: HttpClient, useValue: {post: (_url: string, body: {requests: {id: string}[]}) => presence().pipe(map((data: unknown) => ({results: body.requests.map(request => ({id: request.id, status: 200, data}))})))}}]});
     join = jasmine.createSpy('join').and.resolveTo();
     mixed = jasmine.createSpy('getMixedStream').and.returnValue(new MediaStream());
     close = jasmine.createSpy('closeConnections').and.resolveTo();
@@ -26,6 +29,7 @@ describe('Lobby setup and joining', () => {
       {join, closeConnections: close, leaveLobby: () => of(null), hostPresence: presence, hostStatus$: status} as any,
       {getMixedStream: mixed} as any,
       {} as any, {} as any, {} as any,
+      TestBed.inject(PollingService),
       {onDestroy: (callback: () => void) => { destroyCallbacks.push(callback); return () => {}; }} as any,
       {markForCheck: () => {}} as any,
     );

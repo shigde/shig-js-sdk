@@ -17,8 +17,9 @@ import {
 
 import {Location} from '@angular/common';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
+import {SkipLoading} from '../../interceptors/loading.interceptor';
 import {HttpErrorResponse} from '@angular/common/http';
-import {BehaviorSubject, catchError, distinctUntilChanged, EMPTY, exhaustMap, lastValueFrom, map, of, switchMap, take, tap, timeout, timer} from 'rxjs';
+import {BehaviorSubject, catchError, distinctUntilChanged, EMPTY, filter, lastValueFrom, map, of, switchMap, take, tap, timeout} from 'rxjs';
 import {environment} from '../../../environments/environment';
 
 import {
@@ -28,6 +29,7 @@ import {
   ParameterService,
   PeerTubeService,
   RelayService,
+  PollingService,
   SessionService,
   StreamService,
 } from '../../provider';
@@ -115,6 +117,7 @@ export class LobbyComponent implements OnInit, AfterViewInit, OnChanges, OnDestr
     private params: ParameterService,
     private location: Location,
     private relay: RelayService,
+    private polling: PollingService,
     private destroyRef: DestroyRef,
     private cdr: ChangeDetectorRef,
   ) {
@@ -203,11 +206,15 @@ export class LobbyComponent implements OnInit, AfterViewInit, OnChanges, OnDestr
     this.presencePolling$.pipe(
       distinctUntilChanged(),
       switchMap(enabled => enabled && !this.isHost
-        ? timer(0, 5000).pipe(exhaustMap(() => this.lobbyService.hostPresence(this.channelUuid!, this.streamUuid!).pipe(
-            timeout(8000),
-            map(response => response.data),
-            catchError(() => of(false)),
-          )))
+        ? this.polling.watch({
+            key: `host-presence:${this.channelUuid}:${this.streamUuid}`,
+            intervalMs: 5000,
+            batch: {resource: 'host-presence', channelUuid: this.channelUuid!, streamUuid: this.streamUuid!},
+            load: context => this.lobbyService.hostPresence(this.channelUuid!, this.streamUuid!, context.get(SkipLoading)).pipe(timeout(8000)),
+          }).pipe(
+            filter(state => !state.loading),
+            map(state => state.error ? false : state.data?.data ?? false),
+          )
         : EMPTY),
       takeUntilDestroyed(this.destroyRef),
     ).subscribe(present => {

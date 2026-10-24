@@ -1,11 +1,13 @@
+import {SkipLoading} from './loading.interceptor';
 import {Injectable} from '@angular/core';
 import {HttpRequest, HttpHandler, HttpEvent, HttpInterceptor} from '@angular/common/http';
-import {catchError, Observable, switchMap, throwError} from 'rxjs';
+import {catchError, finalize, Observable, shareReplay, switchMap, throwError} from 'rxjs';
 import {AuthService, ParameterService, SessionService} from '../provider';
 import {Router} from '@angular/router';
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
+  private refreshInFlight$: Observable<void> | null = null;
   constructor(
     private session: SessionService,
     private autService: AuthService,
@@ -38,7 +40,13 @@ export class AuthInterceptor implements HttpInterceptor {
 
   private handleTokenExpired(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     // Call the refresh token endpoint to get a new access token
-    return this.autService.refreshLogin().pipe(
+    if (!this.refreshInFlight$) {
+      this.refreshInFlight$ = this.autService.refreshLogin(request.context.get(SkipLoading)).pipe(
+        finalize(() => this.refreshInFlight$ = null),
+        shareReplay({bufferSize: 1, refCount: true}),
+      );
+    }
+    return this.refreshInFlight$.pipe(
       switchMap(() => {
         // Retry the original request with the new access token
         const newToken = this.session.getAuthenticationToken();

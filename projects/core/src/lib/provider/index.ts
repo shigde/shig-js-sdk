@@ -27,3 +27,5 @@ export * from './error.handler';
 export * from './stream-placeholder';
 
 export * from './notification.service';
+
+export * from './polling.service';

@@ -198,9 +198,9 @@ export class LobbyService {
     return this.http.get<StreamLiveStatus>(getUrl).pipe(catchError(this.handleError<any>('', '')));
   }
 
-  hostPresence(spaceId: string, streamId: string): Observable<{data: boolean}> {
+  hostPresence(spaceId: string, streamId: string, background = true): Observable<{data: boolean}> {
     return this.http.get<{data: boolean}>(`${this.params.API_PREFIX}/channel/${spaceId}/stream/${streamId}/lobby/host`, {
-      context: new HttpContext().set(SkipLoading, true),
+      context: new HttpContext().set(SkipLoading, background),
     });
   }
 

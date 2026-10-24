@@ -1,6 +1,7 @@
+import {SkipLoading} from '../interceptors/loading.interceptor';
 import {Injectable} from '@angular/core';
 import {Account, ApiResponse, Token, User} from '../entities';
-import {HttpClient, HttpHeaders} from '@angular/common/http';
+import {HttpClient, HttpContext, HttpHeaders} from '@angular/common/http';
 import {ParameterService} from './parameter.service';
 import {map, mergeMap, Observable, tap} from 'rxjs';
 import {SessionService} from './session.service';
@@ -28,12 +29,12 @@ export class AuthService {
         );
     }
 
-    refreshLogin(): Observable<void> {
+    refreshLogin(background = false): Observable<void> {
         // Call the refresh token endpoint to get a new access token
         const token = this.session.getRefreshToken();
         const refreshUrl = `${this.params.API_PREFIX}/auth/refresh`;
         const body = {token};
-        return this.http.post<ApiResponse<Token>>(refreshUrl, body, this.httpOptions).pipe(
+        return this.http.post<ApiResponse<Token>>(refreshUrl, body, {...this.httpOptions, context: new HttpContext().set(SkipLoading, background)}).pipe(
             map((resp: ApiResponse<Token>) => this.session.setToken(resp.data))
         );
     }
