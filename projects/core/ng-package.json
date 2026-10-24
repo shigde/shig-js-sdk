@@ -4,6 +4,7 @@
   "lib": {
     "entryFile": "./src/public-api.ts"
   },
+  "allowedNonPeerDependencies": ["@peermetrics/webrtc-stats"],
   "assets": [
     "./assets/scss/*.*"
     "./assets/icons/*.*"

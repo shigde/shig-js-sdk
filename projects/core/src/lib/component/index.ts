@@ -10,3 +10,5 @@ export * from './stream-layout-editor/stream-layout-editor.component';
 export * from './stream-overlay-menu/stream-overlay-menu.component';
 export * from './settings-panel/settings-panel.component';
 export * from './stream-settings/stream-settings.component';
+
+export * from './connection-dashboard/connection-dashboard.component';

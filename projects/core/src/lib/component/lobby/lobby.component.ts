@@ -64,6 +64,7 @@ export class LobbyComponent implements OnInit, AfterViewInit, OnChanges, OnDestr
   streamLayoutEditor?: StreamLayoutEditorComponent;
   readonly getStreamLayoutEditor = () => this.streamLayoutEditor;
 
+  showConnectionDashboard = false;
   isInLobby = false;
   isJoining = false;
   isDeviceLoading = false;

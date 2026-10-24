@@ -1,3 +1,4 @@
+import {ConnectionDashboardComponent} from './component/connection-dashboard/connection-dashboard.component';
 import {CUSTOM_ELEMENTS_SCHEMA, NgModule, NO_ERRORS_SCHEMA} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {
@@ -48,6 +49,7 @@ import {StreamOverlayMenuComponent} from './component/stream-overlay-menu/stream
         SettingsPanelComponent,
         StreamOverlayMenuComponent,
         CommonModule,
+        ConnectionDashboardComponent,
         LoadingIndicatorComponent,
         FormsModule,
         ReactiveFormsModule,

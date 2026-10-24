@@ -5,6 +5,7 @@
       Your browser does not support HTML5 Canvas.
     </canvas>
     <div #stageContainer class="layout-stage" [class.is-editing]="layoutEditMode"></div>
+    <ng-container [ngTemplateOutlet]="previewControls ?? null"></ng-container>
     <button type="button" class="stream-fullscreen-button" (click)="toggleFullscreen()"
             [attr.title]="isFullscreen ? 'Exit fullscreen' : 'Fullscreen'"
             [attr.aria-label]="isFullscreen ? 'Exit fullscreen' : 'Fullscreen'">

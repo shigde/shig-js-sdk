@@ -1,3 +1,4 @@
+import {WebrtcMetricsService} from './webrtc-metrics.service';
 import {Injectable} from '@angular/core';
 import {HttpClient, HttpContext, HttpHeaders} from '@angular/common/http';
 import {SkipLoading} from '../interceptors/loading.interceptor';
@@ -40,7 +41,7 @@ export class LobbyService {
     responseType: 'text'
   };
 
-  constructor(private http: HttpClient, private messageService: MessageService, private params: ParameterService) {
+  constructor(private http: HttpClient, private messageService: MessageService, private params: ParameterService, private metrics?: WebrtcMetricsService) {
   }
 
   public async join(stream: Map<LobbyMediaPurpose, MediaStream>, spaceId: string, streamId: string, config: RTCConfiguration, info: string): Promise<unknown> {
@@ -75,7 +76,7 @@ export class LobbyService {
 
   private createSendingConnection(streams: Map<LobbyMediaPurpose, MediaStream>, spaceId: string, streamId: string, config: RTCConfiguration, info: string): Promise<ChannelMessenger> {
     this.hostStatus$.next(null);
-    this.ingress = new WebrtcConnection(config, 'ingress');
+    this.ingress = new WebrtcConnection(config, 'ingress', this.metrics);
     const msg = new ChannelMessenger(this.ingress.createDataChannel('whip'));
     this.messenger = msg;
     msg.subscribe(message => {
@@ -89,7 +90,7 @@ export class LobbyService {
   }
 
   private createReceivingConnection(messenger: ChannelMessenger, spaceId: string, streamId: string, config: RTCConfiguration): Promise<unknown> {
-    const wc = new WebrtcConnection(config, 'egress');
+    const wc = new WebrtcConnection(config, 'egress', this.metrics);
     this.egress = wc;
     let renegotiationChain: Promise<void> = Promise.resolve();
 

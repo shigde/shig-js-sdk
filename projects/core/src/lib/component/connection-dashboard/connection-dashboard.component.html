@@ -1,0 +1,66 @@
+<section #panel class="connection-dashboard" [class.is-detached]="detached" [style.left.px]="detached ? null : left" [style.top.px]="detached ? null : top" [style.max-width.px]="availableWidth" [style.max-height.px]="availableHeight" aria-label="WebRTC connection dashboard">
+  <header>
+    @if (!detached) { <button type="button" class="drag-handle" aria-label="Move dashboard with mouse or arrow keys" title="Drag to move · arrow keys to move" (pointerdown)="startMove($event)" (keydown)="moveWithKeyboard($event)">⠿</button> }
+    <h2>Connection stats</h2>
+    <div class="window-actions">
+      @if (detached) { <button type="button" (click)="dock()" title="Return to lobby">Dock</button> }
+      @else { <button type="button" (click)="detach()" title="Open in a separate window">Detach ↗</button> }
+      <button type="button" (click)="dismiss.emit()" aria-label="Close dashboard" title="Close dashboard">✕</button>
+    </div>
+  </header>
+  @if (popupError) { <p class="popup-error" role="alert">{{ popupError }}</p> }
+  <div class="dashboard-content">
+  @if (dashboard$ | async; as dashboard) {
+    <table class="quality-summary" aria-label="Quality summary"><tbody>
+      @for (item of [{name: 'Connection Quality', status: dashboard.transport}, {name: 'Media Quality', status: dashboard.quality}]; track item.name) {
+        <tr><th scope="row">{{ item.name }} <button type="button" class="info" [attr.title]="item.status.description" [attr.aria-label]="item.status.description" [attr.aria-expanded]="explanation === item.name" (click)="explanation = explanation === item.name ? '' : item.name">ⓘ</button></th><td [attr.data-tone]="item.status.tone"><span class="status-dot" aria-hidden="true"></span>{{ qualityLabel(item.status.tone) }}</td></tr>
+        @if (explanation === item.name) { <tr class="explanation"><td colspan="2">{{ item.status.description }}</td></tr> }
+      }
+    </tbody></table>
+    <div class="tabs" role="tablist" aria-label="Connection direction" (keydown)="tabKey($event)">
+      @for (tab of directions; track tab) { <button type="button" role="tab" [attr.data-direction]="tab" [id]="'stats-tab-' + tab" [attr.aria-selected]="direction === tab" [attr.tabindex]="direction === tab ? 0 : -1" aria-controls="stats-direction-panel" (click)="selectDirection(tab)">{{ tab === 'send' ? '↑ Sending' : '↓ Receiving' }}</button> }
+    </div>
+    <div id="stats-direction-panel" role="tabpanel" [attr.aria-labelledby]="'stats-tab-' + direction">
+      <section class="metric-section"><h3>Connection</h3><table><tbody>
+        <tr class="rtt-row"><th scope="row">Roundtrip time (RTT) <button type="button" class="info" [attr.title]="dashboard.rtt.help" [attr.aria-label]="dashboard.rtt.help" [attr.aria-expanded]="explanation === 'rtt'" (click)="explanation = explanation === 'rtt' ? '' : 'rtt'">ⓘ</button></th><td>{{ dashboard.rtt[direction] }}</td></tr>
+        @if (explanation === 'rtt') { <tr class="explanation"><td colspan="2">{{ dashboard.rtt.help }}</td></tr> }
+      </tbody></table></section>
+      @for (section of mediaSections; track section.kind) {
+        <section class="metric-section" [attr.data-kind]="section.kind"><h3 [class.audio-label]="section.kind === 'audio'" [class.video-label]="section.kind === 'video'">{{ section.label }}</h3>
+          @for (track of dashboard.tracks[direction][section.kind]; track track.id) {
+            <table class="track-metrics"><tbody>
+              <tr class="track-heading"><th scope="row">Track</th><td>{{ track.label }}</td></tr>
+              @for (row of track.rows; track row.label) {
+                <tr><th scope="row">{{ row.label }} <button type="button" class="info" [attr.title]="row.help" [attr.aria-label]="row.help" [attr.aria-expanded]="explanation === track.id + row.label" (click)="explanation = explanation === track.id + row.label ? '' : track.id + row.label">ⓘ</button></th><td>{{ row.value }}</td></tr>
+                @if (explanation === track.id + row.label) { <tr class="explanation"><td colspan="2">{{ row.help }}</td></tr> }
+              }
+            </tbody></table>
+          } @empty { <p class="empty-tracks">No {{ section.label.toLowerCase() }} tracks measured.</p> }
+          <details class="graph"><summary>{{ section.label }} {{ direction === 'send' ? 'send' : 'receive' }} graph</summary>
+            <label class="history">History <select [value]="historySeconds" aria-label="Chart time range" (change)="setRange($event)"><option value="60">1 minute</option><option value="300">5 minutes</option><option value="600">10 minutes</option></select></label>
+            <svg viewBox="0 0 600 180" role="img" [attr.aria-label]="section.label + ' ' + direction + ' data rate history in ' + (section.kind === 'audio' ? 'kbit/s' : 'Mbit/s')">
+              @for (tick of ticks; track tick) {
+                <line class="grid" x1="48" x2="552" [attr.y1]="156 - tick * 132" [attr.y2]="156 - tick * 132"/>
+                <text x="42" [attr.y]="160 - tick * 132" text-anchor="end">{{ dashboard.maxima[section.kind] * tick | number:'1.0-2' }}</text>
+              }
+              @for (line of dashboard.series; track line.kind + line.direction) { @if (line.kind === section.kind && line.direction === direction) { <path [attr.class]="'metric-line ' + line.kind" [attr.d]="line.path"/> } }
+            </svg>
+            <div class="chart-times"><time>{{ dashboard.start | date:'HH:mm:ss' }}</time><span>{{ section.kind === 'audio' ? 'kbit/s' : 'Mbit/s' }}</span><time>{{ dashboard.end | date:'HH:mm:ss' }}</time></div>
+          </details>
+        </section>
+      }
+    </div>
+    <details class="technical-details"><summary>Connection details</summary>
+      @for (connection of dashboard.connections; track connection.direction) {
+        <h4>{{ connection.direction === 'send' ? 'Sending' : 'Receiving' }}</h4>
+        <table><tbody>@for (row of connection.rows; track row.label) { <tr [class.address-row]="row.address"><th scope="row">{{ row.label }}</th><td [attr.title]="row.value">{{ row.value }}</td></tr> }</tbody></table>
+      }
+      <p>Addresses belong to the selected ICE connection. The browser may provide an IP, a hostname or no address.</p>
+      <p>ICE candidate types describe network addresses, not participant roles. Host candidates can also be used with NAT; they do not prove a direct internet connection.</p>
+      <p>— means unavailable. Outgoing loss and jitter require receiver feedback. RTT measures browser ↔ SFU, not end-to-end stream delay.</p>
+      <p>Quality reference values: loss ≥ 2%, jitter ≥ 30 ms, RTT ≥ 250 ms or encoder limitations across three comparable samples.</p>
+      <details><summary>Connection events ({{ dashboard.events.length }})</summary><ul>@for (event of dashboard.events.slice().reverse(); track $index) { <li><time>{{ event.timestamp | date:'HH:mm:ss' }}</time> {{ event.message }}</li> }</ul></details>
+    </details>
+  }
+  </div>
+</section>

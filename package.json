@@ -74,5 +74,8 @@
     "karma-jasmine-html-reporter": "~2.1.0",
     "ng-packagr": "^21.0.1",
     "typescript": "~5.9.3"
+  },
+  "dependencies": {
+    "@peermetrics/webrtc-stats": "^5.9.0"
   }
 }

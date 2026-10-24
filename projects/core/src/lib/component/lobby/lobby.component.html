@@ -1,3 +1,11 @@
+<ng-template #statsControl>
+  @if (isInLobby) {
+    <button type="button" class="connection-stats-button" title="Connection statistics" aria-label="Connection statistics"
+            [attr.aria-expanded]="showConnectionDashboard" aria-controls="lobby-connection-dashboard" (click)="showConnectionDashboard = !showConnectionDashboard">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 19V5M4 19h16M8 15v-4M13 15V7M18 15v-7"/></svg>
+    </button>
+  }
+</ng-template>
 <div class="lobby">
 
   @if (stream && !isHost && (!hostPresent || lobbyNotice)) {
@@ -89,15 +97,20 @@
     }
     <!--// Video Stream -->
     <div class="video-call-wrapper shadow border rounded-1">
+    @if (isInLobby && showConnectionDashboard) {
+      <shig-connection-dashboard id="lobby-connection-dashboard" (dismiss)="showConnectionDashboard = false"></shig-connection-dashboard>
+    }
+
 
         @if (isHost) {
-            <shig-stream-leayout-editor [basePath]="basePath"></shig-stream-leayout-editor>
+            <shig-stream-leayout-editor [basePath]="basePath" [previewControls]="statsControl"></shig-stream-leayout-editor>
         } @else if (!isInLobby && setupPreview) {
           <div class="lobby-setup-preview">
             <ng-container [ngTemplateOutlet]="setupPreview" [ngTemplateOutletContext]="{ $implicit: stream, live: state === 'online' }"></ng-container>
           </div>
         } @else {
           <div id="lobby-stream-video" class="stream-video">
+            <ng-container [ngTemplateOutlet]="statsControl"></ng-container>
             <video id="video-stream" #videoStreamElement muted autoplay playsinline
                    [hidden]="!hostPresent || !remoteVideoPlaying"
                    (playing)="remoteVideoPlaying = videoStreamElement.videoWidth > 0"

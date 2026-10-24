@@ -1,3 +1,4 @@
+import {WebrtcMetricsService} from './webrtc-metrics.service';
 import {EventEmitter} from '@angular/core';
 import {LobbyMedia, LobbyMediaEvent, LobbyMediaIndex, LobbyMediaPurpose, SdpMediaInfo} from '../entities';
 import {SdpParser} from './sdp-parser';
@@ -8,16 +9,19 @@ import {createLogger} from './logger';
 export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
   private readonly log = createLogger('WebrtcConnection');
   private readonly pc: RTCPeerConnection;
+  private readonly releaseMetrics?: () => void;
   private readonly remoteMedia: Map<LobbyMediaIndex, LobbyMedia> = new Map<LobbyMediaIndex, LobbyMedia>();
   private dataChannel: RTCDataChannel | undefined;
   private readonly localSenders = new Map<LobbyMediaPurpose, RTCRtpSender[]>();
 
   constructor(
     private readonly config: RTCConfiguration,
-    private readonly type: 'ingress' | 'egress'
+    private readonly type: 'ingress' | 'egress',
+    metrics?: WebrtcMetricsService
   ) {
     super(true);
     this.pc = new RTCPeerConnection(this.config);
+    this.releaseMetrics = metrics?.register(this.pc, type === 'ingress' ? 'send' : 'receive', (stats, direction) => this.metricsTrackLabel(stats, direction));
     this.pc.ontrack = (ev: RTCTrackEvent) => this.onTrack(ev);
     this.pc.onsignalingstatechange = _ => this.onSignalStateChange();
     this.pc.oniceconnectionstatechange = _ => this.log.info('oniceconnectionstatechange');
@@ -30,6 +34,24 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
       this.dataChannel.onopen = () => this.onReceiveChannelStateChange;
       this.dataChannel.onclose = () => this.onReceiveChannelStateChange;
     };
+  }
+
+  private metricsTrackLabel(stats: Record<string, any>, direction: 'send' | 'receive'): string | undefined {
+    const transceivers = this.pc.getTransceivers();
+    const mid = stats['mid'] == null ? undefined : String(stats['mid']);
+    const trackId = stats['trackIdentifier'] ?? stats['track']?.['trackIdentifier'];
+    const transceiver = transceivers.find(t => mid !== undefined && t.mid === mid) ??
+      transceivers.find(t => !!trackId && (direction === 'send' ? t.sender.track?.id : t.receiver.track.id) === trackId);
+    if (direction === 'send' && transceiver) {
+      for (const [purpose, senders] of this.localSenders) {
+        if (senders.includes(transceiver.sender)) return purpose === LobbyMediaPurpose.STREAM ? 'Stream' : 'Me';
+      }
+    }
+    if (direction === 'receive') {
+      const media = this.remoteMedia.get(Number(mid ?? transceiver?.mid));
+      if (media) return media.purpose === LobbyMediaPurpose.STREAM ? 'Stream' : media.info || 'Guest';
+    }
+    return undefined;
   }
 
   public createDataChannel(label: 'whip' | 'whep'): RTCDataChannel {
@@ -176,6 +198,7 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
   }
 
   public close(): Promise<void> {
+    this.releaseMetrics?.();
     this.localSenders.clear();
     if (this.dataChannel !== undefined) {
       this.dataChannel.onmessage = null;

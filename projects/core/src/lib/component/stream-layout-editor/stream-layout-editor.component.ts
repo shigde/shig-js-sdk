@@ -1,11 +1,12 @@
-import {Component, ElementRef, HostListener, Input, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import {Component, ElementRef, HostListener, Input, TemplateRef, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import {NgTemplateOutlet} from '@angular/common';
 import Konva from 'konva';
 import {createLogger} from "../../provider";
 import {StreamMixerService} from "../../provider/stream-mixer.service";
 
 @Component({
   selector: 'shig-stream-leayout-editor',
-  imports: [],
+  imports: [NgTemplateOutlet],
   templateUrl: './stream-layout-editor.component.html',
   styleUrl: './stream-layout-editor.component.scss',
 })
@@ -14,6 +15,8 @@ export class StreamLayoutEditorComponent implements OnInit, OnDestroy {
   private readonly log = createLogger('StreamLayoutEditorComponent');
   private readonly faceImage: HTMLImageElement = new Image();
   private readonly logoImage: HTMLImageElement = new Image();
+
+  @Input() previewControls?: TemplateRef<unknown>;
 
   @Input('basePath') basePath: string | undefined;
 

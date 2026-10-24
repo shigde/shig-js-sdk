@@ -29,3 +29,5 @@ export * from './stream-placeholder';
 export * from './notification.service';
 
 export * from './polling.service';
+
+export * from './webrtc-metrics.service';
