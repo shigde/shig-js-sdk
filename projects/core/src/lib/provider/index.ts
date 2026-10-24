@@ -25,3 +25,5 @@ export * from './relay.service';
 export * from './loading.service';
 export * from './error.handler';
 export * from './stream-placeholder';
+
+export * from './notification.service';
