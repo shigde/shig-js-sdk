@@ -44,6 +44,7 @@ export interface StreamPreview {
   ownerUuid: string;
   ownerAvatar: string;
   channelName: string;
+  channelDisplayName?: string;
   channelUuid: string;
 }
 
