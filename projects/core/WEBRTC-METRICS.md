@@ -33,3 +33,7 @@ The media tables now list each audio/video RTP track separately with right-align
 Connection details are shared below the direction panel, with distinct Sending and Receiving subsections. Local and remote ICE candidates and protocol are separate fields; a host candidate is described as an endpoint address, not a host participant or proof of an internet-direct route.
 
 Candidate details display the ICE type and its address on separate rows. Addresses may be IPv4, IPv6 or browser-provided hostnames; missing addresses are explicitly unavailable. Only the selected candidate pair is shown, using address (or the legacy ip field). These values stay in browser memory; there is no backend upload.
+
+## Dashboard appearance
+
+The existing order, values, tabs, graph disclosures and per-track structure remain unchanged. The panel uses rounded cards with audio (green), video (purple) and connection (cyan) accents and decorative inline SVG section icons. Panel-local light/dark tokens follow the web client's existing document-level data-bs-theme preference, falling back to the system preference when unset. A scoped MutationObserver keeps the detached panel and its document in sync with theme changes; the observer and system-theme listener are removed on destruction. Styles do not depend on the Angular host remaining an ancestor of the portalled panel.

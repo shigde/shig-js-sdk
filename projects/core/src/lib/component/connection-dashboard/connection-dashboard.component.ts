@@ -30,6 +30,16 @@ export class ConnectionDashboardComponent implements OnInit, OnDestroy {
   get availableHeight(): number | null {
     return this.detached ? null : Math.max(0, window.innerHeight - (this.top ?? 8) - 8);
   }
+  theme: 'light' | 'dark' = 'light';
+  private themeObserver?: MutationObserver;
+  private readonly systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+  private readonly syncTheme = () => {
+    if (this.destroyed) return;
+    const selected = document.documentElement.getAttribute('data-bs-theme');
+    this.theme = selected === 'dark' || (selected !== 'light' && this.systemTheme.matches) ? 'dark' : 'light';
+    if (this.popup && !this.popup.closed) this.popup.document.documentElement.setAttribute('data-bs-theme', this.theme);
+    this.cdr.markForCheck();
+  };
   explanation = '';
   popupError = '';
   private release?: () => void;
@@ -44,6 +54,10 @@ export class ConnectionDashboardComponent implements OnInit, OnDestroy {
   constructor(private metrics: WebrtcMetricsService, private zone: NgZone, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
+    this.syncTheme();
+    this.themeObserver = new MutationObserver(() => this.zone.run(() => this.syncTheme()));
+    this.themeObserver.observe(document.documentElement, {attributes: true, attributeFilter: ['data-bs-theme']});
+    this.systemTheme.addEventListener('change', this.syncTheme);
     this.left = Math.max(8, window.innerWidth - 414);
     this.top = Math.min(100, Math.max(8, window.innerHeight - 240));
     // Keep Angular's host in its original view; only portal the owned panel DOM.
@@ -158,6 +172,8 @@ export class ConnectionDashboardComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.destroyed = true;
+    this.themeObserver?.disconnect();
+    this.systemTheme.removeEventListener('change', this.syncTheme);
     this.stopMove?.();
     window.removeEventListener('pagehide', this.onParentClose);
     const popup = this.popup;

@@ -1,4 +1,4 @@
-<section #panel class="connection-dashboard" [class.is-detached]="detached" [style.left.px]="detached ? null : left" [style.top.px]="detached ? null : top" [style.max-width.px]="availableWidth" [style.max-height.px]="availableHeight" aria-label="WebRTC connection dashboard">
+<section #panel class="connection-dashboard" [attr.data-theme]="theme" [class.is-detached]="detached" [style.left.px]="detached ? null : left" [style.top.px]="detached ? null : top" [style.max-width.px]="availableWidth" [style.max-height.px]="availableHeight" aria-label="WebRTC connection dashboard">
   <header>
     @if (!detached) { <button type="button" class="drag-handle" aria-label="Move dashboard with mouse or arrow keys" title="Drag to move · arrow keys to move" (pointerdown)="startMove($event)" (keydown)="moveWithKeyboard($event)">⠿</button> }
     <h2>Connection stats</h2>
@@ -21,12 +21,12 @@
       @for (tab of directions; track tab) { <button type="button" role="tab" [attr.data-direction]="tab" [id]="'stats-tab-' + tab" [attr.aria-selected]="direction === tab" [attr.tabindex]="direction === tab ? 0 : -1" aria-controls="stats-direction-panel" (click)="selectDirection(tab)">{{ tab === 'send' ? '↑ Sending' : '↓ Receiving' }}</button> }
     </div>
     <div id="stats-direction-panel" role="tabpanel" [attr.aria-labelledby]="'stats-tab-' + direction">
-      <section class="metric-section"><h3>Connection</h3><table><tbody>
+      <section class="metric-section connection-section"><h3><span class="section-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="2"/><path d="M8 8a6 6 0 0 0 0 8m8-8a6 6 0 0 1 0 8M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14"/></svg></span>Connection</h3><table><tbody>
         <tr class="rtt-row"><th scope="row">Roundtrip time (RTT) <button type="button" class="info" [attr.title]="dashboard.rtt.help" [attr.aria-label]="dashboard.rtt.help" [attr.aria-expanded]="explanation === 'rtt'" (click)="explanation = explanation === 'rtt' ? '' : 'rtt'">ⓘ</button></th><td>{{ dashboard.rtt[direction] }}</td></tr>
         @if (explanation === 'rtt') { <tr class="explanation"><td colspan="2">{{ dashboard.rtt.help }}</td></tr> }
       </tbody></table></section>
       @for (section of mediaSections; track section.kind) {
-        <section class="metric-section" [attr.data-kind]="section.kind"><h3 [class.audio-label]="section.kind === 'audio'" [class.video-label]="section.kind === 'video'">{{ section.label }}</h3>
+        <section class="metric-section" [attr.data-kind]="section.kind"><h3 [class.audio-label]="section.kind === 'audio'" [class.video-label]="section.kind === 'video'"><span class="section-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">@if (section.kind === 'audio') { <path d="M9 18V5l11-2v13M9 8l11-2"/><ellipse cx="6" cy="18" rx="3" ry="2.5"/><ellipse cx="17" cy="16" rx="3" ry="2.5"/> } @else { <rect x="3" y="6" width="12" height="12" rx="2"/><path d="m15 10 6-3v10l-6-3"/> }</svg></span>{{ section.label }}</h3>
           @for (track of dashboard.tracks[direction][section.kind]; track track.id) {
             <table class="track-metrics"><tbody>
               <tr class="track-heading"><th scope="row">Track</th><td>{{ track.label }}</td></tr>

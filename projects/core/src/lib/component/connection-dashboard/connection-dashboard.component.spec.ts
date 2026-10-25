@@ -53,6 +53,37 @@ describe('Floating connection dashboard', () => {
     return {popup: popup as unknown as Window, events};
   }
 
+
+  it('follows light/dark changes in a detached document without changing values or order', async () => {
+    const original = document.documentElement.getAttribute('data-bs-theme');
+    document.documentElement.setAttribute('data-bs-theme', 'light');
+    const fixture = TestBed.createComponent(ConnectionDashboardComponent); fixture.detectChanges();
+    const panel = fixture.componentInstance.panel.nativeElement;
+    const text = panel.textContent;
+    const lightColor = getComputedStyle(panel).backgroundColor;
+    const iframe = document.createElement('iframe'); document.body.append(iframe);
+    const popup = iframe.contentWindow!;
+    spyOn(popup, 'close'); spyOn(popup, 'focus');
+    spyOn(window, 'open').and.returnValue(popup);
+    try {
+      document.documentElement.setAttribute('data-bs-theme', 'dark');
+      await new Promise<void>(resolve => setTimeout(resolve, 0)); fixture.detectChanges();
+      expect(panel.getAttribute('data-theme')).toBe('dark');
+      expect(getComputedStyle(panel).backgroundColor).not.toBe(lightColor);
+      expect(panel.textContent).toBe(text);
+      fixture.componentInstance.detach(); fixture.detectChanges();
+      document.documentElement.setAttribute('data-bs-theme', 'light');
+      await new Promise<void>(resolve => setTimeout(resolve, 0)); fixture.detectChanges();
+      expect(panel.getAttribute('data-theme')).toBe('light');
+      expect(popup.document.documentElement.getAttribute('data-bs-theme')).toBe('light');
+      expect(popup.getComputedStyle(panel).backgroundColor).toBe(lightColor);
+    } finally {
+      fixture.destroy(); iframe.remove();
+      if (original === null) document.documentElement.removeAttribute('data-bs-theme');
+      else document.documentElement.setAttribute('data-bs-theme', original);
+    }
+  });
+
   it('keeps the same live view and collection lease when detaching and returning after window close', () => {
     const fixture = TestBed.createComponent(ConnectionDashboardComponent);
     fixture.detectChanges();
