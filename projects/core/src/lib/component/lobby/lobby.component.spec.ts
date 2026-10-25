@@ -42,6 +42,52 @@ describe('Lobby setup and joining', () => {
 
   afterEach(() => destroyCallbacks.forEach(callback => callback()));
 
+  it('requires confirmation for leaving, starting and stopping', () => {
+    const showModal = jasmine.createSpy('showModal');
+    const closeDialog = jasmine.createSpy('close');
+    component.actionDialog = {nativeElement: {showModal, close: closeDialog}} as any;
+    component.isInLobby = true;
+    component.isHost = true;
+    component.hasMediaStreamSet$.next(true);
+    const start = spyOn(component, 'start');
+    const stop = spyOn(component, 'stop');
+    const leave = spyOn(component, 'leaveLobby');
+    component.requestAction('start');
+    component.requestAction('start');
+    expect(showModal).toHaveBeenCalledTimes(1);
+    expect(start).not.toHaveBeenCalled();
+    component.finishAction(false);
+    expect(start).not.toHaveBeenCalled();
+    component.requestAction('start');
+    component.finishAction(true);
+    expect(start).toHaveBeenCalledTimes(1);
+    component.state = 'online';
+    component.requestAction('stop');
+    component.cancelAction(new Event('cancel', {cancelable: true}));
+    expect(stop).not.toHaveBeenCalled();
+    component.requestAction('stop');
+    component.finishAction(true);
+    expect(stop).toHaveBeenCalledTimes(1);
+    component.state = 'offline';
+    component.requestAction('leave');
+    component.finishAction(false);
+    expect(leave).not.toHaveBeenCalled();
+    component.requestAction('leave');
+    component.finishAction(true);
+    expect(leave).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not start if the lobby state changed during confirmation', () => {
+    component.isInLobby = true;
+    component.isHost = true;
+    component.hasMediaStreamSet$.next(true);
+    const start = spyOn(component, 'start');
+    component.requestAction('start');
+    component.state = 'online';
+    component.finishAction(true);
+    expect(start).not.toHaveBeenCalled();
+  });
+
   it('does not join as a guest before the host is present', () => {
     component.hostPresent = false;
     component.join();

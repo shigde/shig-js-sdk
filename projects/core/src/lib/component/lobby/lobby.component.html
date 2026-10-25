@@ -39,7 +39,7 @@
             }
             <!-- stop -->
             @if (isInLobby && state=='online' && isHost) {
-              <button class="nav-icon-button warning icon" title="Stop Stream" aria-label="Stop Stream" (click)="stop()">
+              <button class="nav-icon-button warning icon" title="Stop Stream" aria-label="Stop Stream" (click)="requestAction('stop')">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="48" viewBox="0 -960 960 960"
                   width="48">
                   <path
@@ -49,21 +49,11 @@
             }
             <!-- broadcast -->
             @if (isInLobby && state=='offline' && isHost) {
-              <button class="nav-icon-button action icon" title="Start Stream" aria-label="Start Stream" (click)="start()"
+              <button class="nav-icon-button action icon" title="Start Stream" aria-label="Start Stream" (click)="requestAction('start')"
                 [disabled]="!(hasMediaStreamSet$ | async)">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor">
                   <path
                     d="M440-80v-331q-18-11-29-28.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 23-11 41t-29 28v331h-80ZM204-190q-57-55-90.5-129.5T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 86-33.5 161T756-190l-56-56q46-44 73-104.5T800-480q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 69 27 129t74 104l-57 57Zm113-113q-35-33-56-78.5T240-480q0-100 70-170t170-70q100 0 170 70t70 170q0 53-21 99t-56 78l-57-57q25-23 39.5-54t14.5-66q0-66-47-113t-113-47q-66 0-113 47t-47 113q0 36 14.5 66.5T374-360l-57 57Z"/>
-                </svg>
-              </button>
-            }
-            <!-- leave -->
-            @if (isInLobby && ((state!='online' && isHost) || (!isHost))) {
-              <button class="nav-icon-button secondary icon" title="Leave Lobby" aria-label="Leave Lobby"
-                (click)="leaveLobby()">
-                <svg xmlns="http://www.w3.org/2000/svg" height="48" viewBox="0 -960 960 960" width="48" fill="currentColor">
-                  <path
-                    d="M180-120q-24 0-42-18t-18-42v-600q0-24 18-42t42-18h299v60H180v600h299v60H180Zm486-185-43-43 102-102H360v-60h363L621-612l43-43 176 176-174 174Z"/>
                 </svg>
               </button>
             }
@@ -81,6 +71,17 @@
                   d="M797-80H557q-17 0-28.5-11.5T517-120v-240q0-17 11.5-28.5T557-400h240q17 0 28.5 11.5T837-360v80l80-80v240l-80-80v80q0 17-11.5 28.5T797-80ZM480-480Zm.101-130q-53.899 0-92 38.071Q350-533.857 350-480q0 43 24 76t62 47v-68q-11-9-18.5-24.5T410-480q0-29.167 20.382-49.583Q450.765-550 479.882-550 509-550 529-529.875 549-509.75 549-481h60q0-54-37.5-91.5T480.101-610ZM388-80l-20-126q-19-7-40-19t-37-25l-118 54-93-164 108-79q-2-9-2.5-20.5T185-480q0-9 .5-20.5T188-521L80-600l93-164 118 54q16-13 37-25t40-18l20-127h184l20 126q19 7 40.5 18.5T669-710l118-54 93 164-108 77q1 10 1.5 21.5t.5 20.5h-60q0-20-2-35.5t-6-30.5l94-69-40-72-106 46q-23-26-52-43.5T538-708l-14.413-112H436l-14 112q-34 7-63.5 24T306-642l-106-46-40 72 94 69q-4 17-6.5 33.5T245-480q0 17.391 2.5 33.696Q250-430 254-413l-94 69 40 72 106-46q26 26 59.5 43.5T436-249v169h-48Z"/>
               </svg>
             </button>
+            <!-- leave -->
+            @if (isInLobby && ((state!='online' && isHost) || (!isHost))) {
+              <button class="nav-icon-button secondary icon" title="Leave Lobby" aria-label="Leave Lobby"
+                (click)="requestAction('leave')">
+                <svg xmlns="http://www.w3.org/2000/svg" height="48" viewBox="0 -960 960 960" width="48" fill="currentColor">
+                  <path
+                    d="M180-120q-24 0-42-18t-18-42v-600q0-24 18-42t42-18h299v60H180v600h299v60H180Zm486-185-43-43 102-102H360v-60h363L621-612l43-43 176 176-174 174Z"/>
+                </svg>
+              </button>
+            }
+
           </div>
         </div>
       </div>
@@ -146,3 +147,12 @@
   </div>
 }
 </div>
+
+<dialog #actionDialog class="lobby-action-dialog" aria-labelledby="lobby-action-title" aria-describedby="lobby-action-description" (cancel)="cancelAction($event)">
+  <h2 id="lobby-action-title">{{ pendingAction === 'start' ? 'Start live stream?' : pendingAction === 'stop' ? 'Stop live stream?' : 'Leave Stream Lobby?' }}</h2>
+  <p id="lobby-action-description">{{ pendingAction === 'start' ? 'Your stream will go live for viewers.' : pendingAction === 'stop' ? 'The live broadcast will end for viewers. You will stay in the lobby.' : 'You will disconnect from the stream lobby.' }}</p>
+  <div class="dialog-actions">
+    <button type="button" class="btn btn-outline-secondary" autofocus (click)="finishAction(false)">Cancel</button>
+    <button type="button" class="btn" [class.btn-primary]="pendingAction === 'start'" [class.btn-danger]="pendingAction !== 'start'" (click)="finishAction(true)">{{ pendingAction === 'start' ? 'Start live stream' : pendingAction === 'stop' ? 'Stop live stream' : 'Leave Lobby' }}</button>
+  </div>
+</dialog>

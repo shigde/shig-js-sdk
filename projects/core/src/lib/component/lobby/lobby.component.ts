@@ -382,6 +382,30 @@ export class LobbyComponent implements OnInit, AfterViewInit, OnChanges, OnDestr
     this.mixer.toggleActive(isSelected, videoId);
   }
 
+  @ViewChild('actionDialog') actionDialog?: ElementRef<HTMLDialogElement>;
+  pendingAction?: 'start' | 'stop' | 'leave';
+
+  requestAction(action: 'start' | 'stop' | 'leave'): void {
+    if (this.pendingAction || this.destroyed) return;
+    this.pendingAction = action;
+    this.actionDialog?.nativeElement.showModal();
+  }
+
+  cancelAction(event: Event): void {
+    event.preventDefault();
+    this.finishAction(false);
+  }
+
+  finishAction(confirmed: boolean): void {
+    const action = this.pendingAction;
+    this.pendingAction = undefined;
+    this.actionDialog?.nativeElement.close();
+    if (!confirmed || this.destroyed || !this.isInLobby) return;
+    if (action === 'start' && this.isHost && this.state === 'offline' && this.hasMediaStreamSet$.value) this.start();
+    if (action === 'stop' && this.isHost && this.state === 'online') this.stop();
+    if (action === 'leave' && (!this.isHost || this.state !== 'online')) this.leaveLobby();
+  }
+
   start(): void {
     this.log.info('start', this.streamUuid, this.channelUuid);
     if (this.streamUuid != undefined && this.channelUuid != undefined) {
@@ -426,6 +450,7 @@ export class LobbyComponent implements OnInit, AfterViewInit, OnChanges, OnDestr
   }
 
   ngOnDestroy(): void {
+    this.finishAction(false);
     this.destroyed = true;
     this.presencePolling$.next(false);
     void this.leaveCurrentLobby().catch(error => this.log.warn('Could not leave lobby', error));
