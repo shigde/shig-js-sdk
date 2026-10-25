@@ -64,4 +64,32 @@ describe('Guest invitation search', () => {
     expect(fixture.componentInstance.guests().map(guest => guest.uuid)).toEqual(['second']);
     fixture.destroy();
   });
+  it('stages guests without a stream or immediate invitation requests', async () => {
+    const friend = {uuid: 'guest', name: 'admin', domain: 'localhost', role: Role.GUEST} as StreamFriend;
+    const add = jasmine.createSpy('add');
+    const remove = jasmine.createSpy('remove');
+    TestBed.configureTestingModule({imports: [ShigModule], providers: [
+      {provide: StreamFriendService, useValue: {addStreamFriend: add, removeStreamFriend: remove}},
+      {provide: UserService, useValue: {searchUser: () => of([friend])}},
+    ]});
+    const fixture = TestBed.createComponent(StreamFriendsComponent);
+    fixture.componentRef.setInput('deferred', true);
+    fixture.detectChanges();
+    const changed = jasmine.createSpy('changed');
+    fixture.componentInstance.guestsChange.subscribe(changed);
+    const input = fixture.nativeElement.querySelector('input') as HTMLInputElement;
+    input.focus(); input.value = 'admin'; input.dispatchEvent(new Event('input', {bubbles: true}));
+    fixture.detectChanges(); await fixture.whenStable(); fixture.detectChanges();
+    fixture.nativeElement.querySelector('[ngOption]').click();
+    fixture.detectChanges();
+    fixture.nativeElement.querySelector('.guest-invite-button').click();
+    fixture.detectChanges();
+    expect(changed).toHaveBeenCalledWith(['guest']);
+    expect(add).not.toHaveBeenCalled();
+    fixture.componentInstance.removeFriend('guest');
+    expect(changed).toHaveBeenCalledWith([]);
+    expect(remove).not.toHaveBeenCalled();
+    fixture.destroy();
+  });
+
 });

@@ -68,7 +68,7 @@
     <div ngCombobox filterMode="auto-select">
 
       <div class="guest-search-input">
-        <input type="text" [(ngModel)]="query" ngComboboxInput class="form-control" placeholder="Guest’s username"
+        <input type="text" [(ngModel)]="query" [ngModelOptions]="{standalone: true}" ngComboboxInput class="form-control" placeholder="Guest’s username"
                aria-label="Guest’s username">
         <button type="button" class="guest-invite-button" title="Invite guest" aria-label="Invite guest" (click)="addFriend()" [disabled]="isAdding()">
 

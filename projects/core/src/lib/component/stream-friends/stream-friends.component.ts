@@ -6,6 +6,8 @@ import {
   DestroyRef,
   inject,
   Input,
+  Output,
+  EventEmitter,
   signal,
   viewChild,
   viewChildren,
@@ -44,6 +46,8 @@ export class StreamFriendsComponent {
    * Inputs
    * ======================= */
 
+  @Input() deferred = false;
+  @Output() guestsChange = new EventEmitter<string[]>();
   private _streamUuid?: string;
 
   @Input()
@@ -178,9 +182,8 @@ export class StreamFriendsComponent {
   }
 
   addFriend() {
-    if (!this._streamUuid) {
-      return;
-    }
+    if (!this.deferred && !this._streamUuid) return;
+    if (this.guests().length >= 3) return;
 
     let friend = this.options().find(o => o.active())?.value();
     const inputValue = this.combobox()?.inputElement()?.value;
@@ -193,8 +196,17 @@ export class StreamFriendsComponent {
       if (!friend) return;
     }
 
+    if (!friend || this.guests().some(g => g.uuid === friend!.uuid)) return;
+    if (this.deferred) {
+      this.guests.update(g => [...g, friend!]);
+      this.guestsChange.emit(this.guests().map(g => g.uuid));
+      this.query.set('');
+      this.combobox()?.close();
+      return;
+    }
     this.isAdding.set(true);
 
+    if (!this._streamUuid) return;
     this.friendService.addStreamFriend(this._streamUuid, friend.uuid)
       .pipe(
         take(1),
@@ -209,6 +221,11 @@ export class StreamFriendsComponent {
   }
 
   removeFriend(uuid: string) {
+    if (this.deferred) {
+      this.guests.update(g => g.filter(friend => friend.uuid !== uuid));
+      this.guestsChange.emit(this.guests().map(g => g.uuid));
+      return;
+    }
     if (!this._streamUuid) {
       return
     }

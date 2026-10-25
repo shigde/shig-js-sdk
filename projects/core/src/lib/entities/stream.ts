@@ -22,6 +22,7 @@ export interface Stream {
   isLive: boolean;
   ownerUuid: string;
   channelUuid: string;
+  guestUuids?: string[];
   participants?: string[]; // user's uuid
   video?: Video | null;
 }

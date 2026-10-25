@@ -33,6 +33,7 @@ import {StreamOverlayMenuComponent} from './component/stream-overlay-menu/stream
     StreamSettingsComponent
   ],
   exports: [
+    StreamFriendsComponent,
     AudioMeterComponent,
     DeviceCaptureComponent,
     LobbyComponent,
