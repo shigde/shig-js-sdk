@@ -7,6 +7,12 @@ import {ParameterService} from './parameter.service';
 import {RelayService} from './relay.service';
 
 describe('RelayService live status', () => {
+  it('recognizes only the exact live broadcast among other announced paths', () => {
+    const get = jasmine.createSpy('get').and.returnValues(of('other/stream\nstream'), of('other/stream'));
+    const relay = new RelayService({get} as unknown as HttpClient, {API_PREFIX: '/api'} as ParameterService, {} as PollingService);
+    relay.hasAnnouncement('channel', 'stream').subscribe(live => expect(live).toBeTrue());
+    relay.hasAnnouncement('channel', 'stream').subscribe(live => expect(live).toBeFalse());
+  });
   beforeEach(() => TestBed.configureTestingModule({providers: [{provide: SessionService, useValue: {getUser: () => of(null)}}]}));
   it('shares polling within a channel and stops after the last subscriber leaves', fakeAsync(() => {
     const get = jasmine.createSpy('get').and.returnValue(of('stream-a'));

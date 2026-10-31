@@ -23,14 +23,19 @@ export class RelayService {
       load: context => this.http.get(url, {...this.httpOptions, context}),
     }).pipe(
       filter(state => !state.loading && !state.error && state.data !== null),
-      map(state => state.data!.trim() === streamUuid)
+      map(state => this.includesBroadcast(state.data!, streamUuid))
     );
   }
 
   public hasAnnouncement(channelUuid: string, streamUuid: string): Observable<boolean> {
     const url = `${this.params.API_PREFIX}/pub/streaming/announced/live/${channelUuid}`;
     return this.http.get(url, this.httpOptions).pipe(
-      map(announcedStreamId => announcedStreamId.trim() === streamUuid)
+      map(announcedStreamId => this.includesBroadcast(announcedStreamId, streamUuid))
     );
+  }
+
+  private includesBroadcast(announcements: string, streamUuid: string): boolean {
+    // Match the exact live broadcast, not another path in the channel namespace.
+    return announcements.split('\n').some(name => name.trim() === streamUuid);
   }
 }

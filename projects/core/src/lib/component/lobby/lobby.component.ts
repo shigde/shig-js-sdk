@@ -37,6 +37,8 @@ import {
 import {LobbyErrorEvent, LobbyMediaPurpose, LobbyMediaStream, Stream, StreamLiveData} from '../../entities';
 import {StreamLayoutEditorComponent} from "../stream-layout-editor/stream-layout-editor.component";
 import {StreamMixerService} from "../../provider/stream-mixer.service";
+import {RecordingControlsComponent} from '../recording-controls/recording-controls.component';
+import {StreamSettingsComponent} from '../stream-settings/stream-settings.component';
 
 @Component({
   selector: 'shig-lobby',
@@ -50,6 +52,8 @@ import {StreamMixerService} from "../../provider/stream-mixer.service";
   standalone: false
 })
 export class LobbyComponent implements OnInit, AfterViewInit, OnChanges, OnDestroy {
+  @ViewChild(RecordingControlsComponent) recordingControls?: RecordingControlsComponent;
+  @ViewChild(StreamSettingsComponent) streamSettings?: StreamSettingsComponent;
   private readonly log = createLogger('LobbyComponent');
 
   private videoStreamRef?: ElementRef<HTMLVideoElement>;

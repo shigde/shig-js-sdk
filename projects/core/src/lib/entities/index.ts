@@ -12,6 +12,7 @@ export * from './lobby-media-muted';
 export * from './lobby-media-purpose';
 export * from './lobby-media-stream';
 export * from './media-devices';
+export * from './media-recording';
 export * from './role';
 export * from './token';
 export * from './scene-node';

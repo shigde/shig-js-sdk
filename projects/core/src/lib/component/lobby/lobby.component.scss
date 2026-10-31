@@ -78,6 +78,8 @@
 .lobby .navigation .nav-group.right > .nav-group-area { gap: 5px; }
 .lobby .navigation .nav-icon-button { margin-left: 0; white-space: nowrap; }
 .lobby .navigation .nav-icon-button { flex-shrink: 0; height: 40px; min-height: 40px; }
+.lobby .navigation .lobby-record-button { display: inline-flex; align-items: center; gap: 6px; }
+.lobby .navigation .lobby-record-button.is-recording { color: var(--bs-danger, #dc3545); }
 .lobby .navigation .lobby-title {
   margin: 0;
   min-width: 0;

@@ -6,6 +6,9 @@
     </button>
   }
 </ng-template>
+<ng-template #videosContent>
+  <ng-container [ngTemplateOutlet]="recordingControls?.panel ?? null"></ng-container>
+</ng-template>
 <div class="lobby">
 
   @if (stream && !isHost && (!hostPresent || lobbyNotice)) {
@@ -14,6 +17,12 @@
 
   @if (stream) {
     <div class="app-main">
+      @if (isHost && streamUuid) {
+        <shig-recording-controls [streamUuid]="streamUuid" [live]="state === 'online'"
+          [embedded]="true"
+          (recordingStopped)="streamSettings?.openVideos()"
+          (actionFailed)="streamSettings?.openVideos()"></shig-recording-controls>
+      }
       <!--// Navigation line -->
       <div class="navigation shadow bg-body rounded-1 border border-secondary-subtle text-body">
         <h1 class="lobby-title" [title]="stream.title">{{ stream.title }}</h1>
@@ -38,6 +47,18 @@
               </button>
             }
             <!-- stop -->
+            @if (isInLobby && state === 'online' && isHost) {
+              <button type="button" class="nav-icon-button secondary icon lobby-record-button"
+                [class.is-recording]="recordingControls?.recording?.status === 'recording'"
+                [attr.aria-label]="recordingControls?.recording?.status === 'recording' ? 'Stop recording' : recordingControls?.recording?.status === 'finalizing' ? 'Finishing recording' : 'Start recording'"
+                [title]="recordingControls?.recording?.status === 'recording' ? 'Stop recording' : 'Start recording'"
+                [disabled]="!recordingControls?.recording || recordingControls?.busy || recordingControls?.recording?.published || recordingControls?.recording?.status === 'finalizing'"
+                [attr.aria-pressed]="recordingControls?.recording?.status === 'recording'"
+                (click)="recordingControls?.toggleRecording()">
+                <span aria-hidden="true">{{ recordingControls?.recording?.status === 'recording' ? '■' : '●' }}</span>
+                <span class="lobby-action-label">{{ recordingControls?.recording?.status === 'finalizing' ? 'Finishing…' : recordingControls?.recording?.status === 'recording' ? 'Stop recording' : 'Record' }}</span>
+              </button>
+            }
             @if (isInLobby && state=='online' && isHost) {
               <button class="nav-icon-button warning icon" title="Stop Stream" aria-label="Stop Stream" (click)="requestAction('stop')">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="48" viewBox="0 -960 960 960"
@@ -60,6 +81,7 @@
 
             @if (isHost) {
               <shig-stream-settings [editorProvider]="getStreamLayoutEditor" [streamUuid]="streamUuid"
+                                    [videosTemplate]="videosContent"
                                     [userUuid]="userUuid ?? undefined"></shig-stream-settings>
             }
 

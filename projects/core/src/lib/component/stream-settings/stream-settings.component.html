@@ -20,6 +20,7 @@
       }
       @case ('overlay') { <shig-stream-overlay-menu></shig-stream-overlay-menu> }
       @case ('guests') { <app-stream-friends [streamUuid]="streamUuid" [userUuid]="userUuid"></app-stream-friends> }
+      @case ('videos') { <ng-container [ngTemplateOutlet]="videosTemplate ?? null"></ng-container> }
     }
   }
 </shig-settings-panel>

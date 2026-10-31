@@ -1,4 +1,4 @@
-import {Component, Input} from '@angular/core';
+import {Component, Input, TemplateRef} from '@angular/core';
 import {StreamLayoutEditorComponent} from '../stream-layout-editor/stream-layout-editor.component';
 import {SettingsTab} from '../settings-panel/settings-panel.component';
 
@@ -15,11 +15,18 @@ export class StreamSettingsComponent {
   }
   @Input() streamUuid?: string;
   @Input() userUuid?: string;
+  @Input() videosTemplate?: TemplateRef<unknown>;
   open = false;
   activeTab = 'layout';
-  readonly tabs: SettingsTab[] = [
+  get tabs(): SettingsTab[] { return [
     {id: 'layout', label: 'Layout', icon: 'bi-grid'},
     {id: 'overlay', label: 'Overlay', icon: 'bi-layers'},
     {id: 'guests', label: 'Guests', icon: 'bi-person-plus'},
-  ];
+    ...(this.videosTemplate ? [{id: 'videos', label: 'Videos', icon: 'bi-record-circle'}] : []),
+  ]; }
+
+  openVideos(): void {
+    this.activeTab = 'videos';
+    this.open = true;
+  }
 }
