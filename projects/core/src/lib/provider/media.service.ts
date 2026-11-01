@@ -1,38 +1,33 @@
 import {Injectable} from '@angular/core';
-import {HttpClient, HttpContext} from '@angular/common/http';
 import {map, Observable} from 'rxjs';
-import {ApiResponse} from '../entities';
-import {MediaRecording} from '../entities/media-recording';
-import {ParameterService} from './parameter.service';
-import {SkipLoading} from '../interceptors/loading.interceptor';
+import {MediaRecording, RecordedVideo} from '../entities';
+import {VideoService} from './video.service';
 
-/** Recording controls for the current server API. Archive integration is pending. */
+/** Lobby recording controls. Each recording refers to its own persisted video. */
 @Injectable({providedIn: 'root'})
 export class MediaService {
-  constructor(private http: HttpClient, private params: ParameterService) {}
+  constructor(private videos: VideoService) {}
 
   getRecording(streamUuid: string): Observable<MediaRecording> {
-    return this.http.get<ApiResponse<MediaRecording>>(this.url(streamUuid), {
-      context: new HttpContext().set(SkipLoading, true),
-    }).pipe(map(response => response.data));
+    return this.videos.listForStream(streamUuid).pipe(map(videos => {
+      const video = videos.find(item => item.status === 'recording') ?? videos[0];
+      return video ? this.recording(video) : {streamUuid, status: 'empty', published: false, durationMs: 0};
+    }));
   }
-
   startRecording(streamUuid: string): Observable<MediaRecording> {
-    return this.http.post<ApiResponse<MediaRecording>>(this.url(streamUuid), {})
-      .pipe(map(response => response.data));
+    return this.videos.startRecording(streamUuid).pipe(map(video => this.recording(video)));
   }
-
-  stopRecording(streamUuid: string): Observable<MediaRecording> {
-    return this.http.delete<ApiResponse<MediaRecording>>(this.url(streamUuid))
-      .pipe(map(response => response.data));
+  stopRecording(videoUuid: string): Observable<MediaRecording> {
+    return this.videos.stopRecording(videoUuid).pipe(map(video => this.recording(video)));
   }
-
-  setPublished(streamUuid: string, published: boolean): Observable<MediaRecording> {
-    return this.http.put<ApiResponse<MediaRecording>>(`${this.url(streamUuid)}/publication`, {published})
-      .pipe(map(response => response.data));
+  setPublished(videoUuid: string, published: boolean): Observable<MediaRecording> {
+    return this.videos.update(videoUuid, {published}).pipe(map(video => this.recording(video)));
   }
-
-  private url(streamUuid: string): string {
-    return `${this.params.API_PREFIX}/stream/${encodeURIComponent(streamUuid)}/recording`;
+  private recording(video: RecordedVideo): MediaRecording {
+    return {
+      streamUuid: video.sourceStreamUuid, videoUuid: video.uuid,
+      status: video.status === 'pending' ? 'empty' : video.status === 'processing' ? 'finalizing' : video.status,
+      published: video.publishedAt !== null, durationMs: video.durationMs, error: video.error ?? undefined,
+    };
   }
 }

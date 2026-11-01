@@ -88,10 +88,11 @@ export class RecordingControlsComponent implements OnChanges, OnDestroy {
   }
   toggleRecording(): void {
     if (this.busy || !this.recording || !this.live) return;
+    if (this.recording.status === 'recording' && !this.recording.videoUuid) return;
     this.busy = true; this.error = '';
     this.awaitingStoppedRecording = this.recording.status === 'recording';
     const operation = this.awaitingStoppedRecording
-      ? this.media.stopRecording(this.streamUuid) : this.media.startRecording(this.streamUuid);
+      ? this.media.stopRecording(this.recording.videoUuid!) : this.media.startRecording(this.streamUuid);
     this.subscriptions.add(operation.pipe(finalize(() => { this.busy = false; this.cdr.markForCheck(); })).subscribe({
       next: value => this.update(value), error: error => {
         this.awaitingStoppedRecording = false;
@@ -106,7 +107,8 @@ export class RecordingControlsComponent implements OnChanges, OnDestroy {
     input.checked = this.recording?.published ?? false;
     if (this.busy) return;
     this.busy = true; this.error = '';
-    this.subscriptions.add(this.media.setPublished(this.streamUuid, value).pipe(
+    if (!this.recording?.videoUuid) { this.busy = false; return; }
+    this.subscriptions.add(this.media.setPublished(this.recording.videoUuid, value).pipe(
       finalize(() => { this.busy = false; this.cdr.markForCheck(); }),
     ).subscribe({next: value => this.update(value), error: error => this.fail(error)}));
   }

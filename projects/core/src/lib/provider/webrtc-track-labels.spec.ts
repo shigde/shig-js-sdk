@@ -5,11 +5,12 @@ import {TrackLabelResolver, WebrtcMetricsService} from './webrtc-metrics.service
 
 describe('WebRTC metric track identity', () => {
   it('labels reordered outgoing stats by negotiated sender, including after device replacement', async () => {
+    spyOn(RTCRtpSender, 'getCapabilities').and.returnValue({headerExtensions: [], codecs: [{mimeType: 'video/H264', clockRate: 90000}]});
     const transceivers: any[] = [];
     const senderFor = (track: MediaStreamTrack) => ({track, getParameters: () => ({encodings: [{}]}),
       setParameters: async () => {}, setStreams: () => {}, replaceTrack: async function(next: MediaStreamTrack) {this.track = next;}});
     const add = (track: MediaStreamTrack) => {
-      const sender = senderFor(track); const transceiver = {mid: String(transceivers.length), sender};
+      const sender = senderFor(track); const transceiver = {mid: String(transceivers.length), sender, setCodecPreferences: () => {}};
       transceivers.push(transceiver); return transceiver;
     };
     const pc = {getTransceivers: () => transceivers, addTrack: (track: MediaStreamTrack) => add(track).sender,

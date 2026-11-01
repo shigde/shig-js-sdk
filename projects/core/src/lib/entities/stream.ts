@@ -1,5 +1,6 @@
 import {Video} from './video';
 import {Weekday} from './weekday';
+import {ContentType} from './recorded-video';
 
 // #[serde(rename_all = "camelCase")]
 export interface Stream {
@@ -28,6 +29,9 @@ export interface Stream {
 }
 
 export interface StreamPreview {
+  type?: ContentType;
+  sourceStreamUuid?: string | null;
+  durationMs?: number | null;
   uuid: string;
   title: string;
   thumbnail: string;

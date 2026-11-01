@@ -6,7 +6,7 @@ import {RecordingControlsComponent} from './recording-controls.component';
 
 describe('Lobby recording completion', () => {
   const recording = (status: MediaRecording['status']): MediaRecording => ({
-    streamUuid: 'stream', status, published: false, durationMs: 12000,
+    streamUuid: 'stream', videoUuid: 'video', status, published: false, durationMs: 12000,
   });
 
   function setup() {

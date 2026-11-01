@@ -50,13 +50,13 @@
             @if (isInLobby && state === 'online' && isHost) {
               <button type="button" class="nav-icon-button secondary icon lobby-record-button"
                 [class.is-recording]="recordingControls?.recording?.status === 'recording'"
-                [attr.aria-label]="recordingControls?.recording?.status === 'recording' ? 'Stop recording' : recordingControls?.recording?.status === 'finalizing' ? 'Finishing recording' : 'Start recording'"
+                [attr.aria-label]="recordingControls?.recording?.status === 'recording' ? 'Stop recording' : 'Start recording'"
                 [title]="recordingControls?.recording?.status === 'recording' ? 'Stop recording' : 'Start recording'"
-                [disabled]="!recordingControls?.recording || recordingControls?.busy || recordingControls?.recording?.published || recordingControls?.recording?.status === 'finalizing'"
+                [disabled]="!recordingControls?.recording || recordingControls?.busy"
                 [attr.aria-pressed]="recordingControls?.recording?.status === 'recording'"
                 (click)="recordingControls?.toggleRecording()">
                 <span aria-hidden="true">{{ recordingControls?.recording?.status === 'recording' ? '■' : '●' }}</span>
-                <span class="lobby-action-label">{{ recordingControls?.recording?.status === 'finalizing' ? 'Finishing…' : recordingControls?.recording?.status === 'recording' ? 'Stop recording' : 'Record' }}</span>
+                <span class="lobby-action-label">{{ recordingControls?.recording?.status === 'recording' ? 'Stop recording' : 'Record' }}</span>
               </button>
             }
             @if (isInLobby && state=='online' && isHost) {

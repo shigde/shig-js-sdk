@@ -80,6 +80,16 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
           senders.push(transceiver.sender);
 
           if (track.kind === 'video') {
+            const codecs = RTCRtpSender.getCapabilities('video')?.codecs ?? [];
+            const h264 = codecs.filter(codec => codec.mimeType.toLowerCase() === 'video/h264');
+            if (!h264.length) {
+              throw new Error('This browser cannot publish the stream using H.264.');
+            }
+            // Restrict the published mix to H.264; retain RTP retransmission support.
+            transceiver.setCodecPreferences([
+              ...h264,
+              ...codecs.filter(codec => codec.mimeType.toLowerCase() === 'video/rtx'),
+            ]);
             senderParameterUpdates.push(this.configureVideoSender(transceiver.sender));
           }
 
