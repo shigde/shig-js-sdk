@@ -7,7 +7,9 @@
   @if (open) {
     @switch (activeTab) {
       @case ('layout') {
-        <div class="stream-layout-settings">
+        <section class="settings-section" aria-label="Layout">
+        <h3 class="settings-heading">Layout</h3>
+        <div class="stream-layout-settings settings-box">
           <label class="form-check form-switch">
             <input class="form-check-input" type="checkbox" role="switch"
                    [checked]="editor?.layoutEditMode" [disabled]="!editor?.ready"
@@ -17,9 +19,20 @@
           <button class="btn btn-outline-primary" type="button" [disabled]="!editor?.ready"
                   (click)="editor?.resetTileLayout()"><i class="bi bi-grid" aria-hidden="true"></i> Tile Grid</button>
         </div>
+        </section>
       }
-      @case ('overlay') { <shig-stream-overlay-menu></shig-stream-overlay-menu> }
-      @case ('guests') { <app-stream-friends [streamUuid]="streamUuid" [userUuid]="userUuid"></app-stream-friends> }
+      @case ('overlay') {
+        <section class="settings-section" aria-label="Overlay">
+          <h3 class="settings-heading">Overlay</h3>
+          <div class="settings-box"><shig-stream-overlay-menu></shig-stream-overlay-menu></div>
+        </section>
+      }
+      @case ('guests') {
+        <section class="settings-section" aria-label="Guests">
+          <h3 class="settings-heading">Guests</h3>
+          <div class="settings-box"><app-stream-friends [streamUuid]="streamUuid" [userUuid]="userUuid"></app-stream-friends></div>
+        </section>
+      }
       @case ('videos') { <ng-container [ngTemplateOutlet]="videosTemplate ?? null"></ng-container> }
     }
   }

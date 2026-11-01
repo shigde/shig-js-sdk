@@ -45,6 +45,9 @@ export class VideoService {
   update(uuid: string, changes: RecordedVideoUpdate): Observable<RecordedVideo> {
     return this.http.patch<ApiResponse<RecordedVideo>>(this.videoUrl(uuid), changes).pipe(map(response => response.data));
   }
+  delete(uuid: string): Observable<void> {
+    return this.http.delete<void>(this.videoUrl(uuid));
+  }
   startRecording(streamUuid: string): Observable<RecordedVideo> {
     return this.http.post<ApiResponse<RecordedVideo>>(`${this.streamUrl(streamUuid)}/recordings`, {})
       .pipe(map(response => response.data));

@@ -1,0 +1,15 @@
+// Shared content treatment for every lobby settings tab.
+@mixin content {
+  .settings-section { min-width: 0; }
+  .settings-heading { margin: 0 0 12px; text-align: left; font-size: 16px; font-weight: 600; }
+  .settings-box {
+    min-width: 0;
+    padding: 14px;
+    border: 0;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--bs-body-bg, #fff) 94%, var(--bs-body-color, #202328) 6%);
+  }
+  @media (max-width: 575.98px) {
+    .settings-box { padding: 12px; }
+  }
+}

@@ -20,6 +20,7 @@
       @if (isHost && streamUuid) {
         <shig-recording-controls [streamUuid]="streamUuid" [live]="state === 'online'"
           [embedded]="true"
+          (replayOpen)="replayOpen.emit($event)"
           (recordingStopped)="streamSettings?.openVideos()"
           (actionFailed)="streamSettings?.openVideos()"></shig-recording-controls>
       }

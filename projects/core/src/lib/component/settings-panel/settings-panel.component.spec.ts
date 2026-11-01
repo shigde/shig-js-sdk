@@ -10,15 +10,45 @@ import {SettingsPanelComponent} from './settings-panel.component';
     <button cdkOverlayOrigin #origin="cdkOverlayOrigin" (click)="open = !open">Settings</button>
     <shig-settings-panel [origin]="origin" [(open)]="open" [tabs]="tabs" [(activeTab)]="activeTab">
       <label>Volume <input type="range" aria-label="Volume"></label>
+      @if (longContent) {
+        @for (row of rows; track row) { <p style="min-height:40px">Replay {{ row }}</p> }
+      }
     </shig-settings-panel>`,
 })
 class PanelHost {
+  longContent = false;
+  rows = Array.from({length: 60}, (_, index) => index + 1);
   open = false;
   activeTab = 'audio';
   tabs = [{id: 'audio', label: 'Audio', icon: 'bi-volume-up'}, {id: 'video', label: 'Video', icon: 'bi-camera-video'}];
 }
 
 describe('SettingsPanelComponent', () => {
+  it('keeps the header in the viewport and scrolls only content as the panel grows', async () => {
+    const fixture = TestBed.createComponent(PanelHost);
+    fixture.componentInstance.open = true;
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const initialPanel = TestBed.inject(OverlayContainer).getContainerElement().querySelector<HTMLElement>('.settings-panel')!;
+    const initialTop = initialPanel.getBoundingClientRect().top;
+    fixture.componentInstance.longContent = true;
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const container = TestBed.inject(OverlayContainer).getContainerElement();
+    const panel = container.querySelector<HTMLElement>('.settings-panel')!;
+    const content = panel.querySelector<HTMLElement>('.settings-panel-content')!;
+    const close = panel.querySelector<HTMLElement>('.settings-panel-close')!;
+    expect(panel.getBoundingClientRect().top).toBeGreaterThanOrEqual(0);
+    expect(panel.getBoundingClientRect().top).toBe(initialTop);
+    expect(panel.getBoundingClientRect().bottom).toBeLessThanOrEqual(window.innerHeight);
+    expect(content.scrollHeight).toBeGreaterThan(content.clientHeight);
+    const headerTop = close.getBoundingClientRect().top;
+    content.scrollTop = content.scrollHeight;
+    expect(close.getBoundingClientRect().top).toBe(headerTop);
+    content.scrollTop = 0;
+    expect(content.scrollTop).toBe(0);
+    fixture.destroy();
+  });
   for (const dark of [false, true]) {
     it(`keeps a single tab compact and transparent in ${dark ? 'dark' : 'light'} mode`, async () => {
       const fixture = TestBed.createComponent(PanelHost);

@@ -1,14 +1,4 @@
-<ng-template cdkConnectedOverlay
-             [cdkConnectedOverlayOrigin]="origin"
-             [cdkConnectedOverlayOpen]="open"
-             [cdkConnectedOverlayPositions]="positions"
-             [cdkConnectedOverlayPush]="true"
-             [cdkConnectedOverlayViewportMargin]="12"
-             [cdkConnectedOverlayHasBackdrop]="true"
-             cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
-             (backdropClick)="close()"
-             (detach)="close()"
-             (overlayKeydown)="onOverlayKeydown($event)">
+<ng-template #panelTemplate>
   <section class="settings-panel" [id]="panelId" role="dialog" [attr.aria-labelledby]="panelId + '-heading'"
            cdkTrapFocus [cdkTrapFocusAutoCapture]="true">
     <header class="settings-panel-header">

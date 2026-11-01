@@ -112,6 +112,7 @@ export class LobbyComponent implements OnInit, AfterViewInit, OnChanges, OnDestr
 
   @Output() loadComp = new EventEmitter();
   @Output() onError = new EventEmitter<LobbyErrorEvent>();
+  @Output() replayOpen = new EventEmitter<string>();
 
   constructor(
     private session: SessionService,

@@ -26,7 +26,7 @@ export class MediaService {
   private recording(video: RecordedVideo): MediaRecording {
     return {
       streamUuid: video.sourceStreamUuid, videoUuid: video.uuid,
-      status: video.status === 'pending' ? 'empty' : video.status === 'processing' ? 'finalizing' : video.status,
+      status: video.status === 'pending' || video.status === 'deleting' ? 'empty' : video.status === 'processing' ? 'finalizing' : video.status,
       published: video.publishedAt !== null, durationMs: video.durationMs, error: video.error ?? undefined,
     };
   }

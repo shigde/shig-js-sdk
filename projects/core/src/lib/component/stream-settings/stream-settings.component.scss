@@ -1,3 +1,6 @@
+@use '../settings-panel/settings-section' as settings;
+@include settings.content;
+
 :host { display: block; }
 .nav-icon-button > i { font-size: 25px; line-height: 1; }
 .stream-layout-settings { display: grid; gap: 20px; }

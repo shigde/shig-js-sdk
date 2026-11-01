@@ -12,7 +12,7 @@ export interface RecordedVideo {
   licence: number;
   isPublic: boolean;
   publishedAt: string | null;
-  status: 'pending' | 'recording' | 'processing' | 'ready' | 'failed';
+  status: 'pending' | 'recording' | 'processing' | 'ready' | 'failed' | 'deleting';
   durationMs: number;
   error: string | null;
   startedAt: string | null;

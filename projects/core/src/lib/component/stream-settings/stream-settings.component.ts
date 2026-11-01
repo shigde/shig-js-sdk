@@ -22,7 +22,7 @@ export class StreamSettingsComponent {
     {id: 'layout', label: 'Layout', icon: 'bi-grid'},
     {id: 'overlay', label: 'Overlay', icon: 'bi-layers'},
     {id: 'guests', label: 'Guests', icon: 'bi-person-plus'},
-    ...(this.videosTemplate ? [{id: 'videos', label: 'Videos', icon: 'bi-record-circle'}] : []),
+    ...(this.videosTemplate ? [{id: 'videos', label: 'Replays', icon: 'bi-collection-play'}] : []),
   ]; }
 
   openVideos(): void {
