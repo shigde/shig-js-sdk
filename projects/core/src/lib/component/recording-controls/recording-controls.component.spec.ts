@@ -16,10 +16,11 @@ describe('Lobby recording completion', () => {
     const media = {
       getRecording: jasmine.createSpy().and.returnValue(of(recording('recording'))),
       stopRecording: jasmine.createSpy().and.returnValue(updates),
-      startRecording: jasmine.createSpy(),
+      startRecording: jasmine.createSpy().and.returnValue(updates),
     };
     const videos = {listForStream: jasmine.createSpy().and.returnValue(of([])),
-      delete: jasmine.createSpy().and.returnValue(of(undefined))};
+      delete: jasmine.createSpy().and.returnValue(of(undefined)),
+      waitForRecordingReady: jasmine.createSpy().and.returnValue(of(undefined))};
     TestBed.configureTestingModule({
       imports: [RecordingControlsComponent],
       providers: [{provide: MediaService, useValue: media}, {provide: VideoService, useValue: videos}],
@@ -54,6 +55,52 @@ describe('Lobby recording completion', () => {
     fixture.detectChanges();
     expect(media.getRecording).toHaveBeenCalledTimes(1);
     expect(stopped).not.toHaveBeenCalled();
+  });
+
+  it('waits for source readiness without starting a recording or emitting menu events', () => {
+    const {fixture, component, media, videos, updates} = setup();
+    const ready = new Subject<void>();
+    videos.waitForRecordingReady.and.returnValue(ready);
+    media.getRecording.and.returnValue(of(recording('empty')));
+    fixture.componentRef.setInput('live', false);
+    fixture.detectChanges();
+    fixture.componentRef.setInput('live', true);
+    fixture.detectChanges();
+    expect(component.preparing).toBeTrue();
+    expect(component.canToggleRecording).toBeFalse();
+    component.toggleRecording();
+    expect(media.startRecording).not.toHaveBeenCalled();
+    ready.next();
+    expect(component.canToggleRecording).toBeTrue();
+    const stopped = jasmine.createSpy();
+    component.recordingStopped.subscribe(stopped);
+    component.toggleRecording();
+    expect(media.startRecording).toHaveBeenCalledWith('stream');
+    updates.next(recording('recording'));
+    expect(stopped).not.toHaveBeenCalled();
+  });
+
+  it('cancels readiness when the stream goes offline and allows an explicit retry after failure', () => {
+    const {fixture, component, media, videos} = setup();
+    const ready = new Subject<void>();
+    videos.waitForRecordingReady.and.returnValue(ready);
+    media.getRecording.and.returnValue(of(recording('empty')));
+    fixture.componentRef.setInput('live', false);
+    fixture.detectChanges();
+    fixture.componentRef.setInput('live', true);
+    fixture.detectChanges();
+    fixture.componentRef.setInput('live', false);
+    fixture.detectChanges();
+    ready.next();
+    expect(component.recordingReady).toBeFalse();
+    videos.waitForRecordingReady.and.returnValue(throwError(() => new Error('not ready')));
+    fixture.componentRef.setInput('live', true);
+    fixture.detectChanges();
+    expect(component.preparationError).not.toBe('');
+    videos.waitForRecordingReady.and.returnValue(of(undefined));
+    component.toggleRecording();
+    expect(component.recordingReady).toBeTrue();
+    expect(media.startRecording).not.toHaveBeenCalled();
   });
 
   it('shows a failed stop through the settings error event without reporting completion', () => {

@@ -15,6 +15,12 @@ describe('VideoService REST resources', () => {
     http = TestBed.inject(HttpTestingController);
   });
   afterEach(() => http.verify());
+  it('waits for recording readiness in one request', () => {
+    service.waitForRecordingReady('stream/id').subscribe();
+    const request = http.expectOne('/api/streams/stream%2Fid/recordings/ready');
+    expect(request.request.method).toBe('GET');
+    request.flush(null, {status: 204, statusText: 'No Content'});
+  });
   it('fetches recorded video previews separately and converts their dates', () => {
     service.getPreview('video/id').subscribe(preview => {
       expect(preview.type).toBe('video');

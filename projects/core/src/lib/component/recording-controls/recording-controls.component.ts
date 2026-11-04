@@ -126,6 +126,9 @@ export class RecordingControlsComponent implements OnChanges, OnDestroy {
   replaysLoaded = false;
   listError = '';
   busy = false;
+  preparing = false;
+  recordingReady = false;
+  preparationError = '';
   error = '';
   pendingDeleteUuid = '';
   deletingUuid = '';
@@ -134,16 +137,28 @@ export class RecordingControlsComponent implements OnChanges, OnDestroy {
   private awaitingStoppedRecording = false;
   private subscriptions = new Subscription();
   private listRequest?: Subscription;
+  private readinessRequest?: Subscription;
+  private wasLive = false;
   constructor(private media: MediaService, private cdr: ChangeDetectorRef, private videos: VideoService) {}
 
   ngOnChanges(): void {
     if (!this.streamUuid) return;
+    const streamChanged = this.watchedStream !== this.streamUuid;
+    const liveChanged = this.wasLive !== this.live;
+    this.wasLive = this.live;
+    if (streamChanged || liveChanged) {
+      this.readinessRequest?.unsubscribe();
+      this.recordingReady = false;
+      this.preparing = false;
+      this.preparationError = '';
+    }
     if (this.watchedStream === this.streamUuid) {
       // Refresh immediately when live ends, including embedded SDK lobbies
       // whose token is set before their principal polling state is initialized.
       this.subscriptions.add(this.media.getRecording(this.streamUuid).subscribe({
         next: value => this.update(value), error: error => this.fail(error),
       }));
+      if (liveChanged && this.live) this.prepareRecording();
       return;
     }
     this.subscriptions.unsubscribe();
@@ -160,9 +175,37 @@ export class RecordingControlsComponent implements OnChanges, OnDestroy {
     this.subscriptions.add(this.media.getRecording(this.streamUuid).subscribe({
       next: value => this.update(value), error: error => this.fail(error),
     }));
+    if (this.live) this.prepareRecording();
+  }
+  get canToggleRecording(): boolean {
+    return this.live && !!this.recording && !this.busy &&
+      (this.recording.status === 'recording' || (!this.preparing && (this.recordingReady || !!this.preparationError)));
+  }
+  prepareRecording(): void {
+    if (!this.live || this.preparing) return;
+    this.preparing = true;
+    this.preparationError = '';
+    this.recordingReady = false;
+    this.readinessRequest = this.videos.waitForRecordingReady(this.streamUuid).subscribe({
+      next: () => {
+        this.preparing = false;
+        this.recordingReady = true;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.preparing = false;
+        this.preparationError = 'Recording is not ready. Click to retry.';
+        this.cdr.markForCheck();
+      },
+    });
+    this.subscriptions.add(this.readinessRequest);
   }
   toggleRecording(): void {
-    if (this.busy || !this.recording || !this.live) return;
+    if (!this.canToggleRecording || !this.recording) return;
+    if (this.recording.status !== 'recording' && !this.recordingReady) {
+      this.prepareRecording();
+      return;
+    }
     if (this.recording.status === 'recording' && !this.recording.videoUuid) return;
     this.busy = true; this.error = '';
     this.awaitingStoppedRecording = this.recording.status === 'recording';

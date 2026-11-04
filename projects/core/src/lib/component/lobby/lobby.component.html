@@ -20,9 +20,7 @@
       @if (isHost && streamUuid) {
         <shig-recording-controls [streamUuid]="streamUuid" [live]="state === 'online'"
           [embedded]="true"
-          (replayOpen)="replayOpen.emit($event)"
-          (recordingStopped)="streamSettings?.openVideos()"
-          (actionFailed)="streamSettings?.openVideos()"></shig-recording-controls>
+          (replayOpen)="replayOpen.emit($event)"></shig-recording-controls>
       }
       <!--// Navigation line -->
       <div class="navigation shadow bg-body rounded-1 border border-secondary-subtle text-body">
@@ -52,13 +50,20 @@
               <button type="button" class="nav-icon-button secondary icon lobby-record-button"
                 [class.is-recording]="recordingControls?.recording?.status === 'recording'"
                 [attr.aria-label]="recordingControls?.recording?.status === 'recording' ? 'Stop recording' : 'Start recording'"
-                [title]="recordingControls?.recording?.status === 'recording' ? 'Stop recording' : 'Start recording'"
-                [disabled]="!recordingControls?.recording || recordingControls?.busy"
+                [title]="recordingControls?.preparationError || recordingControls?.error || (recordingControls?.preparing ? 'Preparing recording…' : recordingControls?.recording?.status === 'recording' ? 'Stop recording' : 'Start recording')"
+                [disabled]="!recordingControls?.canToggleRecording"
                 [attr.aria-pressed]="recordingControls?.recording?.status === 'recording'"
                 (click)="recordingControls?.toggleRecording()">
-                <span aria-hidden="true">{{ recordingControls?.recording?.status === 'recording' ? '■' : '●' }}</span>
-                <span class="lobby-action-label">{{ recordingControls?.recording?.status === 'recording' ? 'Stop recording' : 'Record' }}</span>
+                @if (recordingControls?.preparing || recordingControls?.busy) {
+                  <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                } @else {
+                  <span aria-hidden="true">{{ recordingControls?.recording?.status === 'recording' ? '■' : '●' }}</span>
+                }
+                <span class="lobby-action-label">{{ recordingControls?.preparing ? 'Preparing recording…' : recordingControls?.preparationError ? 'Retry recording' : recordingControls?.recording?.status === 'recording' ? 'Stop recording' : 'Record' }}</span>
               </button>
+              @if (recordingControls?.error) {
+                <span class="text-danger small" role="alert">{{ recordingControls?.error }}</span>
+              }
             }
             @if (isInLobby && state=='online' && isHost) {
               <button class="nav-icon-button warning icon" title="Stop Stream" aria-label="Stop Stream" (click)="requestAction('stop')">

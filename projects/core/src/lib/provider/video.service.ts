@@ -52,6 +52,11 @@ export class VideoService {
     return this.http.post<ApiResponse<RecordedVideo>>(`${this.streamUrl(streamUuid)}/recordings`, {})
       .pipe(map(response => response.data));
   }
+  waitForRecordingReady(streamUuid: string): Observable<void> {
+    return this.http.get<void>(`${this.streamUrl(streamUuid)}/recordings/ready`, {
+      context: new HttpContext().set(SkipLoading, true),
+    });
+  }
   stopRecording(uuid: string): Observable<RecordedVideo> {
     return this.http.post<ApiResponse<RecordedVideo>>(`${this.videoUrl(uuid)}/stop`, {})
       .pipe(map(response => response.data));
