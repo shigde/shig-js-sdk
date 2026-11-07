@@ -48,5 +48,7 @@
   color: var(--bs-body-color, #343a40);
   background: var(--bs-body-bg, #fff);
   box-shadow: 0 2px 6px #0000001a;
+  opacity: .6;
 }
+.stream-fullscreen-button:is(:hover, :focus-visible, :active) { opacity: 1; }
 .stream-fullscreen-button:focus-visible { outline: 2px solid var(--bs-primary, #8dcaff); outline-offset: 2px; }

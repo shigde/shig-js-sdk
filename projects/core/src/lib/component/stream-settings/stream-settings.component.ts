@@ -9,6 +9,7 @@ import {SettingsTab} from '../settings-panel/settings-panel.component';
   styleUrl: './stream-settings.component.scss',
 })
 export class StreamSettingsComponent {
+  @Input() centered = false;
   @Input() editorProvider?: () => StreamLayoutEditorComponent | undefined;
   get editor(): StreamLayoutEditorComponent | undefined {
     return this.editorProvider?.();
@@ -18,15 +19,33 @@ export class StreamSettingsComponent {
   @Input() videosTemplate?: TemplateRef<unknown>;
   open = false;
   activeTab = 'layout';
+  newReplay = false;
   get tabs(): SettingsTab[] { return [
     {id: 'layout', label: 'Layout', icon: 'bi-grid'},
     {id: 'overlay', label: 'Overlay', icon: 'bi-layers'},
     {id: 'guests', label: 'Guests', icon: 'bi-person-plus'},
-    ...(this.videosTemplate ? [{id: 'videos', label: 'Replays', icon: 'bi-collection-play'}] : []),
+    ...(this.videosTemplate ? [{
+      id: 'videos', label: 'Replays', icon: 'bi-collection-play',
+      notificationLabel: this.newReplay ? 'New replay' : undefined,
+    }] : []),
   ]; }
 
   openVideos(): void {
-    this.activeTab = 'videos';
-    this.open = true;
+    this.selectTab('videos');
+    this.setOpen(true);
+  }
+
+  notifyReplayReady(): void {
+    this.newReplay = true;
+  }
+
+  setOpen(open: boolean): void {
+    this.open = open;
+    if (!open) this.newReplay = false;
+  }
+
+  selectTab(tab: string): void {
+    this.activeTab = tab;
+    if (tab === 'videos') this.newReplay = false;
   }
 }

@@ -1,7 +1,50 @@
+@mixin notification-dot {
+  position: absolute;
+  inset-block-start: 5px;
+  inset-inline-end: 5px;
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--bs-danger);
+  pointer-events: none;
+}
+
 // Shared content treatment for every lobby settings tab.
 @mixin content {
   .settings-section { min-width: 0; }
-  .settings-heading { margin: 0 0 12px; text-align: left; font-size: 16px; font-weight: 600; }
+  .settings-heading {
+    --heading-color: var(--bs-primary-text-emphasis, #084298);
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin: 0 0 12px;
+    color: var(--heading-color);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+
+    .bi {
+      display: grid;
+      place-items: center;
+      flex: 0 0 30px;
+      height: 30px;
+      border-radius: 4px;
+      background: color-mix(in srgb, var(--heading-color) 13%, transparent);
+      font-size: 16px;
+      letter-spacing: normal;
+    }
+  }
+  .settings-heading-overlay { --heading-color: #00778a; }
+  .settings-heading-guests { --heading-color: #377719; }
+  .settings-heading-replay { --heading-color: #8337cc; }
+
+  :host-context([data-bs-theme="dark"]) {
+    .settings-heading-overlay { --heading-color: #35d3f2; }
+    .settings-heading-guests { --heading-color: #7be333; }
+    .settings-heading-replay { --heading-color: #ba79ff; }
+  }
   .settings-box {
     min-width: 0;
     padding: 14px;

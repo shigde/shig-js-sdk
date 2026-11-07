@@ -16,11 +16,13 @@
           <button type="button" role="tab" class="settings-panel-tab"
                   [id]="panelId + '-tab-' + tab.id"
                   [class.is-active]="activeTab === tab.id"
+                  [attr.aria-label]="tab.notificationLabel ? tab.label + ', ' + tab.notificationLabel : null"
                   [attr.aria-selected]="activeTab === tab.id"
                   [attr.aria-controls]="panelId + '-content'"
                   [tabIndex]="activeTab === tab.id ? 0 : -1"
                   (keydown)="onTabKeydown($event, index)" (click)="activeTabChange.emit(tab.id)">
             <i [class]="'bi ' + tab.icon" aria-hidden="true"></i><span>{{ tab.label }}</span>
+            @if (tab.notificationLabel) { <span class="settings-notification-dot" aria-hidden="true"></span> }
           </button>
         }
       </div>

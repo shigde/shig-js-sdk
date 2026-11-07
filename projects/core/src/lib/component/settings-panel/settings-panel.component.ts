@@ -8,6 +8,7 @@ export interface SettingsTab {
   id: string;
   label: string;
   icon: string;
+  notificationLabel?: string;
 }
 
 let nextPanelId = 0;
@@ -21,6 +22,7 @@ let nextPanelId = 0;
 })
 export class SettingsPanelComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Input({required: true}) origin!: CdkOverlayOrigin;
+  @Input() centered = false;
   @Input() open = false;
   @Input() heading = 'Settings';
   @Input() subtitle = '';
@@ -81,8 +83,10 @@ export class SettingsPanelComponent implements AfterViewInit, OnChanges, OnDestr
     const belowButton = this.origin.elementRef.nativeElement.getBoundingClientRect().bottom + 8;
     // Keep a stable top edge across tab/content changes. On mobile, or when
     // the trigger is too low, use the viewport's top margin instead.
-    const top = window.innerWidth > 575 && window.innerHeight - belowButton - 12 >= 200
-      ? Math.max(12, belowButton) : 12;
+    const top = this.centered
+      ? Math.max(12, Math.min(80, Math.round(window.innerHeight * 0.1)))
+      : window.innerWidth > 575 && window.innerHeight - belowButton - 12 >= 200
+        ? Math.max(12, belowButton) : 12;
     const maxHeight = `calc(100dvh - ${top + 12}px)`;
     this.position.top(`${top}px`);
     this.overlayRef.updateSize({maxHeight});

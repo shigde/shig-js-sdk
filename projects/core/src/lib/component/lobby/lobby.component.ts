@@ -19,7 +19,7 @@ import {Location} from '@angular/common';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import {SkipLoading} from '../../interceptors/loading.interceptor';
 import {HttpErrorResponse} from '@angular/common/http';
-import {BehaviorSubject, catchError, distinctUntilChanged, EMPTY, filter, lastValueFrom, map, of, switchMap, take, tap, timeout} from 'rxjs';
+import {BehaviorSubject, catchError, distinctUntilChanged, EMPTY, filter, finalize, lastValueFrom, map, Observable, of, switchMap, take, tap, timeout, timer} from 'rxjs';
 import {environment} from '../../../environments/environment';
 
 import {
@@ -38,6 +38,7 @@ import {LobbyErrorEvent, LobbyMediaPurpose, LobbyMediaStream, Stream, StreamLive
 import {StreamLayoutEditorComponent} from "../stream-layout-editor/stream-layout-editor.component";
 import {StreamMixerService} from "../../provider/stream-mixer.service";
 import {RecordingControlsComponent} from '../recording-controls/recording-controls.component';
+import {MediaRecording} from '../../entities/media-recording';
 import {StreamSettingsComponent} from '../stream-settings/stream-settings.component';
 
 @Component({
@@ -81,7 +82,41 @@ export class LobbyComponent implements OnInit, AfterViewInit, OnChanges, OnDestr
   @Input() setupPreview?: TemplateRef<any>;
 
   get connectionActive(): boolean { return this.isInLobby || this.isJoining; }
-  state: 'offline' | 'online' = 'offline';
+  private readonly liveSince$ = new BehaviorSubject<number | null>(null);
+  private readonly recordingSince$ = new BehaviorSubject<number | null>(null);
+  readonly liveElapsed$ = this.elapsedSince(this.liveSince$);
+  readonly recordingElapsed$ = this.elapsedSince(this.recordingSince$);
+
+  private elapsedSince(started$: Observable<number | null>): Observable<string | null> {
+    return started$.pipe(distinctUntilChanged(), switchMap(started =>
+      started === null ? of(null) : timer(0, 1000).pipe(map(() => {
+        const seconds = Math.max(0, Math.floor((Date.now() - started) / 1000));
+        return [Math.floor(seconds / 3600), Math.floor(seconds / 60) % 60, seconds % 60]
+          .map(part => String(part).padStart(2, '0')).join(':');
+      })),
+    ));
+  }
+  get state(): 'offline' | 'online' { return this.liveSince$.value === null ? 'offline' : 'online'; }
+  set state(value: 'offline' | 'online') {
+    if (value !== this.state) this.liveSince$.next(value === 'online' ? Date.now() : null);
+  }
+  liveActionBusy = false;
+  startPanelCollapsed = true;
+  private replayOverride?: boolean;
+  get saveReplay(): boolean {
+    return this.replayOverride ?? this.recordingControls?.recordReplaysByDefault ?? false;
+  }
+  set saveReplay(enabled: boolean) {
+    this.replayOverride = enabled;
+  }
+
+  updateRecordingClock(recording: MediaRecording): void {
+    const startedAt = recording.status === 'recording' ? recording.startedAt : null;
+    const timestamp = startedAt
+      ? Date.parse(/(?:Z|[+-]\d{2}:\d{2})$/.test(startedAt) ? startedAt : startedAt + 'Z')
+      : NaN;
+    this.recordingSince$.next(Number.isFinite(timestamp) ? timestamp : null);
+  }
 
   stream: Stream | undefined;
   localGuest: LobbyMediaStream | undefined;
@@ -298,7 +333,12 @@ export class LobbyComponent implements OnInit, AfterViewInit, OnChanges, OnDestr
       this.presencePolling$.next(false);
       this.joiningTask = lastValueFrom(this.session.getUserName().pipe(take(1)))
         .then(name => this.lobbyService.join(streams, this.channelUuid!, this.streamUuid!, this.config, name || 'Guest'))
-          .then(() => { if (!this.destroyed) this.isInLobby = true; })
+          .then(() => {
+            if (!this.destroyed) {
+              this.startPanelCollapsed = true;
+              this.isInLobby = true;
+            }
+          })
           .catch((error) => {
             this.log.error('Could not join lobby', error);
             this.isInLobby = false;
@@ -391,7 +431,7 @@ export class LobbyComponent implements OnInit, AfterViewInit, OnChanges, OnDestr
   pendingAction?: 'start' | 'stop' | 'leave';
 
   requestAction(action: 'start' | 'stop' | 'leave'): void {
-    if (this.pendingAction || this.destroyed) return;
+    if (this.pendingAction || this.liveActionBusy || this.destroyed) return;
     this.pendingAction = action;
     this.actionDialog?.nativeElement.showModal();
   }
@@ -406,26 +446,45 @@ export class LobbyComponent implements OnInit, AfterViewInit, OnChanges, OnDestr
     this.pendingAction = undefined;
     this.actionDialog?.nativeElement.close();
     if (!confirmed || this.destroyed || !this.isInLobby) return;
-    if (action === 'start' && this.isHost && this.state === 'offline' && this.hasMediaStreamSet$.value) this.start();
+    if (action === 'start' && this.isHost && this.state === 'offline' && this.hasMediaStreamSet$.value) this.start(this.saveReplay);
     if (action === 'stop' && this.isHost && this.state === 'online') this.stop();
     if (action === 'leave' && (!this.isHost || this.state !== 'online')) this.leaveLobby();
   }
 
-  start(): void {
+  start(saveReplay = false): void {
     this.log.info('start', this.streamUuid, this.channelUuid);
-    if (this.streamUuid != undefined && this.channelUuid != undefined) {
+    if (!this.liveActionBusy && this.streamUuid != undefined && this.channelUuid != undefined) {
+      this.liveActionBusy = true;
       this.lobbyService.startLiveStream(this.channelUuid, this.streamUuid)
-        .subscribe(() => {
+        .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => {
+          this.liveActionBusy = false;
+          this.cdr.markForCheck();
+        }))
+        .subscribe(response => {
+          if (!response) return;
+          this.replayOverride = undefined;
+          this.startPanelCollapsed = true;
           this.state = 'online';
+          if (saveReplay) this.recordingControls?.startForBroadcast();
         });
     }
   }
 
   stop(): void {
-    if (this.streamUuid != undefined && this.channelUuid != undefined) {
-      this.lobbyService.stopLiveStream(this.channelUuid, this.streamUuid).subscribe(() => {
-        this.state = 'offline';
-      });
+    if (!this.liveActionBusy && this.streamUuid != undefined && this.channelUuid != undefined) {
+      this.liveActionBusy = true;
+      this.lobbyService.stopLiveStream(this.channelUuid, this.streamUuid)
+        .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => {
+          this.liveActionBusy = false;
+          this.cdr.markForCheck();
+        }))
+        .subscribe(response => {
+          if (response) {
+            this.state = 'offline';
+            this.startPanelCollapsed = true;
+            this.recordingControls?.refreshReplays();
+          }
+        });
     }
   }
 

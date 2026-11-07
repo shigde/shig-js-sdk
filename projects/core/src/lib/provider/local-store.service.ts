@@ -12,6 +12,22 @@ export class LocalStoreService {
   private readonly log = createLogger('LocalStoreService');
   private readonly STORAGE_KEY = 'media.devices';
 
+  loadReplayDefault(userUuid: string): boolean {
+    try {
+      return localStorage.getItem(`media.replay-default.${userUuid}`) === 'true';
+    } catch {
+      return false;
+    }
+  }
+
+  saveReplayDefault(userUuid: string, enabled: boolean): void {
+    try {
+      localStorage.setItem(`media.replay-default.${userUuid}`, String(enabled));
+    } catch (error) {
+      this.log.error('save replay default', error);
+    }
+  }
+
   loadDevicesSettings(): DeviceSettings | null {
     try {
       const raw = localStorage.getItem(this.STORAGE_KEY);

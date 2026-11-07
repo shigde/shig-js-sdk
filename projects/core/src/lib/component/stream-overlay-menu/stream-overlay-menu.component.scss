@@ -1,6 +1,6 @@
 .stream-overlay-settings { display: grid; gap: 20px; }
 .stream-overlay-settings .form-check { margin: 0; }
-.stream-overlay-settings fieldset { margin: 0; padding: 0; border: 0; }
+.stream-overlay-settings fieldset { margin: 0; padding: 12px 0 0; border-top: 1px solid var(--bs-border-color); }
 .stream-overlay-settings legend { margin-bottom: 12px; font-size: 14px; }
 
 .stream-overlay-size {

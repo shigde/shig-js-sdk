@@ -11,7 +11,7 @@ describe('Lobby recording completion', () => {
     streamUuid: 'stream', videoUuid: 'video', status, published: false, durationMs: 12000,
   });
 
-  function setup() {
+  function setup(automatic = false) {
     const updates = new Subject<MediaRecording>();
     const media = {
       getRecording: jasmine.createSpy().and.returnValue(of(recording('recording'))),
@@ -29,6 +29,7 @@ describe('Lobby recording completion', () => {
     fixture.componentRef.setInput('streamUuid', 'stream');
     fixture.componentRef.setInput('live', true);
     fixture.componentRef.setInput('embedded', true);
+    fixture.componentRef.setInput('automatic', automatic);
     fixture.detectChanges();
     return {fixture, component: fixture.componentInstance, media, videos, updates};
   }
@@ -55,6 +56,42 @@ describe('Lobby recording completion', () => {
     fixture.detectChanges();
     expect(media.getRecording).toHaveBeenCalledTimes(1);
     expect(stopped).not.toHaveBeenCalled();
+  });
+
+  it('reports a replay once when stopping the live stream completes its recording', () => {
+    const {fixture, component, media} = setup(true);
+    const stopped = jasmine.createSpy();
+    component.recordingStopped.subscribe(stopped);
+    media.getRecording.and.returnValue(of(recording('ready')));
+
+    fixture.componentRef.setInput('live', false);
+    fixture.detectChanges();
+    expect(stopped).toHaveBeenCalledTimes(1);
+
+    fixture.componentRef.setInput('userUuid', 'owner');
+    fixture.detectChanges();
+    expect(stopped).toHaveBeenCalledTimes(1);
+  });
+
+  it('starts and stops separate replays from the automatic lobby controls', () => {
+    const {component, media, videos} = setup(true);
+
+    media.startRecording.and.returnValues(
+      of({...recording('recording'), videoUuid: 'first-replay'}),
+      of({...recording('recording'), videoUuid: 'second-replay'}),
+    );
+    media.stopRecording.and.returnValue(of({...recording('ready'), videoUuid: 'first-replay'}));
+    component.recording = recording('empty');
+
+    expect(component.canToggleRecording).toBeTrue();
+    component.toggleRecording();
+    component.toggleRecording();
+    component.toggleRecording();
+
+    expect(videos.waitForRecordingReady).not.toHaveBeenCalled();
+    expect(media.startRecording).toHaveBeenCalledTimes(2);
+    expect(media.stopRecording).toHaveBeenCalledOnceWith('first-replay');
+    expect(component.recording?.videoUuid).toBe('second-replay');
   });
 
   it('waits for source readiness without starting a recording or emitting menu events', () => {

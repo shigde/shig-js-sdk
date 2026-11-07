@@ -1,7 +1,8 @@
 <div class="stream-overlay-settings">
-  <label class="form-check form-switch">
-    <input class="form-check-input" type="checkbox" role="switch" [checked]="nameOverlayEnabled" (change)="toggleNameOverlay()">
-    <span class="form-check-label">Name overlay</span>
+  <label class="form-check form-switch d-flex align-items-center justify-content-between gap-3 ps-0">
+    <span class="form-check-label">Show names</span>
+    <input class="form-check-input ms-0 mt-0 flex-shrink-0" type="checkbox" role="switch"
+           [checked]="nameOverlayEnabled" (change)="toggleNameOverlay()">
   </label>
   <fieldset [disabled]="!nameOverlayEnabled">
     <legend>Size</legend>

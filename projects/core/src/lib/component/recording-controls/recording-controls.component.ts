@@ -5,6 +5,7 @@ import {MediaService} from '../../provider/media.service';
 import {MediaRecording} from '../../entities/media-recording';
 import {RecordedVideo} from '../../entities/recorded-video';
 import {VideoService} from '../../provider/video.service';
+import {LocalStoreService} from '../../provider/local-store.service';
 
 /** Start/stop controls and the lobby's replay list; publication stays outside the lobby. */
 @Component({
@@ -16,7 +17,18 @@ import {VideoService} from '../../provider/video.service';
     @if (!embedded) { <ng-container [ngTemplateOutlet]="panel"></ng-container> }
     <ng-template #panel>
     <section class="recording-controls settings-section" [class.in-settings]="embedded" aria-label="Replays">
-      <h3 class="settings-heading">Replays</h3>
+      @if (automatic && userUuid) {
+        <h3 class="settings-heading settings-heading-overlay"><i class="bi bi-sliders" aria-hidden="true"></i>Replay Settings</h3>
+        <div class="settings-box mb-3">
+          <label class="form-check form-switch d-flex align-items-center justify-content-between gap-3 ps-0 mb-0">
+            <span class="form-check-label">Always record when going live</span>
+            <input #replayDefault type="checkbox" role="switch"
+                   class="form-check-input ms-0 mt-0 flex-shrink-0" [checked]="recordReplaysByDefault"
+                   (change)="setReplayDefault(replayDefault.checked)">
+          </label>
+        </div>
+      }
+      <h3 class="settings-heading settings-heading-replay"><i class="bi bi-collection-play" aria-hidden="true"></i>Replays</h3>
       @if (error) { <p class="recording-error" role="alert">{{ error }}</p> }
       @if (listError) {
         <p class="recording-error" role="alert">{{ listError }}</p>
@@ -116,6 +128,8 @@ export class RecordingControlsComponent implements OnChanges, OnDestroy {
   @Input({required: true}) streamUuid = '';
   @Input() live = false;
   @Input() embedded = false;
+  @Input() automatic = false;
+  @Input() userUuid?: string;
   @ViewChild('panel', {static: true}) panel!: TemplateRef<unknown>;
   @Output() recordingChange = new EventEmitter<MediaRecording>();
   @Output() recordingStopped = new EventEmitter<void>();
@@ -139,9 +153,12 @@ export class RecordingControlsComponent implements OnChanges, OnDestroy {
   private listRequest?: Subscription;
   private readinessRequest?: Subscription;
   private wasLive = false;
-  constructor(private media: MediaService, private cdr: ChangeDetectorRef, private videos: VideoService) {}
+  recordReplaysByDefault = false;
+  constructor(private media: MediaService, private cdr: ChangeDetectorRef, private videos: VideoService,
+              private localStore: LocalStoreService) {}
 
   ngOnChanges(): void {
+    this.recordReplaysByDefault = !!this.userUuid && this.localStore.loadReplayDefault(this.userUuid);
     if (!this.streamUuid) return;
     const streamChanged = this.watchedStream !== this.streamUuid;
     const liveChanged = this.wasLive !== this.live;
@@ -158,7 +175,7 @@ export class RecordingControlsComponent implements OnChanges, OnDestroy {
       this.subscriptions.add(this.media.getRecording(this.streamUuid).subscribe({
         next: value => this.update(value), error: error => this.fail(error),
       }));
-      if (liveChanged && this.live) this.prepareRecording();
+      if (liveChanged && this.live && !this.automatic) this.prepareRecording();
       return;
     }
     this.subscriptions.unsubscribe();
@@ -175,11 +192,32 @@ export class RecordingControlsComponent implements OnChanges, OnDestroy {
     this.subscriptions.add(this.media.getRecording(this.streamUuid).subscribe({
       next: value => this.update(value), error: error => this.fail(error),
     }));
-    if (this.live) this.prepareRecording();
+    if (this.live && !this.automatic) this.prepareRecording();
+  }
+  setReplayDefault(enabled: boolean): void {
+    if (!this.userUuid) return;
+    this.recordReplaysByDefault = enabled;
+    this.localStore.saveReplayDefault(this.userUuid, enabled);
+  }
+
+  startForBroadcast(): void {
+    if (this.busy || !this.streamUuid) return;
+    this.busy = true;
+    this.error = '';
+    // The recording endpoint waits for the first usable HLS media.
+    this.subscriptions.add(this.media.startRecording(this.streamUuid).pipe(
+      finalize(() => { this.busy = false; this.cdr.markForCheck(); }),
+    ).subscribe({
+      next: value => this.update(value),
+      error: error => this.fail(error),
+    }));
   }
   get canToggleRecording(): boolean {
-    return this.live && !!this.recording && !this.busy &&
-      (this.recording.status === 'recording' || (!this.preparing && (this.recordingReady || !!this.preparationError)));
+    if (!this.live || !this.recording || this.busy) return false;
+    if (this.recording.status === 'recording') return !!this.recording.videoUuid;
+    return this.automatic
+      ? this.recording.status !== 'finalizing'
+      : !this.preparing && (this.recordingReady || !!this.preparationError);
   }
   prepareRecording(): void {
     if (!this.live || this.preparing) return;
@@ -202,7 +240,7 @@ export class RecordingControlsComponent implements OnChanges, OnDestroy {
   }
   toggleRecording(): void {
     if (!this.canToggleRecording || !this.recording) return;
-    if (this.recording.status !== 'recording' && !this.recordingReady) {
+    if (this.recording.status !== 'recording' && !this.automatic && !this.recordingReady) {
       this.prepareRecording();
       return;
     }
@@ -278,13 +316,17 @@ export class RecordingControlsComponent implements OnChanges, OnDestroy {
     return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
   }
   private update(value: MediaRecording): void {
+    const previous = this.recording;
+    const finishedWithBroadcast = !this.live && !!previous?.videoUuid && previous.videoUuid === value.videoUuid &&
+      (previous.status === 'recording' || previous.status === 'finalizing');
     this.refreshReplays();
     this.recording = value; this.error = ''; this.recordingChange.emit(value); this.cdr.markForCheck();
-    if (this.awaitingStoppedRecording && (value.status === 'ready' || value.status === 'failed' || value.status === 'empty')) {
+    const stoppedManually = this.awaitingStoppedRecording;
+    if (stoppedManually && (value.status === 'ready' || value.status === 'failed' || value.status === 'empty')) {
       this.awaitingStoppedRecording = false;
-      if (value.status === 'ready') this.recordingStopped.emit();
       if (value.status === 'failed') this.actionFailed.emit();
     }
+    if (value.status === 'ready' && (stoppedManually || finishedWithBroadcast)) this.recordingStopped.emit();
   }
   private fail(error: {error?: {message?: string}}): void {
     this.refreshReplays();
