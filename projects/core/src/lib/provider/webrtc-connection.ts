@@ -62,7 +62,7 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
     return this.dataChannel;
   }
 
-  public async createOffer(streams: Map<LobbyMediaPurpose, MediaStream>, info: string): Promise<RTCSessionDescription> {
+  public async createOffer(streams: Map<LobbyMediaPurpose, MediaStream>, info: string, sendOnly = false): Promise<RTCSessionDescription> {
     const trackInfo = new Map<string, SdpMediaInfo>();
     const senderParameterUpdates: Promise<void>[] = [];
 
@@ -110,7 +110,9 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
             transceiver.setCodecPreferences(opusCodecs);
           }
         } else {
-          const sender = this.pc.addTrack(track, ms);
+          const sender = sendOnly
+            ? this.pc.addTransceiver(track, {direction: 'sendonly', streams: [ms]}).sender
+            : this.pc.addTrack(track, ms);
           senders.push(sender);
           if (track.kind === 'video') {
             senderParameterUpdates.push(this.configureVideoSender(sender));
@@ -127,12 +129,25 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
 
     await Promise.all(senderParameterUpdates);
 
-    // @ts-ignore
-    return this.pc.createOffer()
-      .then((offer) => this.pc.setLocalDescription(offer))
-      .then(_ => {
-        return SdpParser.mungeOfferInfo(this.pc.localDescription as RTCSessionDescription, trackInfo);
-      });
+    await this.pc.setLocalDescription(await this.pc.createOffer());
+    if (sendOnly) await this.waitForIceGathering();
+    return SdpParser.mungeOfferInfo(this.pc.localDescription as RTCSessionDescription, trackInfo);
+  }
+
+  private async waitForIceGathering(): Promise<void> {
+    if (this.pc.iceGatheringState === 'complete') return;
+    await new Promise<void>(resolve => {
+      const finish = () => {
+        clearTimeout(timeout);
+        this.pc.removeEventListener('icegatheringstatechange', check);
+        resolve();
+      };
+      const check = () => {
+        if (this.pc.iceGatheringState === 'complete') finish();
+      };
+      const timeout = setTimeout(finish, 4000);
+      this.pc.addEventListener('icegatheringstatechange', check);
+    });
   }
 
   public async replaceStream(purpose: LobbyMediaPurpose, stream: MediaStream): Promise<void> {
@@ -192,7 +207,7 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
     }
   }
 
-  public setAnswer(answer: RTCSessionDescription): Promise<void> {
+  public setAnswer(answer: RTCSessionDescriptionInit): Promise<void> {
     this.log.info('setAnswer: ', answer);
     return this.pc.setRemoteDescription(answer);
   }

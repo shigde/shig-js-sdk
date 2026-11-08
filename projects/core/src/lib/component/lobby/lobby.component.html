@@ -158,7 +158,7 @@
     </div>
     <div class="lobby-toolbar" role="group" aria-label="Lobby settings and exit">
       <div class="lobby-toolbar-settings">
-        @if (isHost) {
+        @if (isHost && isInLobby) {
           <shig-stream-settings [centered]="true" [editorProvider]="getStreamLayoutEditor" [streamUuid]="streamUuid"
                                 [videosTemplate]="videosContent" [devicesEnabled]="isInLobby"
                                 [userUuid]="userUuid ?? undefined"></shig-stream-settings>

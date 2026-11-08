@@ -49,13 +49,29 @@ export class DeviceService {
       .pipe(map(response => response.data));
   }
 
+  publish(token: string, offer: RTCSessionDescription) {
+    return this.deviceHttp.post(`${this.params.API_PREFIX}/auth/device/whip`, offer.sdp, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/sdp',
+        Accept: 'application/sdp',
+      },
+      responseType: 'text',
+    });
+  }
+
   disconnect(token: string) {
-    return this.deviceHttp.post<void>(this.disconnectUrl(), {token});
+    return this.deviceHttp.post<void>(this.disconnectUrl(), null, {
+      headers: {Authorization: `Bearer ${token}`},
+    });
   }
 
   disconnectOnPageExit(token: string): void {
-    const body = new Blob([JSON.stringify({token})], {type: 'application/json'});
-    navigator.sendBeacon(this.disconnectUrl(), body);
+    void fetch(this.disconnectUrl(), {
+      method: 'POST',
+      headers: {Authorization: `Bearer ${token}`},
+      keepalive: true,
+    }).catch(() => undefined);
   }
 
   private disconnectUrl(): string {
