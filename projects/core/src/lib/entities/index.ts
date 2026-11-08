@@ -37,3 +37,4 @@ export * from './weekday';
 export * from './admin-user';
 
 export * from './inbox-entry';
+export * from './device';

@@ -1,0 +1,13 @@
+:host { display: block; }
+.device-row, .device-invite { display: grid; gap: 8px; padding: 12px 0; }
+.device-row + .device-row, .device-invite { border-top: 1px solid var(--bs-border-color); }
+.device-details, .device-actions, .device-form, .device-confirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.device-details { overflow-wrap: anywhere; }
+.device-form { margin-top: 12px; }
+.device-form input { flex: 1 1 140px; min-width: 0; width: auto; }
+.device-invite { justify-items: start; margin-top: 12px; }

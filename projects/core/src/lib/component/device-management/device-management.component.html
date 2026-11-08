@@ -1,0 +1,65 @@
+<section aria-label="Devices">
+  @if (error) { <p class="text-danger mb-2" role="alert">{{ error }}</p> }
+  @if (loaded) {
+    <ul class="list-unstyled mb-0">
+      @for (device of devices; track device.uuid) {
+        <li class="device-row">
+          <div class="device-details">
+            <strong>{{ device.name }}</strong>
+            @if (!device.active) { <span class="text-body-secondary">Disabled</span> }
+          </div>
+          <div class="device-actions">
+            @if (streamUuid) {
+              <button type="button" class="btn btn-outline-primary btn-sm" [disabled]="busy || !device.active"
+                      (click)="invite(device)">Create invitation</button>
+            }
+            <button type="button" class="btn btn-outline-secondary btn-sm" [disabled]="busy"
+                    (click)="renameUuid = device.uuid; removeUuid = undefined">Rename</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" [disabled]="busy"
+                    (click)="toggle(device)">{{ device.active ? 'Disable' : 'Enable' }}</button>
+            <button type="button" class="btn btn-outline-danger btn-sm" [disabled]="busy"
+                    (click)="removeUuid = device.uuid; renameUuid = undefined">Remove</button>
+          </div>
+          @if (renameUuid === device.uuid) {
+            <form class="device-form" (submit)="$event.preventDefault(); rename(device, renameInput.value)">
+              <input #renameInput class="form-control" aria-label="New device name" [value]="device.name" maxlength="255" required>
+              <button type="submit" class="btn btn-primary btn-sm" [disabled]="busy">Save</button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" (click)="renameUuid = undefined">Cancel</button>
+            </form>
+          }
+          @if (removeUuid === device.uuid) {
+            <div class="device-confirm">
+              <span>Remove {{ device.name }} and revoke its access?</span>
+              <button type="button" class="btn btn-danger btn-sm" [disabled]="busy" (click)="remove(device)">Remove device</button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" (click)="removeUuid = undefined">Cancel</button>
+            </div>
+          }
+        </li>
+      } @empty {
+        <li class="text-body-secondary">No devices yet.</li>
+      }
+    </ul>
+
+    @if (devices.length < 3) {
+      <form class="device-form" (submit)="$event.preventDefault(); create(nameInput)">
+        <input #nameInput class="form-control" aria-label="Device name" placeholder="Device name" maxlength="255" required>
+        <button type="submit" class="btn btn-primary" [disabled]="busy">Add device</button>
+      </form>
+    } @else {
+      <p class="text-body-secondary mt-3 mb-0">All three device slots are in use.</p>
+    }
+  } @else if (busy) {
+    <p class="text-body-secondary mb-0" role="status">Loading devices…</p>
+  } @else {
+    <button type="button" class="btn btn-outline-secondary" (click)="load()">Retry</button>
+  }
+
+  @if (invitation; as invite) {
+    <div class="device-invite">
+      <strong>{{ invite.device.name }}</strong>
+      <shig-device-invite-qr [url]="invite.url"></shig-device-invite-qr>
+      <a [href]="invite.url" target="_blank" rel="noopener noreferrer">Open invitation link</a>
+      <span class="text-body-secondary">This link can be used once within five minutes.</span>
+    </div>
+  }
+</section>

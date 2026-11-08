@@ -62,6 +62,7 @@
     "@angular/compiler-cli": "^21.0.6",
     "@types/debug": "^4.1.12",
     "@types/jasmine": "~4.3.0",
+    "@types/qrcode": "^1.5.6",
     "@types/sdp-transform": "^2.4.9",
     "concat": "^1.0.3",
     "debug": "^4.4.3",
@@ -76,6 +77,7 @@
     "typescript": "~5.9.3"
   },
   "dependencies": {
-    "@peermetrics/webrtc-stats": "^5.9.0"
+    "@peermetrics/webrtc-stats": "^5.9.0",
+    "qrcode": "^1.5.4"
   }
 }

@@ -160,7 +160,7 @@
       <div class="lobby-toolbar-settings">
         @if (isHost) {
           <shig-stream-settings [centered]="true" [editorProvider]="getStreamLayoutEditor" [streamUuid]="streamUuid"
-                                [videosTemplate]="videosContent"
+                                [videosTemplate]="videosContent" [devicesEnabled]="isInLobby"
                                 [userUuid]="userUuid ?? undefined"></shig-stream-settings>
         }
 

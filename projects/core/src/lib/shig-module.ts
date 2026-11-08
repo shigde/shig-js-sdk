@@ -5,6 +5,7 @@ import {CommonModule} from '@angular/common';
 import {
     AudioMeterComponent,
     DeviceCaptureComponent,
+    DeviceManagementComponent,
     GuestListDirective,
     GuestListComponent,
     GuestComponent,
@@ -45,6 +46,7 @@ import {StreamOverlayMenuComponent} from './component/stream-overlay-menu/stream
     imports: [
         Combobox,
         RecordingControlsComponent,
+        DeviceManagementComponent,
         ComboboxInput,
         ComboboxPopupContainer,
         Listbox,

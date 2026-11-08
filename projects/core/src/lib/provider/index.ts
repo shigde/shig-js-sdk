@@ -1,6 +1,7 @@
 export * from './auth.service';
 export * from './channel-messenger';
 export * from './channel.service';
+export * from './device.service';
 export * from './lobby.service';
 export * from './local-store.service';
 export * from './message.service';

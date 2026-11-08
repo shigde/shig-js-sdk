@@ -1,5 +1,7 @@
 export * from './audio-meter/audio-meter.component';
 export * from './device-capture/device-capture.component';
+export * from './device-invite-qr';
+export * from './device-management/device-management.component';
 export * from './loading-indicator/loading-indicator.component'
 export * from './lobby/lobby.component';
 export * from './recording-controls/recording-controls.component';

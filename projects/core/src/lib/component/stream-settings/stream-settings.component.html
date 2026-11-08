@@ -39,6 +39,12 @@
         </section>
       }
       @case ('videos') { <ng-container [ngTemplateOutlet]="videosTemplate ?? null"></ng-container> }
+      @case ('devices') {
+        <section class="settings-section" aria-label="Devices">
+          <h3 class="settings-heading settings-heading-overlay"><i class="bi bi-camera-video" aria-hidden="true"></i>Devices</h3>
+          <div class="settings-box"><shig-device-management [streamUuid]="streamUuid"></shig-device-management></div>
+        </section>
+      }
     }
   }
 </shig-settings-panel>
