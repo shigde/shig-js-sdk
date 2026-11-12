@@ -1,6 +1,6 @@
 :host { display: block; }
-.device-row, .device-invite { display: grid; gap: 8px; padding: 12px 0; }
-.device-row + .device-row, .device-invite { border-top: 1px solid var(--bs-border-color); }
+.device-row { display: grid; gap: 8px; padding: 12px 0; }
+.device-row + .device-row { border-top: 1px solid var(--bs-border-color); }
 .device-details, .device-actions, .device-form, .device-confirm {
   display: flex;
   flex-wrap: wrap;
@@ -9,5 +9,16 @@
 }
 .device-details { overflow-wrap: anywhere; }
 .device-form { margin-top: 12px; }
+.device-add-form { margin-top: 1.25rem; }
 .device-form input { flex: 1 1 140px; min-width: 0; width: auto; }
-.device-invite { justify-items: start; margin-top: 12px; }
+.device-invite {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+  margin-top: 4px;
+  padding: 12px;
+  border: var(--bs-border-width) solid var(--bs-border-color);
+  border-radius: var(--bs-border-radius);
+  background: var(--bs-body-bg);
+  overflow-wrap: anywhere;
+}

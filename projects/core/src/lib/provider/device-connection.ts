@@ -27,6 +27,10 @@ export class DeviceConnection {
     return this.ingress.setAnswer({type: 'answer', sdp});
   }
 
+  replaceStream(media: MediaStream): Promise<void> {
+    return this.ingress.replaceStream(LobbyMediaPurpose.GUEST, media);
+  }
+
   mute(track: MediaStreamTrack, mute: boolean): void {
     track.enabled = !mute;
     const mid = this.ingress.getMid(track.id);
@@ -35,9 +39,12 @@ export class DeviceConnection {
     }
   }
 
-  close(): void {
-    this.messenger.close();
-    this.messenger.complete();
-    void this.ingress.close();
+  async close(): Promise<void> {
+    try {
+      this.messenger.close();
+    } finally {
+      this.messenger.complete();
+      await this.ingress.close();
+    }
   }
 }

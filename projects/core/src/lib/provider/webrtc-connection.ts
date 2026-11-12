@@ -168,6 +168,7 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
     const replaced: typeof replacements = [];
     try {
       for (const replacement of replacements) {
+        if (replacement.track === replacement.previous) continue;
         await replacement.sender.replaceTrack(replacement.track);
         replaced.push(replacement);
       }
@@ -236,10 +237,6 @@ export class WebrtcConnection extends EventEmitter<LobbyMediaEvent> {
 
       this.dataChannel = undefined;
     }
-
-    this.pc.getTransceivers().forEach((transceiver) => {
-      transceiver.stop();
-    });
 
     this.pc.ontrack = null;
     this.pc.oniceconnectionstatechange = null;

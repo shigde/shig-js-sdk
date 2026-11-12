@@ -11,7 +11,7 @@
           <div class="device-actions">
             @if (streamUuid) {
               <button type="button" class="btn btn-outline-primary btn-sm" [disabled]="busy || !device.active"
-                      (click)="invite(device)">Create invitation</button>
+                      (click)="invite(device)">Generate invitation code</button>
             }
             <button type="button" class="btn btn-outline-secondary btn-sm" [disabled]="busy"
                     (click)="renameUuid = device.uuid; removeUuid = undefined">Rename</button>
@@ -34,6 +34,15 @@
               <button type="button" class="btn btn-outline-secondary btn-sm" (click)="removeUuid = undefined">Cancel</button>
             </div>
           }
+          @if (invitation && invitation.device.uuid === device.uuid) {
+            <div class="device-invite">
+              <strong>Invitation for {{ device.name }}</strong>
+              <span class="text-body-secondary">Scan with this device to join as a camera.</span>
+              <shig-device-invite-qr [url]="invitation.url"></shig-device-invite-qr>
+              <a [href]="invitation.url" target="_blank" rel="noopener noreferrer">Open invitation link</a>
+              <span class="text-body-secondary">The invitation can be used once within five minutes.</span>
+            </div>
+          }
         </li>
       } @empty {
         <li class="text-body-secondary">No devices yet.</li>
@@ -41,7 +50,7 @@
     </ul>
 
     @if (devices.length < 3) {
-      <form class="device-form" (submit)="$event.preventDefault(); create(nameInput)">
+      <form class="device-form device-add-form" (submit)="$event.preventDefault(); create(nameInput)">
         <input #nameInput class="form-control" aria-label="Device name" placeholder="Device name" maxlength="255" required>
         <button type="submit" class="btn btn-primary" [disabled]="busy">Add device</button>
       </form>
@@ -54,12 +63,4 @@
     <button type="button" class="btn btn-outline-secondary" (click)="load()">Retry</button>
   }
 
-  @if (invitation; as invite) {
-    <div class="device-invite">
-      <strong>{{ invite.device.name }}</strong>
-      <shig-device-invite-qr [url]="invite.url"></shig-device-invite-qr>
-      <a [href]="invite.url" target="_blank" rel="noopener noreferrer">Open invitation link</a>
-      <span class="text-body-secondary">This link can be used once within five minutes.</span>
-    </div>
-  }
 </section>
