@@ -5,6 +5,39 @@
       Your browser does not support HTML5 Canvas.
     </canvas>
     <div #stageContainer class="layout-stage" [class.is-editing]="layoutEditMode"></div>
+    @if (inLobby) {
+    <div #sceneBar class="scene-bar" role="group" aria-label="Scenes">
+      <button type="button" class="scene-menu-trigger" [attr.aria-expanded]="sceneMenuOpen"
+              aria-label="Configure scenes" (click)="sceneMenuOpen = !sceneMenuOpen">Scenes</button>
+      @for (scene of [1, 2, 3, 4]; track scene) {
+        <button type="button" class="scene-number" [class.is-active]="activeScene === scene"
+                [disabled]="!sceneReady(scene)" [attr.aria-pressed]="activeScene === scene"
+                [attr.aria-label]="'Scene ' + scene + ', ' + (scene === 1 ? 'Mixer Layout' : sceneLabel(scene))"
+                [attr.title]="scene === 1 ? 'Mixer Layout' : sceneLabel(scene)"
+                (click)="chooseScene(scene)">{{ scene }}</button>
+      }
+      @if (sceneMenuOpen) {
+        <div class="scene-menu" aria-label="Assign scenes">
+          <strong>Scenes</strong>
+          <div class="scene-menu-row scene-standard"><span>1</span><span>Mixer Layout</span></div>
+          @for (scene of [2, 3, 4]; track scene) {
+            <div class="scene-menu-row">
+            <label [for]="'scene-choice-' + scene">{{ scene }}</label>
+            <select [id]="'scene-choice-' + scene" #choice
+                    (change)="assignScene(scene, choice.value)">
+              <option value="" [selected]="sceneValue(scene) === ''">Empty</option>
+              <option value="picture-in-picture" [disabled]="!pictureInPictureReady"
+                      [selected]="sceneValue(scene) === 'picture-in-picture'">Picture in picture</option>
+              @for (slot of sceneSlots; track $index) {
+                <option [value]="slot.id" [selected]="sceneValue(scene) === slot.id">{{ slot.label }}</option>
+              }
+            </select>
+            </div>
+          }
+        </div>
+      }
+    </div>
+    }
     <ng-container [ngTemplateOutlet]="previewControls ?? null"></ng-container>
     <button type="button" class="stream-fullscreen-button" (click)="toggleFullscreen()"
             [attr.title]="isFullscreen ? 'Exit fullscreen' : 'Fullscreen'"

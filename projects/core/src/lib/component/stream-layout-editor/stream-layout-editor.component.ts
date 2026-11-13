@@ -2,7 +2,7 @@ import {Component, ElementRef, HostListener, Input, TemplateRef, OnDestroy, OnIn
 import {NgTemplateOutlet} from '@angular/common';
 import Konva from 'konva';
 import {createLogger} from "../../provider";
-import {StreamMixerService} from "../../provider/stream-mixer.service";
+import {PictureInPicture, SceneChoice, StreamMixerService} from "../../provider/stream-mixer.service";
 
 @Component({
   selector: 'shig-stream-leayout-editor',
@@ -17,11 +17,14 @@ export class StreamLayoutEditorComponent implements OnInit, OnDestroy {
   private readonly logoImage: HTMLImageElement = new Image();
 
   @Input() previewControls?: TemplateRef<unknown>;
+  @Input() streamUuid?: string;
+  @Input() inLobby = false;
 
   @Input('basePath') basePath: string | undefined;
 
   @ViewChild("fullscreenContainer")
   fullscreenContainer!: ElementRef<HTMLElement>;
+  @ViewChild('sceneBar') sceneBar?: ElementRef<HTMLElement>;
   isFullscreen = false;
 
   @ViewChild('canvas')
@@ -39,6 +42,12 @@ export class StreamLayoutEditorComponent implements OnInit, OnDestroy {
 
   ready = false;
   layoutEditMode = false;
+  activeScene = 1;
+  sceneMenuOpen = false;
+  sceneChoices: Array<SceneChoice | undefined> = [undefined, {kind: 'picture-in-picture'}, undefined, undefined];
+  pictureInPicture: PictureInPicture | undefined;
+  mainVideoId = '';
+  insetVideoId = '';
   canvas!: HTMLCanvasElement;
   private stageContainer: HTMLDivElement | undefined;
   private stage: Konva.Stage | undefined;
@@ -76,7 +85,15 @@ export class StreamLayoutEditorComponent implements OnInit, OnDestroy {
     this.updateStageSize();
   }
 
+  @HostListener('document:pointerdown', ['$event'])
+  closeSceneMenuOutside(event: PointerEvent): void {
+    if (this.sceneMenuOpen && !this.sceneBar?.nativeElement.contains(event.target as Node)) {
+      this.sceneMenuOpen = false;
+    }
+  }
+
   ngOnInit() {
+    this.loadScenes();
     this.loadImage(this.faceImage, this.basePath + '/icons/face.svg');
     this.loadImage(this.logoImage, this.basePath + '/icons/logo.png');
 
@@ -96,6 +113,7 @@ export class StreamLayoutEditorComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    this.mixer.setScene(undefined);
     this.mixer.stop();
     this.stopLayoutSync();
     this.stage?.destroy();
@@ -112,6 +130,136 @@ export class StreamLayoutEditorComponent implements OnInit, OnDestroy {
     });
     this.syncLayoutStage();
     this.selectFirstLayoutShape();
+  }
+
+  get sceneVideos(): Array<{id: string; name: string}> {
+    return this.mixer.getSceneVideos();
+  }
+
+  get sceneSlots(): Array<{id: string; label: string}> {
+    const labels = ['Me', 'Guest 1', 'Guest 2', 'Guest 3'];
+    return labels.map((label, index) => {
+      const video = this.mixer.getSceneSlot(index);
+      const name = video?.name?.trim();
+      return {id: `slot-${index}`, label: video
+        ? name && name.toLowerCase() !== label.toLowerCase() ? `${label} · ${name}` : label
+        : `${label} · Empty`};
+    });
+  }
+
+  sceneReady(scene: number): boolean {
+    if (scene === 1) return true;
+    const choice = this.sceneChoices[scene - 1];
+    if (choice?.kind === 'picture-in-picture') {
+      const preset = this.pictureInPicture;
+      if (!preset) return false;
+      const mainId = this.resolveVideoId(preset.mainId, preset.mainName);
+      const insetId = this.resolveVideoId(preset.insetId, preset.insetName);
+      return !!mainId && !!insetId && this.mixer.isSceneSourceActive(mainId)
+        && this.mixer.isSceneSourceActive(insetId);
+    }
+    if (choice?.kind === 'video') return this.mixer.isSceneSourceActive(
+      this.resolveVideoId(choice.videoId, choice.videoName) ?? '');
+    return false;
+  }
+
+  get pictureInPictureReady(): boolean {
+    const preset = this.pictureInPicture;
+    return !!preset && preset.mainId !== preset.insetId;
+  }
+
+  sceneLabel(scene: number): string {
+    const choice = this.sceneChoices[scene - 1];
+    if (choice?.kind === 'picture-in-picture') return 'picture in picture';
+    if (choice?.kind === 'video') {
+      return this.sceneSlots.find(slot => slot.id === this.sceneValue(scene))?.label ?? 'Empty';
+    }
+    return 'Empty';
+  }
+
+  get savedMainVideoId(): string {
+    return this.slotValue(this.mainVideoId, this.pictureInPicture?.mainName);
+  }
+
+  get savedInsetVideoId(): string {
+    return this.slotValue(this.insetVideoId, this.pictureInPicture?.insetName);
+  }
+
+  chooseScene(scene: number): void {
+    this.sceneMenuOpen = false;
+    this.activeScene = scene;
+    this.mixer.setScene(this.sceneChoices[scene - 1], this.pictureInPicture);
+    this.syncLayoutStage();
+  }
+
+  assignScene(scene: number, value: string): void {
+    this.sceneChoices[scene - 1] = !value ? undefined : value === 'picture-in-picture'
+      ? {kind: 'picture-in-picture'}
+      : {kind: 'video', videoId: value};
+    this.saveScenes();
+    if (this.activeScene === scene) {
+      if (this.sceneReady(scene)) {
+        this.mixer.setScene(this.sceneChoices[scene - 1], this.pictureInPicture);
+        this.syncLayoutStage();
+      } else {
+        this.chooseScene(1);
+      }
+    }
+  }
+
+  sceneValue(scene: number): string {
+    const choice = this.sceneChoices[scene - 1];
+    return choice?.kind === 'picture-in-picture' ? choice.kind
+      : choice?.kind === 'video'
+        ? this.slotValue(choice.videoId, choice.videoName)
+        : '';
+  }
+
+  savePictureInPicture(): void {
+    if (!this.mainVideoId || !this.insetVideoId || this.mainVideoId === this.insetVideoId) return;
+    const previous = this.mixer.getPictureInPicture() ?? this.pictureInPicture;
+    this.pictureInPicture = {mainId: this.mainVideoId, insetId: this.insetVideoId,
+      x: previous?.x ?? 0.72, y: previous?.y ?? 0.04,
+      width: previous?.width ?? 0.25, height: previous?.height ?? 0.25};
+    this.saveScenes();
+    if (this.sceneChoices[this.activeScene - 1]?.kind === 'picture-in-picture') this.chooseScene(this.activeScene);
+  }
+
+  private slotValue(id: string, name?: string): string {
+    if (/^slot-[0-3]$/.test(id)) return id;
+    const index = this.sceneSlots.findIndex((_, slot) => {
+      const video = this.mixer.getSceneSlot(slot);
+      return video?.id === id || (!!name && video?.name === name);
+    });
+    return index < 0 ? '' : `slot-${index}`;
+  }
+
+  private resolveVideoId(id: string, name?: string): string | undefined {
+    if (/^slot-[0-3]$/.test(id)) return this.mixer.getSceneSlot(Number(id.slice(-1)))?.id;
+    return this.sceneVideos.find(video => video.id === id || (!!name && video.name === name))?.id;
+  }
+
+  private saveScenes(): void {
+    if (!this.streamUuid) return;
+    localStorage.setItem(`shig-scenes-${this.streamUuid}`, JSON.stringify({
+      choices: this.sceneChoices.slice(1), pictureInPicture: this.pictureInPicture,
+    }));
+  }
+
+  private loadScenes(): void {
+    if (!this.streamUuid) return;
+    try {
+      const saved = JSON.parse(localStorage.getItem(`shig-scenes-${this.streamUuid}`) ?? 'null');
+      if (!saved) return;
+      if (Array.isArray(saved.choices) && saved.choices.length === 3) {
+        this.sceneChoices = [undefined, ...saved.choices];
+      }
+      this.pictureInPicture = saved.pictureInPicture;
+      this.mainVideoId = this.pictureInPicture?.mainId ?? '';
+      this.insetVideoId = this.pictureInPicture?.insetId ?? '';
+    } catch (error) {
+      this.log.warn('Could not load saved scenes', error);
+    }
   }
 
   toggleLayoutEditMode(): void {

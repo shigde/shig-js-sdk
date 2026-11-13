@@ -136,7 +136,8 @@
 
 
         @if (isHost) {
-            <shig-stream-leayout-editor [basePath]="basePath" [previewControls]="hostPreviewControls"></shig-stream-leayout-editor>
+            <shig-stream-leayout-editor [basePath]="basePath" [streamUuid]="streamUuid" [inLobby]="isInLobby"
+                                        [previewControls]="hostPreviewControls"></shig-stream-leayout-editor>
         } @else if (!isInLobby && setupPreview) {
           <div class="lobby-setup-preview">
             <ng-container [ngTemplateOutlet]="setupPreview" [ngTemplateOutletContext]="{ $implicit: stream, live: state === 'online' }"></ng-container>

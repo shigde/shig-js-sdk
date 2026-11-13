@@ -23,6 +23,10 @@ type SceneNodeLayout = {
   zIndex?: number;
 };
 
+export type SceneChoice = {kind: 'picture-in-picture'} | {kind: 'video'; videoId: string; videoName?: string};
+export type PictureInPicture = {mainId: string; insetId: string; mainName?: string; insetName?: string;
+  x: number; y: number; width: number; height: number};
+
 @Injectable({providedIn: 'root'})
 export class StreamMixerService {
 
@@ -34,18 +38,23 @@ export class StreamMixerService {
   private streamPlaceholderTheme?: string;
   private context: CanvasRenderingContext2D | undefined;
   private nodes: Map<string, SceneNode> = new Map<string, SceneNode>();
+  private sceneSources: Map<string, SceneNode> = new Map<string, SceneNode>();
+  private sceneSlotIds: Array<string | undefined> = [undefined, undefined, undefined, undefined];
   private videoElements: Map<string, HTMLVideoElement> = new Map<string, HTMLVideoElement>();
   private mediaStreams: Map<string, MediaStream> = new Map<string, MediaStream>();
   private audioContext: AudioContext | undefined;
   private audioDestination: MediaStreamAudioDestinationNode | undefined;
   private audioSources: Map<string, MediaStreamAudioSourceNode> = new Map<string, MediaStreamAudioSourceNode>();
   private audioGains: Map<string, GainNode> = new Map<string, GainNode>();
+  private sceneAudioIds = new Set<string>();
   private volumeById: Map<string, number> = new Map<string, number>();
   private silentAudioSource: ConstantSourceNode | undefined;
   private silentAudioGain: GainNode | undefined;
   private running = false;
   private renderTimerId: number | undefined;
   private canvasVideoTrack: CanvasCaptureMediaStreamTrack | undefined;
+  private sceneChoice: SceneChoice | undefined;
+  private pictureInPicture: PictureInPicture | undefined;
 
   constructor(
     private overlays: StreamOverlayService,
@@ -72,6 +81,9 @@ export class StreamMixerService {
   stop(): void {
     this.running = false;
     this.nodes.clear();
+    this.sceneSources.clear();
+    this.sceneSlotIds.fill(undefined);
+    this.sceneAudioIds.clear();
     this.videoElements.clear();
     this.mediaStreams.clear();
     this.overlays.clear();
@@ -108,6 +120,25 @@ export class StreamMixerService {
     }
   }
 
+  registerSceneSource(videoId: string, name: string): void {
+    const video = document.getElementById(videoId) as HTMLVideoElement | null;
+    if (!video) return;
+    if (!this.sceneSlotIds.includes(videoId)) {
+      const emptySlot = this.sceneSlotIds.indexOf(undefined);
+      if (emptySlot !== -1) this.sceneSlotIds[emptySlot] = videoId;
+    }
+    this.sceneSources.set(videoId, {id: videoId, videoId, video, name,
+      muted: false, cameraOff: false, active: true});
+    this.syncSceneAudio();
+  }
+
+  unregisterSceneSource(videoId: string): void {
+    this.sceneSources.delete(videoId);
+    const slot = this.sceneSlotIds.indexOf(videoId);
+    if (slot !== -1) this.sceneSlotIds[slot] = undefined;
+    this.syncSceneAudio();
+  }
+
   updateStream(videoId: string, stream: MediaStream): void {
     for (const [id, node] of this.nodes) {
       if (node.videoId === videoId && this.mediaStreams.get(id) !== stream) {
@@ -126,6 +157,7 @@ export class StreamMixerService {
         this.mediaStreams.delete(id);
         this.disconnectAudioSource(id);
         this.volumeById.delete(id);
+        this.syncSceneAudio();
         break;
       }
     }
@@ -151,6 +183,15 @@ export class StreamMixerService {
   }
 
   updateNodeLayout(id: string, layout: SceneNodeLayout): void {
+    if (this.sceneChoice?.kind === 'picture-in-picture' && this.pictureInPicture
+      && this.findSceneNode(this.pictureInPicture.insetId, this.pictureInPicture.insetName)?.id === id) {
+      const width = this.clamp(layout.width, 0.01, 1);
+      const height = this.clamp(layout.height, 0.01, 1);
+      this.pictureInPicture = {...this.pictureInPicture,
+        x: this.clamp(layout.x, 0, 1 - width), y: this.clamp(layout.y, 0, 1 - height),
+        width, height};
+      return;
+    }
     const node = this.nodes.get(id);
     if (node === undefined) return;
 
@@ -175,8 +216,48 @@ export class StreamMixerService {
     });
   }
 
+  setScene(choice: SceneChoice | undefined, pictureInPicture?: PictureInPicture): void {
+    this.sceneChoice = choice;
+    this.pictureInPicture = pictureInPicture;
+    this.syncSceneAudio();
+  }
+
+  private syncSceneAudio(): void {
+    for (const id of this.sceneAudioIds) {
+      if (!this.mediaStreams.has(id)) this.disconnectAudioSource(id);
+    }
+    this.sceneAudioIds.clear();
+    if (!this.sceneChoice) return;
+    for (const node of this.getDisplayedNodes()) {
+      if (this.mediaStreams.has(node.id)) continue;
+      const stream = node.video.srcObject as MediaStream | null;
+      if (stream) {
+        this.connectAudioSource(node.id, stream);
+        this.sceneAudioIds.add(node.id);
+      }
+    }
+  }
+
+  getSceneVideos(): Array<{id: string; name: string}> {
+    return [...this.sceneSources.values()].map(node => ({id: node.id, name: node.name}));
+  }
+
+  getSceneSlot(index: number): {id: string; name: string} | undefined {
+    const id = this.sceneSlotIds[index];
+    const node = id ? this.sceneSources.get(id) : undefined;
+    return node ? {id: node.id, name: node.name} : undefined;
+  }
+
+  isSceneSourceActive(id: string): boolean {
+    return this.nodes.get(id)?.active === true;
+  }
+
+  getPictureInPicture(): PictureInPicture | undefined {
+    return this.pictureInPicture;
+  }
+
   getSceneLayout(): Array<SceneNodeLayout & { id: string; videoId: string; name: string; active: boolean }> {
-    const activeNodes = this.getActiveNodes();
+    const activeNodes = this.getDisplayedNodes();
     const fallbackTiles = this.getTileLayout(activeNodes.length, 1, 1);
 
     return activeNodes.map((node, index) => {
@@ -186,7 +267,7 @@ export class StreamMixerService {
         id: node.id,
         videoId: node.videoId,
         name: node.name,
-        active: node.active,
+        active: this.sceneChoice ? true : node.active,
         x: node.x ?? fallbackTile.x,
         y: node.y ?? fallbackTile.y,
         width: node.width ?? fallbackTile.width,
@@ -256,7 +337,7 @@ export class StreamMixerService {
     ctx.fillStyle = '#111';
     ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-    const activeNodes = this.getActiveNodes();
+    const activeNodes = this.getDisplayedNodes();
 
     if (activeNodes.length === 0) {
       this.drawNoVideoPlaceholder({x: 0, y: 0, width: this.canvas.width, height: this.canvas.height}, ctx);
@@ -284,6 +365,31 @@ export class StreamMixerService {
       .filter(node => node.active)
       .sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0))
       .slice(0, 4);
+  }
+
+  private getDisplayedNodes(): SceneNode[] {
+    if (!this.sceneChoice) return this.getActiveNodes();
+    if (this.sceneChoice.kind === 'video') {
+      const node = this.findSceneNode(this.sceneChoice.videoId, this.sceneChoice.videoName);
+      return node ? [{...node, x: 0, y: 0, width: 1, height: 1}] : [];
+    }
+    const preset = this.pictureInPicture;
+    if (!preset || preset.mainId === preset.insetId) return [];
+    const main = this.findSceneNode(preset.mainId, preset.mainName);
+    const inset = this.findSceneNode(preset.insetId, preset.insetName);
+    if (!main || !inset) return [];
+    return [
+      {...main, x: 0, y: 0, width: 1, height: 1, zIndex: 0},
+      {...inset, x: preset.x, y: preset.y, width: preset.width, height: preset.height, zIndex: 1},
+    ];
+  }
+
+  private findSceneNode(id: string, name?: string): SceneNode | undefined {
+    if (/^slot-[0-3]$/.test(id)) {
+      const videoId = this.sceneSlotIds[Number(id.slice(-1))];
+      return videoId ? this.sceneSources.get(videoId) : undefined;
+    }
+    return this.sceneSources.get(id) ?? [...this.sceneSources.values()].find(node => name && node.name === name);
   }
 
   private getNodeTile(node: SceneNode, fallbackTile: Tile, width: number, height: number): Tile {
@@ -491,6 +597,7 @@ export class StreamMixerService {
     }
 
     this.mediaStreams.forEach((stream, id) => this.connectAudioSource(id, stream));
+    this.syncSceneAudio();
 
     return this.audioDestination.stream;
   }
