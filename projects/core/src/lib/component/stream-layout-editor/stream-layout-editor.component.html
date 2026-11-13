@@ -45,5 +45,55 @@
       <i class="bi" [class.bi-fullscreen]="!isFullscreen" [class.bi-fullscreen-exit]="isFullscreen" aria-hidden="true"></i>
     </button>
   </div>
-
+  @if (inLobby && (scoreboard.enabled || scoreboard.timerRunning)) {
+    <div #scoreboardWidget class="scoreboard-control-widget" [class.is-positioned]="scoreboardControlPosition !== undefined"
+         [style.left.px]="scoreboardControlPosition?.left ?? null"
+         [style.top.px]="scoreboardControlPosition?.top ?? null">
+      @if (!scoreboardControlsCollapsed) {
+        <section class="scoreboard-live-card" aria-label="Live scoreboard controls">
+          <div class="scoreboard-card-header" title="Drag to move" (pointerdown)="startScoreboardCardDrag($event)">
+            <strong>Scoreboard</strong>
+            <button type="button" class="btn scoreboard-collapse-toggle" aria-label="Collapse scoreboard controls"
+                    title="Collapse scoreboard controls" (click)="scoreboardControlsCollapsed = true">
+              <i class="bi bi-chevron-up" aria-hidden="true"></i>
+            </button>
+          </div>
+          <div class="scoreboard-card-content">
+            <div class="live-team-score">
+              <span class="live-score-name">{{ scoreboard.homeAbbr || scoreboard.homeName }}</span>
+              <strong class="live-score-value">{{ scoreboard.homeScore }}</strong>
+              <div class="live-score-buttons">
+                <button type="button" class="btn btn-outline-secondary" aria-label="Decrease home score" (click)="adjustScore('home', -1)">−</button>
+                <button type="button" class="btn btn-outline-secondary" aria-label="Increase home score" (click)="adjustScore('home', 1)">+</button>
+              </div>
+            </div>
+            <div class="live-team-score">
+              <span class="live-score-name">{{ scoreboard.awayAbbr || scoreboard.awayName }}</span>
+              <strong class="live-score-value">{{ scoreboard.awayScore }}</strong>
+              <div class="live-score-buttons">
+                <button type="button" class="btn btn-outline-secondary" aria-label="Decrease away score" (click)="adjustScore('away', -1)">−</button>
+                <button type="button" class="btn btn-outline-secondary" aria-label="Increase away score" (click)="adjustScore('away', 1)">+</button>
+              </div>
+            </div>
+            <div class="live-timer-control">
+              <span class="live-timer-label">Timer</span>
+              @if (!scoreboard.timerRunning) {
+                <input class="form-control live-timer-input" type="text" inputmode="numeric" aria-label="Set current timer time, minutes and seconds"
+                       [value]="scoreboardTimerDisplay" (change)="onScoreboardTimerValueChange($event)">
+              }
+              <button type="button" class="btn btn-primary" (click)="toggleScoreboardTimer()">{{ scoreboard.timerRunning ? 'Pause' : 'Start' }}</button>
+            </div>
+          </div>
+        </section>
+      } @else {
+        <div class="scoreboard-collapsed-bar" title="Drag to move" (pointerdown)="startScoreboardCardDrag($event)">
+          <span class="scoreboard-collapsed-label">Scoreboard</span>
+          <button type="button" class="btn scoreboard-expand-button" aria-label="Expand scoreboard controls"
+                  title="Expand scoreboard controls" (click)="scoreboardControlsCollapsed = false">
+            <i class="bi bi-chevron-down" aria-hidden="true"></i>
+          </button>
+        </div>
+      }
+    </div>
+  }
 </div>

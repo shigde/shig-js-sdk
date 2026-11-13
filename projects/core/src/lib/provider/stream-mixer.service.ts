@@ -341,6 +341,7 @@ export class StreamMixerService {
 
     if (activeNodes.length === 0) {
       this.drawNoVideoPlaceholder({x: 0, y: 0, width: this.canvas.width, height: this.canvas.height}, ctx);
+      this.overlays.drawScoreboard(ctx, this.canvas.width, this.canvas.height);
       this.requestCanvasFrame();
       return;
     }
@@ -353,6 +354,7 @@ export class StreamMixerService {
       this.drawNode(node, this.getNodeTile(node, tiles[index], canvasWidth, canvasHeight), ctx);
     });
 
+    this.overlays.drawScoreboard(ctx, canvasWidth, canvasHeight);
     this.requestCanvasFrame();
   }
 

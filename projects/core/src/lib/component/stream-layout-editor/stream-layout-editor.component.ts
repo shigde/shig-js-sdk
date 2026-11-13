@@ -1,8 +1,9 @@
-import {Component, ElementRef, HostListener, Input, TemplateRef, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import {AfterViewChecked, Component, ElementRef, HostListener, Input, TemplateRef, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {NgTemplateOutlet} from '@angular/common';
 import Konva from 'konva';
 import {createLogger} from "../../provider";
 import {PictureInPicture, SceneChoice, StreamMixerService} from "../../provider/stream-mixer.service";
+import {ScoreboardState, StreamOverlayService} from '../../provider/stream-overlay.service';
 
 @Component({
   selector: 'shig-stream-leayout-editor',
@@ -10,7 +11,7 @@ import {PictureInPicture, SceneChoice, StreamMixerService} from "../../provider/
   templateUrl: './stream-layout-editor.component.html',
   styleUrl: './stream-layout-editor.component.scss',
 })
-export class StreamLayoutEditorComponent implements OnInit, OnDestroy {
+export class StreamLayoutEditorComponent implements OnInit, OnDestroy, AfterViewChecked {
   private static readonly STAGE_PADDING = 12;
   private readonly log = createLogger('StreamLayoutEditorComponent');
   private readonly faceImage: HTMLImageElement = new Image();
@@ -19,13 +20,17 @@ export class StreamLayoutEditorComponent implements OnInit, OnDestroy {
   @Input() previewControls?: TemplateRef<unknown>;
   @Input() streamUuid?: string;
   @Input() inLobby = false;
+  scoreboard: ScoreboardState;
 
   @Input('basePath') basePath: string | undefined;
 
   @ViewChild("fullscreenContainer")
   fullscreenContainer!: ElementRef<HTMLElement>;
   @ViewChild('sceneBar') sceneBar?: ElementRef<HTMLElement>;
+  @ViewChild('scoreboardWidget') scoreboardWidget?: ElementRef<HTMLElement>;
   isFullscreen = false;
+  scoreboardControlsCollapsed = false;
+  scoreboardControlPosition?: {left: number; top: number};
 
   @ViewChild('canvas')
   set canvasRef(el: ElementRef<HTMLCanvasElement> | undefined) {
@@ -56,10 +61,15 @@ export class StreamLayoutEditorComponent implements OnInit, OnDestroy {
   private layoutShapes: Map<string, Konva.Rect> = new Map<string, Konva.Rect>();
   private transformingShapeIds: Set<string> = new Set<string>();
   private syncTimerId: number | undefined;
+  private scoreboardRefreshId: number | undefined;
+  private scoreboardDrag?: {pointerId: number; offsetX: number; offsetY: number};
+  private scoreboardPositionInitialized = false;
 
   constructor(
     private mixer: StreamMixerService,
+    private overlays: StreamOverlayService,
   ) {
+    this.scoreboard = this.overlays.getScoreboardState();
   }
 
   async toggleFullscreen() {
@@ -78,11 +88,13 @@ export class StreamLayoutEditorComponent implements OnInit, OnDestroy {
   fullscreenChanged() {
     this.isFullscreen = document.fullscreenElement === this.fullscreenContainer.nativeElement;
     this.updateStageSize();
+    this.clampScoreboardCardPosition();
   }
 
   @HostListener('window:resize')
   windowResized() {
     this.updateStageSize();
+    this.clampScoreboardCardPosition();
   }
 
   @HostListener('document:pointerdown', ['$event'])
@@ -93,6 +105,7 @@ export class StreamLayoutEditorComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    this.scoreboardRefreshId = window.setInterval(() => this.refreshScoreboard(), 1000);
     this.loadScenes();
     this.loadImage(this.faceImage, this.basePath + '/icons/face.svg');
     this.loadImage(this.logoImage, this.basePath + '/icons/logo.png');
@@ -116,9 +129,136 @@ export class StreamLayoutEditorComponent implements OnInit, OnDestroy {
     this.mixer.setScene(undefined);
     this.mixer.stop();
     this.stopLayoutSync();
+    if (this.scoreboardRefreshId !== undefined) window.clearInterval(this.scoreboardRefreshId);
     this.stage?.destroy();
     this.stage = undefined;
     this.ready = false;
+  }
+
+  ngAfterViewChecked(): void {
+    if (this.scoreboardPositionInitialized || !this.scoreboardWidget) return;
+    this.scoreboardPositionInitialized = true;
+    window.setTimeout(() => this.initializeScoreboardControlPosition(), 0);
+  }
+
+  refreshScoreboard(): void {
+    this.scoreboard = this.overlays.getScoreboardState();
+  }
+
+  adjustScore(team: 'home' | 'away', delta: number): void {
+    this.overlays.adjustScore(team, delta);
+    this.refreshScoreboard();
+  }
+
+  toggleScoreboardTimer(): void {
+    this.overlays.toggleScoreboardTimer();
+    this.refreshScoreboard();
+  }
+
+  onScoreboardTimerValueChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const value = input.value.trim();
+    const match = /^(\d{1,3}):([0-5]\d)$/.exec(value);
+    if (!match || this.scoreboard.timerRunning) {
+      input.value = this.scoreboardTimerDisplay;
+      return;
+    }
+    this.overlays.setScoreboardTimerValue(Number(match[1]) * 60 + Number(match[2]));
+    this.refreshScoreboard();
+  }
+
+  get scoreboardTimerDisplay(): string {
+    const seconds = Math.max(0, Math.floor(this.scoreboard.timerValue));
+    return `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
+  }
+
+  startScoreboardCardDrag(event: PointerEvent): void {
+    const widget = this.scoreboardWidget?.nativeElement;
+    if (!widget || event.button !== 0 || (event.target as HTMLElement).closest('button, input, select, textarea')) return;
+
+    const widgetRect = widget.getBoundingClientRect();
+    this.scoreboardControlPosition = {
+      left: widgetRect.left,
+      top: widgetRect.top,
+    };
+    this.scoreboardDrag = {
+      pointerId: event.pointerId,
+      offsetX: event.clientX - widgetRect.left,
+      offsetY: event.clientY - widgetRect.top,
+    };
+    event.preventDefault();
+  }
+
+  @HostListener('document:pointermove', ['$event'])
+  moveScoreboardCard(event: PointerEvent): void {
+    if (!this.scoreboardDrag || event.pointerId !== this.scoreboardDrag.pointerId) return;
+    const widget = this.scoreboardWidget?.nativeElement;
+    if (!widget) return;
+
+    const maxLeft = Math.max(0, window.innerWidth - widget.offsetWidth);
+    const maxTop = Math.max(0, window.innerHeight - widget.offsetHeight);
+    this.scoreboardControlPosition = {
+      left: Math.min(maxLeft, Math.max(0, event.clientX - this.scoreboardDrag.offsetX)),
+      top: Math.min(maxTop, Math.max(0, event.clientY - this.scoreboardDrag.offsetY)),
+    };
+  }
+
+  @HostListener('document:pointerup', ['$event'])
+  endScoreboardCardDrag(event: PointerEvent): void {
+    if (event.pointerId !== this.scoreboardDrag?.pointerId) return;
+    this.scoreboardDrag = undefined;
+    this.persistScoreboardControlPosition();
+  }
+
+  @HostListener('document:pointercancel', ['$event'])
+  cancelScoreboardCardDrag(event: PointerEvent): void {
+    this.endScoreboardCardDrag(event);
+  }
+
+  private clampScoreboardCardPosition(): void {
+    const widget = this.scoreboardWidget?.nativeElement;
+    if (!widget || !this.scoreboardControlPosition) return;
+    this.scoreboardControlPosition = {
+      left: Math.min(Math.max(0, window.innerWidth - widget.offsetWidth), Math.max(0, this.scoreboardControlPosition.left)),
+      top: Math.min(Math.max(0, window.innerHeight - widget.offsetHeight), Math.max(0, this.scoreboardControlPosition.top)),
+    };
+  }
+
+  private initializeScoreboardControlPosition(): void {
+    const widget = this.scoreboardWidget?.nativeElement;
+    if (!widget) {
+      this.scoreboardPositionInitialized = false;
+      return;
+    }
+
+    let savedPosition: {left: number; top: number} | undefined;
+    try {
+      const saved = JSON.parse(localStorage.getItem(this.getScoreboardPositionKey()) ?? 'null');
+      if (Number.isFinite(saved?.left) && Number.isFinite(saved?.top)) {
+        savedPosition = {left: saved.left, top: saved.top};
+      }
+    } catch {
+      savedPosition = undefined;
+    }
+
+    this.scoreboardControlPosition = savedPosition ?? {
+      left: Math.max(0, (window.innerWidth - widget.offsetWidth) / 2),
+      top: Math.max(0, (window.innerHeight - widget.offsetHeight) / 2),
+    };
+    this.clampScoreboardCardPosition();
+  }
+
+  private persistScoreboardControlPosition(): void {
+    if (!this.scoreboardControlPosition) return;
+    try {
+      localStorage.setItem(this.getScoreboardPositionKey(), JSON.stringify(this.scoreboardControlPosition));
+    } catch (error) {
+      this.log.warn('Could not save scoreboard controls position', error);
+    }
+  }
+
+  private getScoreboardPositionKey(): string {
+    return `shig-scoreboard-controls-${this.streamUuid ?? 'default'}`;
   }
 
   resetTileLayout(): void {
