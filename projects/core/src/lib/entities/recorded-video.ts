@@ -14,6 +14,8 @@ export interface RecordedVideo {
   publishedAt: string | null;
   status: 'pending' | 'recording' | 'processing' | 'ready' | 'failed' | 'deleting';
   durationMs: number;
+  viewCount?: number;
+  likeCount?: number;
   error: string | null;
   startedAt: string | null;
   endedAt: string | null;

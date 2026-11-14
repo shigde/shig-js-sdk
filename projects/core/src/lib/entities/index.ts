@@ -27,6 +27,7 @@ export * from './settings';
 export * from './user';
 export * from './video';
 export * from './recorded-video';
+export * from './reaction-stats';
 export * from './weekday';
 
 
