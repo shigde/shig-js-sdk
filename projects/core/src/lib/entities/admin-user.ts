@@ -12,6 +12,7 @@ export interface AdminUser {
   created_at: string;
   channel_name: string | null;
   channel_uuid: string | null;
+  streaming_status?: 'requested' | 'allowed' | 'blocked' | null;
 }
 
 export interface AdminUserPage {

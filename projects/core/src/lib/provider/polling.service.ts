@@ -12,7 +12,8 @@ export type PollResource =
   | {resource: 'stream-status'; channelUuid: string}
   | {resource: 'host-presence'; channelUuid: string; streamUuid: string}
   | {resource: 'content-stats'; contentType: 'stream' | 'video'; uuid: string}
-  | {resource: 'live-viewers'; streamUuid: string};
+  | {resource: 'live-viewers'; streamUuid: string}
+  | {resource: 'streaming-policy'};
 interface BatchResponse { results: {id: string; status: number; data?: unknown; error?: {code: string; message: string}}[]; }
 export class PollResourceError extends Error {
   constructor(readonly status: number, readonly code: string, message: string) { super(message); this.name = 'PollResourceError'; }
