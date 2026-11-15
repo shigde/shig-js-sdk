@@ -7,7 +7,6 @@
   }
 </ng-template>
 <ng-template #hostPreviewControls>
-  <ng-container [ngTemplateOutlet]="statsControl"></ng-container>
   @if (isInLobby) {
     <div class="lobby-preview-start" [class.is-collapsed]="startPanelCollapsed" [class.is-live]="state === 'online'">
       <div class="lobby-preview-panel">
@@ -86,6 +85,7 @@
         <span class="lobby-phase">{{ isInLobby ? 'Stream Lobby' : 'Waiting Room' }}</span>
         <div class="nav-group right" role="group" aria-label="actions">
           <div class="nav-group-area">
+            <ng-container [ngTemplateOutlet]="statsControl"></ng-container>
             <span class="lobby-live-status" [class.is-live]="state === 'online'" [class.is-recording]="state === 'online' && recordingControls?.recording?.status === 'recording'" role="status" aria-live="polite"
                   [attr.aria-label]="state === 'online' ? (recordingControls?.recording?.status === 'recording' ? 'Live, recording' : 'Live') : 'Offline'"
                   [title]="state === 'online' ? (recordingControls?.recording?.status === 'recording' ? 'Live, recording' : 'Live') : 'Offline'">
@@ -136,14 +136,14 @@
 
 
         @if (isHost) {
-            <shig-stream-leayout-editor [basePath]="basePath" [previewControls]="hostPreviewControls"></shig-stream-leayout-editor>
+            <shig-stream-leayout-editor [basePath]="basePath" [streamUuid]="streamUuid" [inLobby]="isInLobby"
+                                        [previewControls]="hostPreviewControls"></shig-stream-leayout-editor>
         } @else if (!isInLobby && setupPreview) {
           <div class="lobby-setup-preview">
             <ng-container [ngTemplateOutlet]="setupPreview" [ngTemplateOutletContext]="{ $implicit: stream, live: state === 'online' }"></ng-container>
           </div>
         } @else {
           <div id="lobby-stream-video" class="stream-video">
-            <ng-container [ngTemplateOutlet]="statsControl"></ng-container>
             <video id="video-stream" #videoStreamElement muted autoplay playsinline
                    [hidden]="!hostPresent || !remoteVideoPlaying"
                    (playing)="remoteVideoPlaying = videoStreamElement.videoWidth > 0"
@@ -158,9 +158,9 @@
     </div>
     <div class="lobby-toolbar" role="group" aria-label="Lobby settings and exit">
       <div class="lobby-toolbar-settings">
-        @if (isHost) {
+        @if (isHost && isInLobby) {
           <shig-stream-settings [centered]="true" [editorProvider]="getStreamLayoutEditor" [streamUuid]="streamUuid"
-                                [videosTemplate]="videosContent"
+                                [videosTemplate]="videosContent" [devicesEnabled]="isInLobby"
                                 [userUuid]="userUuid ?? undefined"></shig-stream-settings>
         }
 

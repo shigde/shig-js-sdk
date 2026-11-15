@@ -1,10 +1,68 @@
-.stream-overlay-settings { display: grid; gap: 20px; }
+.stream-overlay-settings {
+  display: grid;
+  gap: 20px;
+}
 .stream-overlay-settings .form-check { margin: 0; }
 .stream-overlay-settings fieldset { margin: 0; padding: 12px 0 0; border-top: 1px solid var(--bs-border-color); }
 .stream-overlay-settings legend { margin-bottom: 12px; font-size: 14px; }
+.overlay-group {
+  display: grid;
+  gap: 12px;
+}
+.overlay-panel {
+  min-width: 0;
+  padding: 14px;
+  border: 0;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--bs-body-bg, #fff) 94%, var(--bs-body-color, #202328) 6%);
+}
+.overlay-card-heading {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0;
+  color: #00778a;
+  font-size: 13px;
+  font-weight: 750;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.overlay-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 30px;
+  width: 30px;
+  height: 30px;
+  border-radius: 5px;
+  background: #e0f1f5;
+  font-size: 16px;
+  letter-spacing: normal;
+}
+.scoreboard-settings .overlay-card-heading { color: #377719; }
+.scoreboard-settings .overlay-icon { background: #eaf3e3; }
+
+:host-context([data-bs-theme='dark']) .overlay-card-heading { color: #35d3f2; }
+:host-context([data-bs-theme='dark']) .overlay-icon { background: #173d49; }
+:host-context([data-bs-theme='dark']) .scoreboard-settings .overlay-card-heading { color: #7be333; }
+:host-context([data-bs-theme='dark']) .scoreboard-settings .overlay-icon { background: #394729; }
 
 .stream-overlay-size {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+}
+
+.scoreboard-settings { display: grid; gap: 20px; }
+.scoreboard-settings fieldset { margin: 0; padding: 12px 0 0; border-top: 1px solid var(--bs-border-color); }
+.scoreboard-settings legend { margin-bottom: 12px; font-size: 14px; }
+.team-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.team-card { display: grid; gap: 10px; }
+.team-card > label, .duration-field { display: grid; gap: 6px; font-size: 14px; }
+.team-color-field .form-control-color { width: 52px; height: 38px; padding: 3px; }
+.timer-mode { display: flex; flex-wrap: wrap; gap: 18px; margin-bottom: 12px; }
+.duration-field { max-width: 220px; margin-bottom: 12px; }
+
+@media (max-width: 520px) {
+  .team-grid { grid-template-columns: 1fr; }
+  .overlay-panel { padding: 12px; }
 }

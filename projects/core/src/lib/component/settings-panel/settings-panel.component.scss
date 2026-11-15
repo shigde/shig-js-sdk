@@ -28,6 +28,9 @@
 .settings-panel:has(.settings-panel-tab:nth-child(4)) {
   width: min(540px, calc(100vw - 24px));
 }
+.settings-panel:has(.settings-panel-tab:nth-child(5)) {
+  width: min(650px, calc(100vw - 24px));
+}
 .settings-panel-header > i { font-size: 20px; }
 .settings-panel-heading { min-width: 0; flex: 1; }
 h2 { margin: 0; font-size: 18px; font-weight: 600; }

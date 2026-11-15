@@ -1,20 +1,67 @@
 <div class="stream-overlay-settings">
-  <label class="form-check form-switch d-flex align-items-center justify-content-between gap-3 ps-0">
-    <span class="form-check-label">Show names</span>
-    <input class="form-check-input ms-0 mt-0 flex-shrink-0" type="checkbox" role="switch"
-           [checked]="nameOverlayEnabled" (change)="toggleNameOverlay()">
-  </label>
-  <fieldset [disabled]="!nameOverlayEnabled">
-    <legend>Size</legend>
-    <div class="stream-overlay-size">
-      <label class="form-check">
-        <input class="form-check-input" type="radio" name="name-overlay-size" [checked]="nameOverlaySize === 'A'" (change)="setNameOverlaySize('A')">
-        <span class="form-check-label">Small</span>
-      </label>
-      <label class="form-check">
-        <input class="form-check-input" type="radio" name="name-overlay-size" [checked]="nameOverlaySize === 'B'" (change)="setNameOverlaySize('B')">
-        <span class="form-check-label">Large</span>
-      </label>
+  <section class="overlay-group" aria-labelledby="name-overlay-heading">
+    <h4 id="name-overlay-heading" class="overlay-card-heading"><span class="overlay-icon names-icon" aria-hidden="true"><i class="bi bi-person-badge"></i></span>Name overlay</h4>
+    <div class="settings-box overlay-panel">
+    <label class="form-check form-switch d-flex align-items-center justify-content-between gap-3 ps-0">
+      <span class="form-check-label">Show names</span>
+      <input class="form-check-input ms-0 mt-0 flex-shrink-0" type="checkbox" role="switch"
+             [checked]="nameOverlayEnabled" (change)="toggleNameOverlay()">
+    </label>
+    <fieldset [disabled]="!nameOverlayEnabled">
+      <legend>Size</legend>
+      <div class="stream-overlay-size">
+        <label class="form-check">
+          <input class="form-check-input" type="radio" name="name-overlay-size" [checked]="nameOverlaySize === 'A'" (change)="setNameOverlaySize('A')">
+          <span class="form-check-label">Small</span>
+        </label>
+        <label class="form-check">
+          <input class="form-check-input" type="radio" name="name-overlay-size" [checked]="nameOverlaySize === 'B'" (change)="setNameOverlaySize('B')">
+          <span class="form-check-label">Large</span>
+        </label>
+      </div>
+    </fieldset>
     </div>
-  </fieldset>
+  </section>
+
+  <section class="overlay-group" aria-labelledby="scoreboard-heading">
+    <h4 id="scoreboard-heading" class="overlay-card-heading"><span class="overlay-icon score-icon" aria-hidden="true"><i class="bi bi-trophy"></i></span>Scoreboard overlay</h4>
+    <div class="settings-box overlay-panel scoreboard-settings">
+    <label class="form-check form-switch d-flex align-items-center justify-content-between gap-3 ps-0">
+      <span class="form-check-label">Show scoreboard</span>
+      <input class="form-check-input ms-0 mt-0 flex-shrink-0" type="checkbox" role="switch"
+             [checked]="scoreboard.enabled" (change)="updateScoreboard({enabled: !scoreboard.enabled})">
+    </label>
+
+    <fieldset>
+      <legend>Teams</legend>
+      <div class="team-grid">
+        <div class="team-card">
+          <label>Home team<input class="form-control" maxlength="40" [value]="scoreboard.homeName" (input)="onTextChange('homeName', $event)"></label>
+          <label>Short name<input class="form-control" maxlength="3" [value]="scoreboard.homeAbbr" (input)="onTextChange('homeAbbr', $event)"></label>
+          <label class="team-color-field">Team color<input class="form-control form-control-color" type="color" [value]="scoreboard.homeColor" (input)="onColorChange('homeColor', $event)"></label>
+        </div>
+        <div class="team-card">
+          <label>Away team<input class="form-control" maxlength="40" [value]="scoreboard.awayName" (input)="onTextChange('awayName', $event)"></label>
+          <label>Short name<input class="form-control" maxlength="3" [value]="scoreboard.awayAbbr" (input)="onTextChange('awayAbbr', $event)"></label>
+          <label class="team-color-field">Team color<input class="form-control form-control-color" type="color" [value]="scoreboard.awayColor" (input)="onColorChange('awayColor', $event)"></label>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Game timer</legend>
+      <div class="timer-mode">
+        <label class="form-check"><input class="form-check-input" type="radio" name="scoreboard-timer-mode" [checked]="scoreboard.timerMode === 'up'" [disabled]="scoreboard.timerRunning" (change)="updateScoreboard({timerMode: 'up'})"><span class="form-check-label">Count up from 00:00</span></label>
+        <label class="form-check"><input class="form-check-input" type="radio" name="scoreboard-timer-mode" [checked]="scoreboard.timerMode === 'down'" [disabled]="scoreboard.timerRunning" (change)="updateScoreboard({timerMode: 'down'})"><span class="form-check-label">Countdown</span></label>
+      </div>
+      @if (scoreboard.timerMode === 'down') {
+        <label class="duration-field">Starting time (minutes)
+          <input class="form-control" type="number" min="0" step="1" [disabled]="scoreboard.timerRunning" [value]="scoreboard.timerDuration / 60" (change)="onDurationChange($event)">
+        </label>
+      }
+      <small>Use the floating scoreboard controls to start or pause the timer and correct its current time.</small>
+      <button type="button" class="btn btn-outline-secondary" (click)="resetTimer()">Reset timer</button>
+    </fieldset>
+    </div>
+  </section>
 </div>

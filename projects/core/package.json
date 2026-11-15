@@ -1,6 +1,6 @@
 {
   "name": "@shigde/core",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "Shig Lobby Library",
   "repository": {
     "type": "git",
@@ -44,6 +44,7 @@
   },
   "dependencies": {
     "tslib": "^2.3.0",
+    "qrcode": "^1.5.4",
     "@peermetrics/webrtc-stats": "^5.9.0"
   },
   "devDependencies": {

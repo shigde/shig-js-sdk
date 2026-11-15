@@ -42,6 +42,10 @@ export class VideoService {
   get(uuid: string): Observable<RecordedVideo> {
     return this.http.get<ApiResponse<RecordedVideo>>(this.videoUrl(uuid)).pipe(map(response => response.data));
   }
+  recordViewStart(uuid: string): Observable<number> {
+    return this.http.post<ApiResponse<number>>(`${this.params.API_PREFIX}/pub/videos/${encodeURIComponent(uuid)}/views`, {})
+      .pipe(map(response => response.data));
+  }
   update(uuid: string, changes: RecordedVideoUpdate): Observable<RecordedVideo> {
     return this.http.patch<ApiResponse<RecordedVideo>>(this.videoUrl(uuid), changes).pipe(map(response => response.data));
   }

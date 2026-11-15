@@ -14,6 +14,8 @@ export interface RecordedVideo {
   publishedAt: string | null;
   status: 'pending' | 'recording' | 'processing' | 'ready' | 'failed' | 'deleting';
   durationMs: number;
+  viewCount?: number;
+  likeCount?: number;
   error: string | null;
   startedAt: string | null;
   endedAt: string | null;
@@ -42,7 +44,7 @@ export interface RecordedVideoPreview {
   likes: number;
   dislikes: number;
   isLive: false;
-  isPublic: true;
+  isPublic: boolean;
   ownerName: string;
   ownerUuid: string;
   ownerAvatar: string;

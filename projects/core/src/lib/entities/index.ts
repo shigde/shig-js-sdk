@@ -20,6 +20,7 @@ export * from './sdp-media-info';
 export * from './sdp-media-line';
 export * from './space';
 export * from './stream';
+export * from './stream-settings';
 export * from './stream-live-data';
 export * from './stream-live-status';
 export * from './stream-friend';
@@ -27,6 +28,7 @@ export * from './settings';
 export * from './user';
 export * from './video';
 export * from './recorded-video';
+export * from './reaction-stats';
 export * from './weekday';
 
 
@@ -37,3 +39,4 @@ export * from './weekday';
 export * from './admin-user';
 
 export * from './inbox-entry';
+export * from './device';

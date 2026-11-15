@@ -65,6 +65,7 @@ export class GuestComponent implements AfterViewInit, OnDestroy {
   ngAfterViewInit() {
     if (this.media && this.media.stream) {
       this.getVideoElement().srcObject = this.media.stream;
+      if (this.onHost) this.mixer.registerSceneSource(this.getVideoElement().id, this.media.name || 'Guest');
       if (this.isLocal) {
         this.getVideoElement().muted = true;
         this.getVideoElement().volume = 0;
@@ -78,6 +79,7 @@ export class GuestComponent implements AfterViewInit, OnDestroy {
     this.media = media;
     if (this.media.stream) {
       this.getVideoElement().srcObject = this.media.stream;
+      if (this.onHost) this.mixer.registerSceneSource(this.getVideoElement().id, this.media.name || 'Guest');
       this.mixer.updateStream(this.getVideoElement().id, this.media.stream);
       this.log.info('update guest tracks - add media:', this.media.stream.getVideoTracks());
     }
@@ -85,6 +87,7 @@ export class GuestComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    if (this.onHost) this.mixer.unregisterSceneSource(this.getVideoElement().id);
     this.muteSub?.unsubscribe();
     const isSelected = this.isSelected();
     if (isSelected) {

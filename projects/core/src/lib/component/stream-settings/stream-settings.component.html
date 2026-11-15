@@ -13,6 +13,27 @@
         <section class="settings-section" aria-label="Layout">
         <h3 class="settings-heading"><i class="bi bi-grid" aria-hidden="true"></i>Layout</h3>
         <div class="stream-layout-settings">
+          <div class="settings-box">
+            <strong>Picture in picture</strong>
+            <label class="d-block mt-2" for="scene-main-video">Main video</label>
+            <select id="scene-main-video" class="form-select" [value]="editor?.savedMainVideoId ?? ''" #mainVideo
+                    (change)="editor!.setPictureInPictureSlot('main', mainVideo.value)">
+              <option value="">Choose slot</option>
+              @for (slot of editor?.sceneSlots ?? []; track $index) {
+                <option [value]="slot.id" [disabled]="slot.id === editor?.savedInsetVideoId"
+                        [selected]="slot.id === editor?.savedMainVideoId">{{ slot.label }}</option>
+              }
+            </select>
+            <label class="d-block mt-2" for="scene-inset-video">Small video</label>
+            <select id="scene-inset-video" class="form-select" [value]="editor?.savedInsetVideoId ?? ''" #insetVideo
+                    (change)="editor!.setPictureInPictureSlot('inset', insetVideo.value)">
+              <option value="">Choose slot</option>
+              @for (slot of editor?.sceneSlots ?? []; track $index) {
+                <option [value]="slot.id" [disabled]="slot.id === editor?.savedMainVideoId"
+                        [selected]="slot.id === editor?.savedInsetVideoId">{{ slot.label }}</option>
+              }
+            </select>
+          </div>
           <label class="settings-box form-check form-switch d-flex align-items-center justify-content-between gap-3">
             <span class="form-check-label">Edit layout</span>
             <input class="form-check-input" type="checkbox" role="switch"
@@ -27,9 +48,9 @@
         </section>
       }
       @case ('overlay') {
-        <section class="settings-section" aria-label="Name overlay">
-          <h3 class="settings-heading settings-heading-overlay"><i class="bi bi-layers" aria-hidden="true"></i>Name overlay</h3>
-          <div class="settings-box"><shig-stream-overlay-menu></shig-stream-overlay-menu></div>
+        <section class="settings-section" aria-label="Overlays">
+          <h3 class="settings-heading settings-heading-overlay"><i class="bi bi-layers" aria-hidden="true"></i>Overlays</h3>
+          <shig-stream-overlay-menu></shig-stream-overlay-menu>
         </section>
       }
       @case ('guests') {
@@ -39,6 +60,12 @@
         </section>
       }
       @case ('videos') { <ng-container [ngTemplateOutlet]="videosTemplate ?? null"></ng-container> }
+      @case ('devices') {
+        <section class="settings-section" aria-label="Devices">
+          <h3 class="settings-heading settings-heading-overlay"><i class="bi bi-camera-video" aria-hidden="true"></i>Devices</h3>
+          <div class="settings-box"><shig-device-management [streamUuid]="streamUuid"></shig-device-management></div>
+        </section>
+      }
     }
   }
 </shig-settings-panel>
