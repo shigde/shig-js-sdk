@@ -61,10 +61,20 @@ export class UserService {
     ).pipe(map(res => res.data));
   }
 
-  getStreamingPolicy(): Observable<{mode: 'request' | 'open' | 'locked'}> {
-    return this.http.get<ApiResponse<{mode: 'request' | 'open' | 'locked'}>>(
+  getStreamingPolicy(): Observable<{mode: 'request' | 'open' | 'locked'; publicContentEnabled: boolean}> {
+    return this.http.get<ApiResponse<{mode: 'request' | 'open' | 'locked'; publicContentEnabled: boolean}>>(
       `${this.params.API_PREFIX}/admin/streaming-policy`, this.httpOptions
     ).pipe(map(res => res.data));
+  }
+
+  setPublicContentEnabled(enabled: boolean): Observable<boolean> {
+    return this.http.patch<ApiResponse<boolean>>(`${this.params.API_PREFIX}/admin/public-content`, {enabled}, this.httpOptions)
+      .pipe(map(res => res.data));
+  }
+
+  getPublicContentPolicy(): Observable<boolean> {
+    return this.http.get<ApiResponse<boolean>>(`${this.params.API_PREFIX}/pub/public-content`, this.httpOptions)
+      .pipe(map(res => res.data));
   }
 
   setStreamingPolicy(mode: 'request' | 'open' | 'locked'): Observable<string> {
@@ -77,17 +87,17 @@ export class UserService {
     return this.http.post<ApiResponse<string>>(`${this.params.API_PREFIX}/channel/streaming-request`, {}, this.httpOptions).pipe(map(res => res.data));
   }
 
-  getMyStreamingPolicy(): Observable<{mode: 'request' | 'open' | 'locked'; channelStatus: string; canStream: boolean}> {
-    return this.http.get<ApiResponse<{mode: 'request' | 'open' | 'locked'; channelStatus: string; canStream: boolean}>>(
+  getMyStreamingPolicy(): Observable<{mode: 'request' | 'open' | 'locked'; channelStatus: string; canStream: boolean; publicContentEnabled: boolean}> {
+    return this.http.get<ApiResponse<{mode: 'request' | 'open' | 'locked'; channelStatus: string; canStream: boolean; publicContentEnabled: boolean}>>(
       `${this.params.API_PREFIX}/channel/streaming-policy`, this.httpOptions
     ).pipe(map(res => res.data));
   }
 
-  watchMyStreamingPolicy(): Observable<PollState<{mode: 'request' | 'open' | 'locked'; channelStatus: string; canStream: boolean}>> {
+  watchMyStreamingPolicy(): Observable<PollState<{mode: 'request' | 'open' | 'locked'; channelStatus: string; canStream: boolean; publicContentEnabled: boolean}>> {
     const url = `${this.params.API_PREFIX}/channel/streaming-policy`;
     return this.polling.watch({
       key: 'streaming-policy', intervalMs: 15000, requiresSession: true, batch: {resource: 'streaming-policy'},
-      load: context => this.http.get<ApiResponse<{mode: 'request' | 'open' | 'locked'; channelStatus: string; canStream: boolean}>>(
+      load: context => this.http.get<ApiResponse<{mode: 'request' | 'open' | 'locked'; channelStatus: string; canStream: boolean; publicContentEnabled: boolean}>>(
         url, {...this.httpOptions, context}
       ).pipe(map(res => res.data))
     });

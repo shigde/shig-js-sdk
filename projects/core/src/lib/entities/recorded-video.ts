@@ -44,7 +44,7 @@ export interface RecordedVideoPreview {
   likes: number;
   dislikes: number;
   isLive: false;
-  isPublic: true;
+  isPublic: boolean;
   ownerName: string;
   ownerUuid: string;
   ownerAvatar: string;
