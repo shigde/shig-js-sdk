@@ -17,23 +17,22 @@
             <strong>Picture in picture</strong>
             <label class="d-block mt-2" for="scene-main-video">Main video</label>
             <select id="scene-main-video" class="form-select" [value]="editor?.savedMainVideoId ?? ''" #mainVideo
-                    (change)="editor!.mainVideoId = mainVideo.value">
+                    (change)="editor!.setPictureInPictureSlot('main', mainVideo.value)">
               <option value="">Choose slot</option>
               @for (slot of editor?.sceneSlots ?? []; track $index) {
-                <option [value]="slot.id">{{ slot.label }}</option>
+                <option [value]="slot.id" [disabled]="slot.id === editor?.savedInsetVideoId"
+                        [selected]="slot.id === editor?.savedMainVideoId">{{ slot.label }}</option>
               }
             </select>
             <label class="d-block mt-2" for="scene-inset-video">Small video</label>
             <select id="scene-inset-video" class="form-select" [value]="editor?.savedInsetVideoId ?? ''" #insetVideo
-                    (change)="editor!.insetVideoId = insetVideo.value">
+                    (change)="editor!.setPictureInPictureSlot('inset', insetVideo.value)">
               <option value="">Choose slot</option>
               @for (slot of editor?.sceneSlots ?? []; track $index) {
-                <option [value]="slot.id">{{ slot.label }}</option>
+                <option [value]="slot.id" [disabled]="slot.id === editor?.savedMainVideoId"
+                        [selected]="slot.id === editor?.savedInsetVideoId">{{ slot.label }}</option>
               }
             </select>
-            <button class="btn btn-outline-primary w-100 mt-2" type="button"
-                    [disabled]="!editor?.mainVideoId || !editor?.insetVideoId || editor?.mainVideoId === editor?.insetVideoId"
-                    (click)="editor?.savePictureInPicture()">Save picture in picture</button>
           </div>
           <label class="settings-box form-check form-switch d-flex align-items-center justify-content-between gap-3">
             <span class="form-check-label">Edit layout</span>

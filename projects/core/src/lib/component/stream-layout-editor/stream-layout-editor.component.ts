@@ -1,9 +1,12 @@
-import {AfterViewChecked, Component, ElementRef, HostListener, Input, TemplateRef, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import {AfterViewChecked, ChangeDetectorRef, Component, ElementRef, HostListener, Input, TemplateRef, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {NgTemplateOutlet} from '@angular/common';
 import Konva from 'konva';
 import {createLogger} from "../../provider";
 import {PictureInPicture, SceneChoice, StreamMixerService} from "../../provider/stream-mixer.service";
 import {ScoreboardState, StreamOverlayService} from '../../provider/stream-overlay.service';
+import {StreamSettingsService} from '../../provider/stream-settings.service';
+import {ScenePreferences} from '../../entities';
+import {take} from 'rxjs';
 
 @Component({
   selector: 'shig-stream-leayout-editor',
@@ -19,7 +22,12 @@ export class StreamLayoutEditorComponent implements OnInit, OnDestroy, AfterView
 
   @Input() previewControls?: TemplateRef<unknown>;
   @Input() streamUuid?: string;
-  @Input() inLobby = false;
+  private _inLobby = false;
+  @Input() set inLobby(value: boolean) {
+    this._inLobby = value;
+    this.overlays.setRenderingEnabled(value);
+  }
+  get inLobby(): boolean { return this._inLobby; }
   scoreboard: ScoreboardState;
 
   @Input('basePath') basePath: string | undefined;
@@ -68,6 +76,8 @@ export class StreamLayoutEditorComponent implements OnInit, OnDestroy, AfterView
   constructor(
     private mixer: StreamMixerService,
     private overlays: StreamOverlayService,
+    private streamSettings: StreamSettingsService,
+    private readonly cdr: ChangeDetectorRef,
   ) {
     this.scoreboard = this.overlays.getScoreboardState();
   }
@@ -106,7 +116,7 @@ export class StreamLayoutEditorComponent implements OnInit, OnDestroy, AfterView
 
   ngOnInit() {
     this.scoreboardRefreshId = window.setInterval(() => this.refreshScoreboard(), 1000);
-    this.loadScenes();
+    this.loadUserSettings();
     this.loadImage(this.faceImage, this.basePath + '/icons/face.svg');
     this.loadImage(this.logoImage, this.basePath + '/icons/logo.png');
 
@@ -126,6 +136,7 @@ export class StreamLayoutEditorComponent implements OnInit, OnDestroy, AfterView
   }
 
   ngOnDestroy() {
+    this.overlays.setRenderingEnabled(false);
     this.mixer.setScene(undefined);
     this.mixer.stop();
     this.stopLayoutSync();
@@ -355,9 +366,21 @@ export class StreamLayoutEditorComponent implements OnInit, OnDestroy, AfterView
         : '';
   }
 
-  savePictureInPicture(): void {
-    if (!this.mainVideoId || !this.insetVideoId || this.mainVideoId === this.insetVideoId) return;
-    const previous = this.mixer.getPictureInPicture() ?? this.pictureInPicture;
+  setPictureInPictureSlot(slot: 'main' | 'inset', value: string): void {
+    const otherValue = slot === 'main' ? this.insetVideoId : this.mainVideoId;
+    if (value && value === otherValue) return;
+    if (slot === 'main') this.mainVideoId = value;
+    else this.insetVideoId = value;
+
+    if (!this.mainVideoId || !this.insetVideoId) {
+      const hadSavedPictureInPicture = this.pictureInPicture !== undefined;
+      this.pictureInPicture = undefined;
+      if (hadSavedPictureInPicture) this.saveScenes();
+      if (this.sceneChoices[this.activeScene - 1]?.kind === 'picture-in-picture') this.chooseScene(1);
+      return;
+    }
+
+    const previous = this.mixer.getPictureInPicture() ?? this.pictureInPicture ?? this.defaultPictureInPicture();
     this.pictureInPicture = {mainId: this.mainVideoId, insetId: this.insetVideoId,
       x: previous?.x ?? 0.72, y: previous?.y ?? 0.04,
       width: previous?.width ?? 0.25, height: previous?.height ?? 0.25};
@@ -380,26 +403,37 @@ export class StreamLayoutEditorComponent implements OnInit, OnDestroy, AfterView
   }
 
   private saveScenes(): void {
-    if (!this.streamUuid) return;
-    localStorage.setItem(`shig-scenes-${this.streamUuid}`, JSON.stringify({
-      choices: this.sceneChoices.slice(1), pictureInPicture: this.pictureInPicture,
-    }));
+    const scenes: ScenePreferences = {
+      choices: this.sceneChoices.slice(1).map(choice => choice ?? null),
+      pictureInPicture: this.pictureInPicture ? {
+        mainId: this.slotValue(this.pictureInPicture.mainId),
+        insetId: this.slotValue(this.pictureInPicture.insetId),
+        x: this.pictureInPicture.x, y: this.pictureInPicture.y,
+        width: this.pictureInPicture.width, height: this.pictureInPicture.height,
+      } : null,
+    };
+    this.streamSettings.saveScenes(scenes).pipe(take(1)).subscribe({
+      error: error => this.log.warn('Could not save user scene settings', error),
+    });
   }
 
-  private loadScenes(): void {
-    if (!this.streamUuid) return;
-    try {
-      const saved = JSON.parse(localStorage.getItem(`shig-scenes-${this.streamUuid}`) ?? 'null');
-      if (!saved) return;
-      if (Array.isArray(saved.choices) && saved.choices.length === 3) {
-        this.sceneChoices = [undefined, ...saved.choices];
-      }
-      this.pictureInPicture = saved.pictureInPicture;
-      this.mainVideoId = this.pictureInPicture?.mainId ?? '';
-      this.insetVideoId = this.pictureInPicture?.insetId ?? '';
-    } catch (error) {
-      this.log.warn('Could not load saved scenes', error);
-    }
+  private loadUserSettings(): void {
+    this.streamSettings.get().pipe(take(1)).subscribe({
+      next: saved => {
+        this.overlays.applyScoreboardPreferences(saved.scoreboard);
+        this.sceneChoices = [undefined, ...saved.scenes.choices.map(choice => choice ?? undefined)];
+        this.pictureInPicture = saved.scenes.pictureInPicture ?? undefined;
+        this.mainVideoId = this.pictureInPicture?.mainId ?? '';
+        this.insetVideoId = this.pictureInPicture?.insetId ?? '';
+        this.refreshScoreboard();
+        this.cdr.markForCheck();
+      },
+      error: error => this.log.warn('Could not load user stream settings', error),
+    });
+  }
+
+  private defaultPictureInPicture(): PictureInPicture {
+    return {mainId: 'slot-0', insetId: 'slot-1', x: 0.72, y: 0.04, width: 0.25, height: 0.25};
   }
 
   toggleLayoutEditMode(): void {

@@ -11,6 +11,7 @@ export * from './session.service';
 export * from './settings.service';
 export * from './space.service';
 export * from './stream.service';
+export * from './stream-settings.service';
 export * from './stream-friend.service';
 export * from './user.service';
 export * from './webrtc-connection';

@@ -20,6 +20,7 @@ export * from './sdp-media-info';
 export * from './sdp-media-line';
 export * from './space';
 export * from './stream';
+export * from './stream-settings';
 export * from './stream-live-data';
 export * from './stream-live-status';
 export * from './stream-friend';

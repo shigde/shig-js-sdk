@@ -2,6 +2,7 @@ import {Injectable} from "@angular/core";
 import Konva from "konva";
 import {snapdom} from "@zumer/snapdom";
 import {createLogger} from "./logger";
+import {ScoreboardPreferences} from '../entities';
 
 export type StreamOverlayTile = {
   x: number;
@@ -67,6 +68,7 @@ export class StreamOverlayService {
   private readonly log = createLogger('StreamOverlayService');
   private nameplateSnapshots: Map<string, NameplateSnapshot> = new Map<string, NameplateSnapshot>();
   private pendingNameplateSnapshots: Set<string> = new Set<string>();
+  private renderingEnabled = false;
   private nameplateEnabled = false;
   private nameplateSize: NameplateOverlaySize = 'B';
   private scoreboard: ScoreboardState = {
@@ -79,6 +81,19 @@ export class StreamOverlayService {
 
   getScoreboardState(): ScoreboardState {
     return {...this.scoreboard, timerValue: this.getTimerValue()};
+  }
+
+  setRenderingEnabled(enabled: boolean): void {
+    this.renderingEnabled = enabled;
+  }
+
+  getScoreboardPreferences(): ScoreboardPreferences {
+    const {enabled, homeName, awayName, homeAbbr, awayAbbr, homeColor, awayColor, timerMode, timerDuration} = this.scoreboard;
+    return {enabled, homeName, awayName, homeAbbr, awayAbbr, homeColor, awayColor, timerMode, timerDuration};
+  }
+
+  applyScoreboardPreferences(preferences: ScoreboardPreferences): void {
+    this.updateScoreboard(preferences);
   }
 
   updateScoreboard(patch: Partial<ScoreboardState>): void {
@@ -126,7 +141,7 @@ export class StreamOverlayService {
 
   drawScoreboard(ctx: CanvasRenderingContext2D, width: number, height: number): void {
     const state = this.scoreboard;
-    if (!state.enabled) return;
+    if (!this.renderingEnabled || !state.enabled) return;
     const scale = Math.min(width / 1920, height / 1080);
     const margin = 30 * scale;
     const barHeight = 68 * scale;
@@ -221,7 +236,7 @@ export class StreamOverlayService {
     ctx: CanvasRenderingContext2D,
     onReady?: () => void,
   ): void {
-    if (!this.nameplateEnabled) return;
+    if (!this.renderingEnabled || !this.nameplateEnabled) return;
 
     const displayName = name?.trim() || 'Guest';
     const cacheKey = this.getNameplateCacheKey(displayName);

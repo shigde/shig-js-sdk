@@ -1,5 +1,9 @@
 import {Component, OnInit} from '@angular/core';
 import {NameplateOverlaySize, ScoreboardState, StreamOverlayService} from '../../provider/stream-overlay.service';
+import {StreamSettingsService} from '../../provider/stream-settings.service';
+import {ScoreboardPreferences} from '../../entities';
+import {createLogger} from '../../provider/logger';
+import {EMPTY, Subject, catchError, debounceTime, switchMap} from 'rxjs';
 
 @Component({
   selector: 'shig-stream-overlay-menu',
@@ -8,20 +12,35 @@ import {NameplateOverlaySize, ScoreboardState, StreamOverlayService} from '../..
   styleUrl: './stream-overlay-menu.component.scss',
 })
 export class StreamOverlayMenuComponent implements OnInit {
+  private readonly log = createLogger('StreamOverlayMenuComponent');
+  private readonly scoreboardChanges = new Subject<ScoreboardPreferences>();
   nameOverlayEnabled = false;
   nameOverlaySize: NameplateOverlaySize = 'B';
   scoreboard: ScoreboardState;
 
   constructor(
     private overlays: StreamOverlayService,
+    private settings: StreamSettingsService,
   ) {
     this.scoreboard = this.overlays.getScoreboardState();
   }
 
   ngOnInit(): void {
+    this.scoreboardChanges.pipe(
+      debounceTime(400),
+      switchMap(preferences => this.settings.saveScoreboard(preferences).pipe(catchError(error => {
+        this.log.warn('Could not save scoreboard preferences', error);
+        return EMPTY;
+      }))),
+    ).subscribe();
     this.nameOverlayEnabled = this.overlays.isNameplateEnabled();
     this.nameOverlaySize = this.overlays.getNameplateSize();
     this.refreshScoreboard();
+  }
+
+  ngOnDestroy(): void {
+    // Completing the source flushes a pending debounced save before this menu is destroyed.
+    this.scoreboardChanges.complete();
   }
 
   toggleNameOverlay(): void {
@@ -41,6 +60,7 @@ export class StreamOverlayMenuComponent implements OnInit {
   updateScoreboard(patch: Partial<ScoreboardState>): void {
     this.overlays.updateScoreboard(patch);
     this.refreshScoreboard();
+    this.scoreboardChanges.next(this.overlays.getScoreboardPreferences());
   }
 
   resetTimer(): void {
